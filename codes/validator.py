@@ -8,9 +8,9 @@ import json
 import os
 import shutil
 from optparse import OptionParser
-from chainscanner import Chainscanner
-from blockchain import Blockchain
-from transactionmanager import Transactionmanager
+from codes.chainscanner import Chainscanner
+from codes.blockchain import Blockchain
+from codes.transactionmanager import Transactionmanager
 
 def econvalidator(mempool="./mempool/"):
 #	print("hellooooo babies!")
