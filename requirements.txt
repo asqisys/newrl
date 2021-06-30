@@ -9,6 +9,7 @@ idna==2.10
 Naked==0.1.31
 pycryptodome==3.10.1
 pydantic==1.8.2
+python-multipart==0.0.5
 PyYAML==5.4.1
 requests==2.25.1
 shellescape==3.8.1
