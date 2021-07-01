@@ -8,6 +8,8 @@ import json
 import datetime
 import binascii
 import base64
+
+from starlette.responses import FileResponse
 from codes.transactionmanager import Transactionmanager
 import base64
 from optparse import OptionParser
@@ -150,7 +152,8 @@ def sign(address, transfile=None, walletfile="all_wallets.json", mempool="./memp
 	#	print("Signatures are")
 		sign_status = tm.verifysign(signtrans,pubkeybytes,address)
 		print("Status of signing: ", sign_status)
-		return sign_status
+		return FileResponse(transfile)
+		# return sign_status
 	else:
 		print("Signing failed. No change made to transaction's signature data")
 		return None

@@ -1,3 +1,4 @@
+from starlette.responses import FileResponse
 from utils import save_file_and_get_path
 from codes.transactionmanager import Transactionmanager
 from codes.addwallet import add_wallet
@@ -25,19 +26,21 @@ async def validate(custodian_address: str = "0x7e433fd1cc776d17d4ad94daa2e1fc52e
     f1 = save_file_and_get_path(kyc1)
     f2 = save_file_and_get_path(kyc2)
     newaddress = add_wallet(f1, f2, custodian_address)
+    return FileResponse("mempool/transaction-1-2021-07-01-570194.json")
     return {
         "status": "SUCCESS",
         "new_address": newaddress
     }
 
 @app.post("/sign")
-async def sign(custodian_address: str = "0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42", transactionfile: UploadFile = File(...)):
+async def sign(signer_address: str = "0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42", transactionfile: UploadFile = File(...)):
     transactionfile_path = save_file_and_get_path(transactionfile)
-    sign_status = signmanager.sign(custodian_address, transactionfile_path)
-    return {
-        "status": "SUCCESS",
-        "data": sign_status
-    }
+    singed_transaction_file = signmanager.sign(signer_address, transactionfile_path)
+    return singed_transaction_file
+    # return {
+    #     "status": "SUCCESS",
+    #     "data": sign_status
+    # }
 
 @app.post("/create-token")
 async def create_token():
