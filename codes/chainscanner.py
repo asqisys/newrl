@@ -7,7 +7,7 @@ import os
 import shutil
 from optparse import OptionParser
 
-from blockchain import Blockchain
+from codes.blockchain import Blockchain
 
 class Chainscanner():
 

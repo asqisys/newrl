@@ -7,8 +7,24 @@ import os
 import shutil
 from optparse import OptionParser
 
-from blockchain import Blockchain
-from kycwallet import Walletmanager
+from codes.blockchain import Blockchain
+from codes.kycwallet import Walletmanager
+
+def add_wallet(idfile, adfile, kyccust="0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42", walletfile="all_wallets.json"):
+	wm=Walletmanager(walletfile)
+	files=[]
+	files.append(idfile)
+	files.append(adfile)
+	kycdocs=[1,2]
+	specific_data=[]
+	kyccust=kyccust
+	newaddress=wm.wallet_maker(kyccust,kycdocs,files,1,2,specific_data)
+#	wm.kycdocslinker(files,kycdocs)
+	wm.walletlistupdater()
+#	print(cs.chainlength)
+#	print(cs.gettransactions(3))
+#	print(wm.wallet)
+	return newaddress
 
 def main():
 	parser = OptionParser();

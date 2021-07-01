@@ -8,9 +8,9 @@ import json
 import os
 import shutil
 from optparse import OptionParser
-from chainscanner import Chainscanner
-from blockchain import Blockchain
-from transactionmanager import Transactionmanager
+from codes.chainscanner import Chainscanner
+from codes.blockchain import Blockchain
+from codes.transactionmanager import Transactionmanager
 
 def econvalidator(mempool="./mempool/"):
 #	print("hellooooo babies!")
@@ -77,3 +77,34 @@ def main():
 if __name__ == "__main__":
 	main();
 
+
+
+def validate(transfile, mempool="./mempool/", state="state.json"):
+	#blockchain = Blockchain("inginesis.json")
+#	blockchain = Blockchain(options.chainfile)
+#	blockchain = Blockchain();
+#	blockchain.loadfromfile("chain.json");
+
+	ts=str(datetime.datetime.now());
+	tm=Transactionmanager(mempool, state)
+	tm.loadtransactionpassive(transfile)
+	econ=tm.econvalidator()
+	signvalid=tm.verifytransigns()
+	valid=0
+	if econ and signvalid:
+#		tm.dumptransaction(options.transfile);
+		msg="All well"
+		valid=1
+	if not econ:
+		msg="Economic validation failed"
+	if not signvalid:
+		msg="Invalid signatures"
+	check={'valid':valid,'msg':msg}
+	
+	checkfile=mempool+tm.transaction['trans_code']+"_validation"+str("-"+ts[0:10]+"-"+ts[-6:]+".json")
+	with open(checkfile,"w") as ckfile:
+		json.dump(check,ckfile)
+	
+	status = f"Wrote check status as {check} to {checkfile}"
+	print(status)	
+	return status
