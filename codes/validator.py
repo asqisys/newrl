@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 
 
-def validate(transfile, mempool="./mempool", state="state.json"):
+def validate(transfile, mempool="./mempool/", state="state.json"):
 	#blockchain = Blockchain("inginesis.json")
 #	blockchain = Blockchain(options.chainfile)
 #	blockchain = Blockchain();
