@@ -77,7 +77,9 @@ class Walletmanager:
 #		with open(flname,"w") as writefile:
 #			json.dump(trans, writefile);
 #			print("Wrote to ",flname)
-		return self.wallet['address']
+		keysdata=[{'address':self.wallet['address'],'public':self.wallet['public'],'private':self.wallet['private']}]
+	#	return self.wallet['address']
+		return keysdata 	#to be used in wallet-file creation
 
 	def address_maker(self):
 		private_key_bytes = os.urandom(32)
