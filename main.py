@@ -9,7 +9,6 @@ from fastapi import FastAPI
 
 from codes import validator
 from codes import signmanager
-from codes import validator
 
 app = FastAPI()
 
@@ -49,6 +48,18 @@ async def create_token():
 @app.post("/run-updater")
 async def run_updater():
     return {"status": "SUCCESS"}
+
+@app.post("/run-updater")
+async def run_updater():
+    return {"status": "SUCCESS"}
+
+@app.get("/download-chain")
+async def run_updater():
+    return FileResponse("chain.json")
+
+@app.get("/download-state")
+async def run_updater():
+    return FileResponse("state.json")
 
 
 if __name__ == "__main__":
