@@ -12,6 +12,7 @@ from codes import validator
 from codes import signmanager
 from codes import updater
 from codes import addtransfer
+from codes import addtoken
 
 app = FastAPI()
 
@@ -50,7 +51,9 @@ async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile 
 
 @app.post("/create-token")
 async def create_token():
-    return {"status": "SUCCESS"}
+    tokenfile_path = addtoken.add_token()
+    response_file = FileResponse(tokenfile_path, filename="token.json")
+    return response_file
 
 @app.post("/run-updater")
 async def run_updater():

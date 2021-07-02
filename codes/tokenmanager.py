@@ -7,8 +7,8 @@ import os
 import shutil
 from optparse import OptionParser
 
-from blockchain import Blockchain
-from transactionmanager import Transactionmanager
+from codes.blockchain import Blockchain
+from codes.transactionmanager import Transactionmanager
 
 class Tokenmanager():
 
