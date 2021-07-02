@@ -59,11 +59,11 @@ async def run_updater():
 
 @app.get("/download-chain")
 async def download_chain():
-    return FileResponse("chain.json", filename="chain.json")
+    return FileResponse("chain.json")
 
 @app.get("/download-state")
 async def download_state():
-    return FileResponse("state.json", filename="state.json")
+    return FileResponse("state.json")
 
 
 if __name__ == "__main__":
