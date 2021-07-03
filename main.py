@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 from starlette.responses import FileResponse
 from utils import save_file_and_get_path
@@ -28,12 +29,16 @@ async def validate(custodian_address: str = "0x7e433fd1cc776d17d4ad94daa2e1fc52e
     kyc1: Optional[UploadFile] = File(None), kyc2: Optional[UploadFile] = File(None)):
     f1 = save_file_and_get_path(kyc1)
     f2 = save_file_and_get_path(kyc2)
-    newaddress = add_wallet(f1, f2, custodian_address)
-    return FileResponse(newaddress, filename="walletfile.json")
-    # return {
-    #     "status": "SUCCESS",
-    #     "new_address": newaddress
-    # }
+    transferfile = add_wallet(f1, f2, custodian_address)
+    return FileResponse(transferfile, filename="transferfile.json")
+
+@app.post("/get-wallet-file")
+async def validate(transferfile: UploadFile = File(...)):
+    f1 = save_file_and_get_path(transferfile)
+    with open(f1, 'r+') as file:
+        data=json.load(file)
+        walletfile = data["transaction"]["specific_data"]["wallet_address"] + "_wallet.json"
+    return FileResponse(walletfile, filename="walletfile.json")
 
 @app.post("/transfer")
 async def transfer(transferfile: UploadFile = File(...)):

@@ -72,14 +72,15 @@ class Walletmanager:
 		self.wallet['specific_data']=specific_data;
 		print("Now adding transaction")
 		trans = self.transactioncreator(self.wallet);
-		trans.dumptransaction();
+		transactionfile = trans.dumptransaction();
 #		flname=self.mempool+"walletcreation-"+trans['timestamp'][0:9]+"-"+trans['timestamp'][-6:]+".json"
 #		with open(flname,"w") as writefile:
 #			json.dump(trans, writefile);
 #			print("Wrote to ",flname)
 		keysdata=[{'address':self.wallet['address'],'public':self.wallet['public'],'private':self.wallet['private']}]
 	#	return self.wallet['address']
-		return keysdata 	#to be used in wallet-file creation
+		# return keysdata 	#to be used in wallet-file creation
+		return transactionfile, keysdata
 
 	def address_maker(self):
 		private_key_bytes = os.urandom(32)

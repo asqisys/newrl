@@ -23,12 +23,12 @@ def add_wallet(idfile, adfile,
 	kycdocs=[1,2]
 	specific_data=[]
 	kyccust=kyccust
-	newaddress=wm.wallet_maker(kyccust,kycdocs,files,ownertype,jurisdiction,specific_data)
+	transferfile, keysdata=wm.wallet_maker(kyccust,kycdocs,files,ownertype,jurisdiction,specific_data)
 #	wm.kycdocslinker(files,kycdocs)
-	with open(outputfile,"w") as writefile:
-		json.dump(newaddress,writefile)
+	with open(keysdata[0]['address'] + "_wallet.json","w") as writefile:
+		json.dump(keysdata,writefile)
 	wm.walletlistupdater()
-	return outputfile
+	return transferfile
 
 def main():
 	parser = OptionParser();
