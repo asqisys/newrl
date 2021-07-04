@@ -1,4 +1,6 @@
+from codes.chainscanner import Chainscanner
 import json
+from request_models import BalanceRequest, BalanceType, TransferRequest
 from typing import Optional
 from starlette.responses import FileResponse
 from utils import save_file_and_get_path
@@ -80,6 +82,25 @@ async def download_chain():
 @app.get("/download-state")
 async def download_state():
     return FileResponse("state.json", filename="state.json")
+
+@app.post("/get-balance")
+async def get_balance(req: BalanceRequest):
+    chain_scanner = Chainscanner()
+    if req.balance_type == BalanceType.TOKEN_IN_WALLET:
+        balance = chain_scanner.getbaladdtoken(req.wallet_address, req.token_code)
+    elif req.balance_type == BalanceType.ALL_TOKENS_IN_WALLET:
+        balance = chain_scanner.getbalancesbyaddress(req.wallet_address)
+    elif req.balance_type == BalanceType.ALL_WALLETS_FOR_TOKEN:
+        balance = chain_scanner.getbalancesbytoken(req.token_code)
+    return balance
+
+
+@app.post("/create-transfer")
+async def create_transfer(req: TransferRequest):
+    transferfile_path = save_file_and_get_path(None)
+    transfer = addtransfer.create_transfer(transferfile=transferfile_path)
+    response_file = FileResponse(transferfile_path, filename="transferfile.json")
+    return transfer
 
 
 if __name__ == "__main__":
