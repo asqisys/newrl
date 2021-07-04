@@ -157,7 +157,7 @@ def sign(walletfile, transfile=None, mempool="./mempool/"):
 	#	print("Signatures are")
 		sign_status = tm.verifysign(signtrans,pubkeybytes,address)
 		print("Status of signing: ", sign_status)
-		return FileResponse(transfile)
+		return FileResponse(transfile, filename="signed_transferfile.json")
 		# return sign_status
 	else:
 		print("Signing failed. No change made to transaction's signature data")

@@ -55,7 +55,15 @@ async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile 
     return singed_transaction_file
 
 @app.post("/create-token")
-async def create_token():
+async def create_token(
+    token_name,
+    token_type,
+    first_owner,
+    custodian,
+    legal_doc,
+    amount_created,
+    value_created,
+):
     tokenfile_path = addtoken.add_token()
     response_file = FileResponse(tokenfile_path, filename="token.json")
     return response_file
