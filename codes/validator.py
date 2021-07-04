@@ -105,6 +105,10 @@ def validate(transfile, mempool="./mempool/", state="state.json"):
 	with open(checkfile,"w") as ckfile:
 		json.dump(check,ckfile)
 	
+	if valid==1:	#econ and signvalid are both True
+		transoutputfile=mempool + "transaction-" + tm.transaction['type'] + "-" + tm.transaction['trans_code'] + ".json"
+		tm.dumptransaction(transoutputfile);
+	
 	status = f"Wrote check status as {check} to {checkfile}"
 	print(status)	
 	return status
