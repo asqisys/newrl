@@ -67,8 +67,14 @@ async def create_token(
     amount_created,
     value_created,
 ):
-    tokenfile_path = addtoken.add_token()
-    response_file = FileResponse(tokenfile_path, filename="token.json")
+    tokendata={
+    "tokencode": 0,"tokenname":token_name, "tokentype": token_type, "tokenattributes": {}, "first_owner": first_owner, "custodian": custodian,
+    "legaldochash": None, "amount_created": amount_created, "value_created": value_created, "disallowed": [], "sc_flag": false
+    }
+    with open("tokennew.json", 'w') as file:
+        json.dump(tokendata,file)
+    tokenfile_path = addtoken.add_token("tokennew.json")
+    response_file = FileResponse(tokenfile_path, filename="newtoken.json")
     return response_file
 
 @app.post("/run-updater")
