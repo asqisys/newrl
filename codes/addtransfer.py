@@ -5,8 +5,8 @@ import os
 import shutil
 from optparse import OptionParser
 
-from blockchain import Blockchain
-from transfermanager import Transfermanager
+from codes.blockchain import Blockchain
+from codes.transfermanager import Transfermanager
 
 def main():
 	parser = OptionParser();
@@ -19,6 +19,11 @@ def main():
 #	newtransfer.dumptransaction('temptrans.json')
 	newtransfer.loadandcreate(options.transferfile)
 #	print(newtoken.transaction)
+
+def create_transfer(transferfile=None, mempool="./mempool/", statefile="state.json"):
+	newtransfer=Transfermanager(mempool,statefile,transferfile)
+#	newtransfer.dumptransaction('temptrans.json')
+	newtransfer.loadandcreate(transferfile)
 
 if __name__ == "__main__":
 	main();

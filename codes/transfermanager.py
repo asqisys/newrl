@@ -5,8 +5,8 @@ import os
 import shutil
 from optparse import OptionParser
 
-from blockchain import Blockchain
-from transactionmanager import Transactionmanager
+from codes.blockchain import Blockchain
+from codes.transactionmanager import Transactionmanager
 
 class Transfermanager(Transactionmanager):
 #	def Transactionmanager.__init__(self, transferfile=None):

@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
 
 
-def sign(address, transfile=None, walletfile="all_wallets.json", mempool="./mempool/"):
+def sign(walletfile, transfile=None, mempool="./mempool/"):
 	# parser = OptionParser()
 	# parser.add_option("-t", "--transfile", dest="transfile",default=None,help="Input transactionfile. default - None");
 	# parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="Mempool directory. default - ./mempool/");
@@ -133,9 +133,10 @@ def sign(address, transfile=None, walletfile="all_wallets.json", mempool="./memp
 	with open(walletfile, 'r') as file:
 		data=json.load(file)
 	for walletdata in data:
-		if walletdata['address']==address:
-			pvtkeybytes=base64.b64decode(walletdata['private'])
-			pubkeybytes=base64.b64decode(walletdata['public'])
+		# if walletdata['address']==address:
+		address=walletdata['address']
+		pvtkeybytes=base64.b64decode(walletdata['private'])
+		pubkeybytes=base64.b64decode(walletdata['public'])
 	if not pvtkeybytes:
 		print("No private key found for the address")
 		return False
@@ -156,7 +157,7 @@ def sign(address, transfile=None, walletfile="all_wallets.json", mempool="./memp
 	#	print("Signatures are")
 		sign_status = tm.verifysign(signtrans,pubkeybytes,address)
 		print("Status of signing: ", sign_status)
-		return FileResponse(transfile)
+		return FileResponse(transfile, filename="signed_transferfile.json")
 		# return sign_status
 	else:
 		print("Signing failed. No change made to transaction's signature data")
