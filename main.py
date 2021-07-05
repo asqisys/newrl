@@ -27,8 +27,9 @@ async def validate(transactionfile: UploadFile = File(...)):
     return {"status": "SUCCESS", "response": response}
     
 @app.post("/add-wallet")
-async def validate(custodian_address: str = "0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42",
-    kyc1: Optional[UploadFile] = File(None), kyc2: Optional[UploadFile] = File(None)):
+async def validate(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
+    ownertype: str = "1", jurisdiction: str = "910",
+    kyc1: UploadFile = File(...), kyc2: UploadFile = File(...)):
     f1 = save_file_and_get_path(kyc1)
     f2 = save_file_and_get_path(kyc2)
     transferfile = add_wallet(f1, f2, custodian_address)
