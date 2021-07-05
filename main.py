@@ -88,11 +88,11 @@ async def download_state():
 async def get_balance(req: BalanceRequest):
     chain_scanner = Chainscanner()
     if req.balance_type == BalanceType.TOKEN_IN_WALLET:
-        balance = chain_scanner.getbaladdtoken(req.wallet_address, req.token_code)
+        balance = chain_scanner.getbaladdtoken(req.wallet_address, int(req.token_code))
     elif req.balance_type == BalanceType.ALL_TOKENS_IN_WALLET:
         balance = chain_scanner.getbalancesbyaddress(req.wallet_address)
     elif req.balance_type == BalanceType.ALL_WALLETS_FOR_TOKEN:
-        balance = chain_scanner.getbalancesbytoken(req.token_code)
+        balance = chain_scanner.getbalancesbytoken(int(req.token_code))
     return balance
 
 
