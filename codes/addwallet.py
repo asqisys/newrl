@@ -13,7 +13,7 @@ from codes.kycwallet import Walletmanager
 def add_wallet(idfile, adfile, 
 				kyccust="0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42", walletfile="all_wallets.json",
 				ownertype=1,
-				jurisdiction=2,
+				jurisdiction=910,
 				outputfile="newwallet.json"):
 	wm=Walletmanager(walletfile)
 #	walletdata=wm.wallet_maker()
