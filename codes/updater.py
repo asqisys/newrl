@@ -206,8 +206,8 @@ def run_updater():
 		if os.path.exists(options.state):
 			ts=str(datetime.datetime.now());
 			statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
-			shutil.copy(options.state,statearchivefile)
-			logger.log("Copied existing state file - ",options.state," - to ",statearchivefile)
+			shutil.move(options.state,statearchivefile)
+			logger.log("Moved existing state file - ",options.state," - to ",statearchivefile)
 		with open(options.state,'w') as writefile:
 			json.dump(newstate,writefile)
 			logger.log("Wrote new state to ",options.state)	

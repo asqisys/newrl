@@ -38,7 +38,7 @@ class Transfermanager(Transactionmanager):
 		print("Loaded transfer transaction from ",transferfile)
 		#need to load signatures as well later
 		if self.techvalid():
-			self.dumptransaction()
+			self.dumptransaction(transferfile)
 
 def main():
 	parser = OptionParser();

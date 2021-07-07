@@ -17,7 +17,10 @@ from codes import updater
 from codes import addtransfer
 from codes import addtoken
 
-app = FastAPI()
+app = FastAPI(
+    title="The Newrl APIs",
+    description="This page covers all the public APIs available at present in the Newrl blockchain platform."
+)
 
 
 @app.post("/validate")
@@ -103,11 +106,32 @@ async def get_balance(req: BalanceRequest):
 
 
 @app.post("/create-transfer")
-async def create_transfer(req: TransferRequest):
-    transferfile_path = save_file_and_get_path(None)
-    transfer = addtransfer.create_transfer(transferfile=transferfile_path)
-    response_file = FileResponse(transferfile_path, filename="transferfile.json")
-    return transfer
+async def create_transfer(
+    transfer_type,
+    asset1_code,
+    asset2_code,
+    wallet1_address,
+    wallet2_address,
+    asset1_quantity,
+    asset2_quantity
+    ):
+    trandata={
+    "asset1_code":int(asset1_code), "asset2_code":int(asset2_code), "wallet1":wallet1_address, "wallet2":wallet2_address, "asset1_number":int(asset1_quantity),"asset2_number":int(asset2_quantity)
+    }
+#    if transfer_type.lower()=="type4":
+#        type=4
+#    if transfer_type.lower()=="type5":
+#        type=5
+    type=int(transfer_type)
+    fulltrandata={"transaction":{"timestamp": "", "trans_code": "000000", "type":type, "currency": "INR", "fee": 0.0, "descr":"", "valid": 1, "block_index": 0, "specific_data": trandata},"signatures":[]}
+    with open("transfernew.json", 'w') as file:
+        json.dump(fulltrandata,file)
+
+    transfer = addtransfer.create_transfer(transferfile="transfernew.json")
+#    with open("./transfernew.json","r") as tfile:
+#        transferfile_path = save_file_and_get_path(tfile)
+    transferfile = FileResponse("transfernew.json", filename="transferfile.json")
+    return transferfile
 
 
 if __name__ == "__main__":
