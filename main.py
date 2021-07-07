@@ -23,15 +23,43 @@ app = FastAPI(
     description="This page covers all the public APIs available at present in the Newrl blockchain platform."
 )
 
+@app.post("/create-transfer")
+async def create_transfer(
+    transfer_type,
+    asset1_code,
+    asset2_code,
+    wallet1_address,
+    wallet2_address,
+    asset1_quantity,
+    asset2_quantity
+    ):
+    trandata={
+    "asset1_code":int(asset1_code), "asset2_code":int(asset2_code), "wallet1":wallet1_address, "wallet2":wallet2_address, "asset1_number":int(asset1_quantity),"asset2_number":int(asset2_quantity)
+    }
+#    if transfer_type.lower()=="type4":
+#        type=4
+#    if transfer_type.lower()=="type5":
+#        type=5
+    type=int(transfer_type)
+    fulltrandata={"transaction":{"timestamp": "", "trans_code": "000000", "type":type, "currency": "INR", "fee": 0.0, "descr":"", "valid": 1, "block_index": 0, "specific_data": trandata},"signatures":[]}
+    with open("transfernew.json", 'w') as file:
+        json.dump(fulltrandata,file)
 
-@app.post("/validate")
-async def validate(transactionfile: UploadFile = File(...)):
-    transactionfile_path = save_file_and_get_path(transactionfile)
-    response = validator.validate(transactionfile_path)
-    return {"status": "SUCCESS", "response": response}
+    transfer = addtransfer.create_transfer(transferfile="transfernew.json")
+#    with open("./transfernew.json","r") as tfile:
+#        transferfile_path = save_file_and_get_path(tfile)
+    transferfile = FileResponse("transfernew.json", filename="transferfile.json")
+    return transferfile
+
+@app.post("/transfer")
+async def transfer(transferfile: UploadFile = File(...)):
+    transferfile_path = save_file_and_get_path(transferfile)
+    transfer = addtransfer.create_transfer(transferfile=transferfile_path)
+    response_file = FileResponse(transferfile_path, filename="transferfile.json")
+    return response_file
     
 @app.post("/add-wallet")
-async def validate(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
+async def add_wallet(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
     ownertype: str = "1", jurisdiction: str = "910",
     kyc1: UploadFile = File(...), kyc2: UploadFile = File(...)):
     f1 = save_file_and_get_path(kyc1)
@@ -40,19 +68,12 @@ async def validate(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4b
     return FileResponse(transferfile, filename="transferfile.json")
 
 @app.post("/get-wallet-file")
-async def validate(transferfile: UploadFile = File(...)):
+async def get_wallet_file(transferfile: UploadFile = File(...)):
     f1 = save_file_and_get_path(transferfile)
     with open(f1, 'r+') as file:
         data=json.load(file)
         walletfile = data["transaction"]["specific_data"]["wallet_address"] + "_wallet.json"
     return FileResponse(walletfile, filename="walletfile.json")
-
-@app.post("/transfer")
-async def transfer(transferfile: UploadFile = File(...)):
-    transferfile_path = save_file_and_get_path(transferfile)
-    transfer = addtransfer.create_transfer(transferfile=transferfile_path)
-    response_file = FileResponse(transferfile_path, filename="transferfile.json")
-    return response_file
 
 @app.post("/sign")
 async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile = File(...)):
@@ -60,6 +81,12 @@ async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile 
     wallet_file = save_file_and_get_path(wallet_file)
     singed_transaction_file = signmanager.sign(wallet_file, transactionfile_path)
     return singed_transaction_file
+
+@app.post("/validate")
+async def validate(transactionfile: UploadFile = File(...)):
+    transactionfile_path = save_file_and_get_path(transactionfile)
+    response = validator.validate(transactionfile_path)
+    return {"status": "SUCCESS", "response": response}
 
 @app.post("/create-token")
 async def create_token(
@@ -104,35 +131,6 @@ async def get_balance(req: BalanceRequest):
     elif req.balance_type == BalanceType.ALL_WALLETS_FOR_TOKEN:
         balance = chain_scanner.getbalancesbytoken(int(req.token_code))
     return balance
-
-
-@app.post("/create-transfer")
-async def create_transfer(
-    transfer_type,
-    asset1_code,
-    asset2_code,
-    wallet1_address,
-    wallet2_address,
-    asset1_quantity,
-    asset2_quantity
-    ):
-    trandata={
-    "asset1_code":int(asset1_code), "asset2_code":int(asset2_code), "wallet1":wallet1_address, "wallet2":wallet2_address, "asset1_number":int(asset1_quantity),"asset2_number":int(asset2_quantity)
-    }
-#    if transfer_type.lower()=="type4":
-#        type=4
-#    if transfer_type.lower()=="type5":
-#        type=5
-    type=int(transfer_type)
-    fulltrandata={"transaction":{"timestamp": "", "trans_code": "000000", "type":type, "currency": "INR", "fee": 0.0, "descr":"", "valid": 1, "block_index": 0, "specific_data": trandata},"signatures":[]}
-    with open("transfernew.json", 'w') as file:
-        json.dump(fulltrandata,file)
-
-    transfer = addtransfer.create_transfer(transferfile="transfernew.json")
-#    with open("./transfernew.json","r") as tfile:
-#        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse("transfernew.json", filename="transferfile.json")
-    return transferfile
 
 
 if __name__ == "__main__":
