@@ -21,9 +21,9 @@ def add_token(tokenfile="tokennew.json", mempool="./mempool/", statefile="state.
 	print(newtoken.tokendata)
 	print(newtoken.istokeninrecords())
 #	newtoken.dumptokendata("firsttoken.json")
-	newtoken.loadandcreate(tokenfile,mempool,statefile)
+	transaction_file = newtoken.loadandcreate(tokenfile,mempool,statefile)
 	newtoken.dumptokendata("firsttoken.json")
-	return "firsttoken.json"
+	return transaction_file
 #	cs=chainscanner(options.tokenfile)
 #	print(cs.chainlength)
 #	print(cs.gettransactions(3))

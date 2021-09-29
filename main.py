@@ -104,9 +104,9 @@ async def create_token(
     }
     with open("tokennew.json", 'w') as file:
         json.dump(tokendata,file)
-    tokenfile_path = addtoken.add_token("tokennew.json")
-    response_file = FileResponse(tokenfile_path, filename="newtoken.json")
-    return response_file
+    transaction_file = addtoken.add_token("tokennew.json")
+    return FileResponse(transaction_file, filename="transaction_file.json")
+
 
 @app.post("/run-updater")
 async def run_updater():

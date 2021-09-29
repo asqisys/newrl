@@ -89,7 +89,7 @@ class Tokenmanager():
 			signatures=[]
 			transactiondata={'transaction':transaction,'signatures':signatures}
 			trans.transactioncreator(transactiondata);
-			trans.dumptransaction();
+			return trans.dumptransaction();
 
 	def istokeninrecords(self):
 		tokenrecordsfile=self.tokenrecordsfile;
