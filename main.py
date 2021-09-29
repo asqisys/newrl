@@ -59,7 +59,7 @@ async def transfer(transferfile: UploadFile = File(...)):
     return response_file
     
 @app.post("/add-wallet")
-async def add_wallet(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
+async def add_wallet_api(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
     ownertype: str = "1", jurisdiction: str = "910",
     kyc1: UploadFile = File(...), kyc2: UploadFile = File(...)):
     f1 = save_file_and_get_path(kyc1)
@@ -100,7 +100,7 @@ async def create_token(
 ):
     tokendata={
     "tokencode": 0,"tokenname":token_name, "tokentype": token_type, "tokenattributes": {}, "first_owner": first_owner, "custodian": custodian,
-    "legaldochash": None, "amount_created": amount_created, "value_created": value_created, "disallowed": [], "sc_flag": false
+    "legaldochash": legal_doc, "amount_created": int(amount_created), "value_created": int(value_created), "disallowed": [], "sc_flag": False
     }
     with open("tokennew.json", 'w') as file:
         json.dump(tokendata,file)
