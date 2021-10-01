@@ -51,8 +51,8 @@ def run_updater():
 #	blockchain = Blockchain();
 #	blockchain.loadfromfile("data/common/chain.json");
 	
-	destchain=globaldir+chain_path
-	deststate=globaldir+state_path
+	destchain=chain_path
+	deststate=state_path
 	if os.path.exists(destchain):
 		logger.log("Found global chain. Checking for match with local.")
 		globalchain=Blockchain(destchain)
@@ -217,9 +217,9 @@ def run_updater():
 			json.dump(newstate,writefile)
 			logger.log("Wrote new state to ",state_path)	
 		
-		logger.log("Local chain updated. Now attempting to update global chain.")
-		destchain=globaldir+chain_path
-		deststate=globaldir+state_path
+		# logger.log("Local chain updated. Now attempting to update global chain.")
+		destchain=chain_path
+		deststate=state_path
 		if os.path.exists(destchain):
 			logger.log("Found global chain to update")
 			try:
