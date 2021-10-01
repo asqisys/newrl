@@ -31,23 +31,28 @@ def chainmatch(chain1, chain2):
 def run_updater():
 	logger = BufferedLog()
 
-	parser = OptionParser()
-	parser.add_option("-c", "--chainfile", dest="chainfile",default="data/common/chain.json",help="Input chainfile. default - data/common/chain.json");
-	parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
-	parser.add_option("-i", "--itpool", dest="itpool",default="data/incltranspool/",help="Included transactions directory. default - data/incltranspool/");	
-	parser.add_option("-s", "--state", dest="state",default="data/common/state.json",help="Statefile. default - data/common/state.json");
+	# parser = OptionParser()
+	# parser.add_option("-c", "--chainfile", dest="chainfile",default="data/common/chain.json",help="Input chainfile. default - data/common/chain.json");
+	# parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
+	# parser.add_option("-i", "--itpool", dest="itpool",default="data/incltranspool/",help="Included transactions directory. default - data/incltranspool/");	
+	# parser.add_option("-s", "--state", dest="state",default="data/common/state.json",help="Statefile. default - data/common/state.json");
+	# (options, args) = parser.parse_args()
 
-	(options, args) = parser.parse_args()
+	chain_path = "data/common/chain.json"
+	mempool_path = "data/mempool/"
+	itpool_path = "data/incltranspool/"
+	state_path = "data/common/state.json"
+
 	globaldir="/data/asqi/newrl/"
 	#blockchain = Blockchain("inginesis.json")
-	blockchain = Blockchain(options.chainfile)
-	statefile=options.state
-	cs_prev=Chainscanner(options.chainfile)
+	blockchain = Blockchain(chain_path)
+	statefile=state_path
+	cs_prev=Chainscanner(chain_path)
 #	blockchain = Blockchain();
 #	blockchain.loadfromfile("data/common/chain.json");
 	
-	destchain=globaldir+options.chainfile
-	deststate=globaldir+options.state
+	destchain=globaldir+chain_path
+	deststate=globaldir+state_path
 	if os.path.exists(destchain):
 		logger.log("Found global chain. Checking for match with local.")
 		globalchain=Blockchain(destchain)
@@ -58,8 +63,8 @@ def run_updater():
 					logger.log("Chains are of matching and local chain is longer or of same length, not updating local.")
 				else:
 					logger.log("Chains are of matching but global longer than local, updating local file and loading it again.")
-					shutil.copy(destchain,options.chainfile)
-					blockchain = Blockchain(options.chainfile)
+					shutil.copy(destchain,chain_path)
+					blockchain = Blockchain(chain_path)
 			else:
 				logger.log("Global chain does not match local chain. Investigae. Not copying to local but continuing with local-only update.")
 		else:
@@ -72,15 +77,15 @@ def run_updater():
 	block_height = 0;
 	latest_ts = blockchain.get_latest_ts(); 
 
-	mempool = options.mempool
-	incltrans = options.itpool
+	mempool = mempool_path
+	incltrans = itpool_path
 	filenames = os.listdir(mempool);	#this is the mempool
 	logger.log("Files in mempool: ",filenames)
 	textarray=[];
 	signarray=[];
 	transfiles=[]
 	validationfiles=[]
-	tmtemp=Transactionmanager(options.mempool,options.state)
+	tmtemp=Transactionmanager(mempool_path,state_path)
 	for filename in filenames:
 		if "validation" in filename:        #the validation files
 			validationfiles.append(filename)
@@ -162,7 +167,7 @@ def run_updater():
 					logger.log("Couldn't move,",file);
 				for vfile in specificvalfiles:
 					try:
-						shutil.move(vfile, options.itpool)
+						shutil.move(vfile, itpool_path)
 					except:
 						logger.log("couldn't move ",vfile)
 				block_height+=1;
@@ -194,27 +199,27 @@ def run_updater():
 
 	if blockchain.chain_valid(blockchain.chain):
 #		chainjsonstr=json.dumps(blockchain.chain);
-		with open(options.chainfile,"w") as chainwrite:
+		with open(chain_path,"w") as chainwrite:
 			json.dump(blockchain.chain, chainwrite);
-		logger.log("Wrote to ",options.chainfile);
+		logger.log("Wrote to ",chain_path);
 		#updating state now
-		cs=Chainscanner(options.chainfile)
+		cs=Chainscanner(chain_path)
 		all_wallets=cs.getallwallets()
 		all_tokens=cs.getalltokens()
 		all_balances=cs.getallbalances()
 		newstate={'all_wallets':all_wallets,'all_tokens':all_tokens,'all_balances':all_balances}
-		if os.path.exists(options.state):
+		if os.path.exists(state_path):
 			ts=str(datetime.datetime.now());
 			statearchivefile='data/statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
-			shutil.move(options.state,statearchivefile)
-			logger.log("Moved existing state file - ",options.state," - to ",statearchivefile)
-		with open(options.state,'w') as writefile:
+			shutil.move(state_path,statearchivefile)
+			logger.log("Moved existing state file - ",state_path," - to ",statearchivefile)
+		with open(state_path,'w') as writefile:
 			json.dump(newstate,writefile)
-			logger.log("Wrote new state to ",options.state)	
+			logger.log("Wrote new state to ",state_path)	
 		
 		logger.log("Local chain updated. Now attempting to update global chain.")
-		destchain=globaldir+options.chainfile
-		deststate=globaldir+options.state
+		destchain=globaldir+chain_path
+		deststate=globaldir+state_path
 		if os.path.exists(destchain):
 			logger.log("Found global chain to update")
 			try:
@@ -232,14 +237,14 @@ def run_updater():
 				return logger.get_logs()
 				# return True	#important to exit to avoid copying local to global
 		try:
-			shutil.copy(options.chainfile,destchain)	#if globalchain does not exist, this will create it
+			shutil.copy(chain_path,destchain)	#if globalchain does not exist, this will create it
 			logger.log("Updated global chain with local copy.")
 			os.chmod(destchain,0o666)
 			logger.log("Changed mode to 666")
 		except:
 			logger.log("Couldn't upload global chain or change its mode to 666, investigate.")
 		try:
-			shutil.copy(options.state,deststate)
+			shutil.copy(state_path,deststate)
 			logger.log("Updated global state with local copy.")
 			os.chmod(deststate,0o666)
 			logger.log("Changed mode to 666")
