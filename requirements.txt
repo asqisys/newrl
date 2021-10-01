@@ -1,4 +1,6 @@
+aiofiles==0.7.0
 asgiref==3.4.0
+autopep8==1.5.7
 certifi==2021.5.30
 chardet==4.0.0
 click==8.0.1
@@ -7,6 +9,7 @@ fastapi==0.65.2
 h11==0.12.0
 idna==2.10
 Naked==0.1.31
+pycodestyle==2.7.0
 pycryptodome==3.10.1
 pydantic==1.8.2
 python-multipart==0.0.5
@@ -15,6 +18,7 @@ requests==2.25.1
 shellescape==3.8.1
 six==1.16.0
 starlette==0.14.2
+toml==0.10.2
 typing-extensions==3.10.0.0
 urllib3==1.26.6
 uvicorn==0.14.0
