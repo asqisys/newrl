@@ -10,7 +10,7 @@ from codes.transactionmanager import Transactionmanager
 import base64
 
 class Walletmanager:
-	def __init__(self, walletfile="all_wallets.json"):
+	def __init__(self, walletfile="data/common/all_wallets.json"):
 #		self.public=
 		self.wallet={"address":None,
 				"public":None,
@@ -28,7 +28,7 @@ class Walletmanager:
 #		self.wallet['jurisd']=0;	# integer 0=unknown, 1=on-chain 2=India, 3=US,4=Singpore etc
 #		self.wallet['specific_data']=[];	#list of numbers and strings, for artificial entities, empty for indvdls 
 		self.walletrecords=walletfile;
-		self.mempool="./mempool/"
+		self.mempool="data/mempool/"
 
 	def get_digest(self,file_path):
 		h = hashlib.sha256()
@@ -42,7 +42,7 @@ class Walletmanager:
 				h.update(chunk)
 		return h.hexdigest()
 
-#with open("chain.json", "rb") as read_file:
+#with open("data/common/chain.json", "rb") as read_file:
 #file="./requirements.txt"
 #print(get_digest(file))
 
@@ -123,7 +123,7 @@ class Walletmanager:
 	def walletlistupdater(self,publicflag=False):
 	# probably a redundant function for now, all new wallets are updated from the wallet maker
 #		if not os.path.exists(allwalletfile):
-#			with open("all_wallets.json", 'w') as file:
+#			with open("data/common/all_wallets.json", 'w') as file:
 #				json.dump(data, file)
 
 		# this currently follows the convention that if the address is present, the updation of kyc cannot be done;
@@ -143,7 +143,7 @@ class Walletmanager:
 		jurisd=wallet['jurisd']
 		allwalletfile=self.walletrecords
 		with open(allwalletfile, 'r+') as file:
-#	with open("chain.json",'r') as file:
+#	with open("data/common/chain.json",'r') as file:
 			data=json.load(file)
 #			print(data)
 			keysaddress={"public":str(public_key), 

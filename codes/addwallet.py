@@ -10,11 +10,13 @@ from optparse import OptionParser
 from codes.blockchain import Blockchain
 from codes.kycwallet import Walletmanager
 
+WALLET_FILE_PATH = "data/wallets"
+
 def add_wallet(idfile, adfile, 
-				kyccust="0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42", walletfile="all_wallets.json",
+				kyccust="0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42", walletfile="data/common/all_wallets.json",
 				ownertype=1,
 				jurisdiction=910,
-				outputfile="newwallet.json"):
+				outputfile="data/tmp/newwallet.json"):
 	wm=Walletmanager(walletfile)
 #	walletdata=wm.wallet_maker()
 	files=[]
@@ -25,18 +27,18 @@ def add_wallet(idfile, adfile,
 	kyccust=kyccust
 	transferfile, keysdata=wm.wallet_maker(kyccust,kycdocs,files,ownertype,jurisdiction,specific_data)
 #	wm.kycdocslinker(files,kycdocs)
-	with open(keysdata[0]['address'] + "_wallet.json","w") as writefile:
+	with open(WALLET_FILE_PATH + keysdata[0]['address'] + "_wallet.json","w") as writefile:
 		json.dump(keysdata,writefile)
 	wm.walletlistupdater()
 	return transferfile
 
 def main():
 	parser = OptionParser();
-	parser.add_option("-w", "--walletfile", dest="walletfile",default="all_wallets.json",help="Wallet recordfile. default - all_wallets.json");
+	parser.add_option("-w", "--walletfile", dest="walletfile",default="data/common/all_wallets.json",help="Wallet recordfile. default - data/common/all_wallets.json");
 	parser.add_option("-i", "--idfile", dest="idfile",default=None,help="Id file in KYC,  default - None");
 	parser.add_option("-a", "--adfile", dest="adfile",default=None,help="postal address file in KYC,  default - None");
 	parser.add_option("-c", "--kyccust", dest="kyccust",default="0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42",help="KYC custodian address,  default - 0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42");
-	parser.add_option("-o", "--outputfile", dest="outputfile",default="newwallet.json",help="New wallet keys file. default - newwallet.json");
+	parser.add_option("-o", "--outputfile", dest="outputfile",default="data/tmp/newwallet.json",help="New wallet keys file. default - data/tmp/newwallet.json");
 	parser.add_option("-y", "--ownertype", dest="ownertype",default=1,help="Ownertype,  default - 1 i.e. individual");
 	parser.add_option("-j", "--jurisd", dest="jurisd",default=2,help="Ownertype,  default - 2 i.e. India");
 	(options, args) = parser.parse_args()

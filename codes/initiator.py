@@ -12,8 +12,8 @@ from blockchain import Blockchain
 def main():
 	parser = OptionParser()
 #	parser.add_option("-g", "--genfile", dest="genfile",default="genesis.json",help="Input genesisfile. default - genesis.json");
-	parser.add_option("-c", "--chainfile", dest="chainfile",default="chain.json",help="Input chainfile. default -chain.json")
-	parser.add_option("-s", "--statefile", dest="statefile",default="state.json",help="Input statefile. default - state.json")
+	parser.add_option("-c", "--chainfile", dest="chainfile",default="data/common/chain.json",help="Input chainfile. default -data/common/chain.json")
+	parser.add_option("-s", "--statefile", dest="statefile",default="data/common/state.json",help="Input statefile. default - data/common/state.json")
 
 	(options, args) = parser.parse_args()
 	#blockchain = Blockchain("inginesis.json")
@@ -30,31 +30,31 @@ def main():
 	with open("empty.json","w") as writefile:
 		json.dump(empty, writefile)
 
-	if not os.path.exists("all_wallets.json"):
-	#	shutil.copy("creatorwalletdata.json","all_wallets.json")
-		print("all_wallets.json does not exist, creating. Signing won't work till valid addresses added to it.")
+	if not os.path.exists("data/common/all_wallets.json"):
+	#	shutil.copy("creatorwalletdata.json","data/common/all_wallets.json")
+		print("data/common/all_wallets.json does not exist, creating. Signing won't work till valid addresses added to it.")
 		allw=[]
-		with open("all_wallets.json","w") as writefile:
+		with open("data/common/all_wallets.json","w") as writefile:
 			json.dump(allw,writefile)
 	else:
-		print("all_wallets.json already exists. Signing will work for addresses in it.")
+		print("data/common/all_wallets.json already exists. Signing will work for addresses in it.")
 
-	if not os.path.exists("all_tokens.json"):
-		shutil.copy("empty.json","all_tokens.json")
+	if not os.path.exists("data/common/all_tokens.json"):
+		shutil.copy("empty.json","data/common/all_tokens.json")
 	else:
-		print("all_tokens.json already exists.")
+		print("data/common/all_tokens.json already exists.")
 
 	print("Making mempool, incltranspool and statearchive directories")
-	if not os.path.exists("./mempool/"):
-		os.mkdir("./mempool/")
+	if not os.path.exists("data/mempool/"):
+		os.mkdir("data/mempool/")
 	else:
 		print("WRN: Mempool already exists, beware of possible errors")
-	if not os.path.exists("./incltranspool/"):
-		os.mkdir("./incltranspool/")
+	if not os.path.exists("data/incltranspool/"):
+		os.mkdir("data/incltranspool/")
 	else:
 		print("WRN: Incltranspool already exists, beware of possible errors")
-	if not os.path.exists("./statearchive/"):
-		os.mkdir("./statearchive/")		
+	if not os.path.exists("data/statearchive/"):
+		os.mkdir("data/statearchive/")		
 	else:
 		print("WRN: statearchive  already exists, beware of possible errors")
 

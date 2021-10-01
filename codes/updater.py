@@ -32,10 +32,10 @@ def run_updater():
 	logger = BufferedLog()
 
 	parser = OptionParser()
-	parser.add_option("-c", "--chainfile", dest="chainfile",default="chain.json",help="Input chainfile. default - chain.json");
-	parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="Mempool directory. default - ./mempool/");
-	parser.add_option("-i", "--itpool", dest="itpool",default="./incltranspool/",help="Included transactions directory. default - ./incltranspool/");	
-	parser.add_option("-s", "--state", dest="state",default="state.json",help="Statefile. default - state.json");
+	parser.add_option("-c", "--chainfile", dest="chainfile",default="data/common/chain.json",help="Input chainfile. default - data/common/chain.json");
+	parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
+	parser.add_option("-i", "--itpool", dest="itpool",default="data/incltranspool/",help="Included transactions directory. default - data/incltranspool/");	
+	parser.add_option("-s", "--state", dest="state",default="data/common/state.json",help="Statefile. default - data/common/state.json");
 
 	(options, args) = parser.parse_args()
 	globaldir="/data/asqi/newrl/"
@@ -44,7 +44,7 @@ def run_updater():
 	statefile=options.state
 	cs_prev=Chainscanner(options.chainfile)
 #	blockchain = Blockchain();
-#	blockchain.loadfromfile("chain.json");
+#	blockchain.loadfromfile("data/common/chain.json");
 	
 	destchain=globaldir+options.chainfile
 	deststate=globaldir+options.state
@@ -205,7 +205,7 @@ def run_updater():
 		newstate={'all_wallets':all_wallets,'all_tokens':all_tokens,'all_balances':all_balances}
 		if os.path.exists(options.state):
 			ts=str(datetime.datetime.now());
-			statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
+			statearchivefile='data/statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
 			shutil.move(options.state,statearchivefile)
 			logger.log("Moved existing state file - ",options.state," - to ",statearchivefile)
 		with open(options.state,'w') as writefile:

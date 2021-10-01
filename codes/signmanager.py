@@ -68,11 +68,11 @@ def checkaddress(transaction, signatures):
 def main():
 	parser = OptionParser()
 	parser.add_option("-t", "--transfile", dest="transfile",default=None,help="Input transactionfile. default - None");
-	parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="Mempool directory. default - ./mempool/");
+	parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
 	parser.add_option("-w", "--walletfile", dest="walletfile",default=None,help="Wallet recordfile. default None");
 #	parser.add_option("-a", "--address", dest="address",default=None,help="String of address. default - None");
-#	parser.add_option("-i", "--itpool", dest="itpool",default="./incltranspool/",help="Included transactions directory. default - ./incltranspool/");
-#	parser.add_option("-s", "--state", dest="state",default="state.json",help="Statefile. default - state.json");
+#	parser.add_option("-i", "--itpool", dest="itpool",default="data/incltranspool/",help="Included transactions directory. default - data/incltranspool/");
+#	parser.add_option("-s", "--state", dest="state",default="data/common/state.json",help="Statefile. default - data/common/state.json");
 	(options, args) = parser.parse_args()
 #	wallet=Walletmanager(option.walletfile);
 #	wallet.iswalletlisted()
@@ -116,14 +116,14 @@ if __name__ == "__main__":
 
 
 
-def sign(walletfile, transfile=None, mempool="./mempool/"):
+def sign(walletfile, transfile=None, mempool="data/mempool/"):
 	# parser = OptionParser()
 	# parser.add_option("-t", "--transfile", dest="transfile",default=None,help="Input transactionfile. default - None");
-	# parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="Mempool directory. default - ./mempool/");
-	# parser.add_option("-w", "--walletfile", dest="walletfile",default="all_wallets.json",help="Wallet recordfile. default - all_wallets.json");
+	# parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
+	# parser.add_option("-w", "--walletfile", dest="walletfile",default="data/common/all_wallets.json",help="Wallet recordfile. default - data/common/all_wallets.json");
 	# parser.add_option("-a", "--address", dest="address",default=None,help="String of address. default - None");
-#	parser.add_option("-i", "--itpool", dest="itpool",default="./incltranspool/",help="Included transactions directory. default - ./incltranspool/");
-#	parser.add_option("-s", "--state", dest="state",default="state.json",help="Statefile. default - state.json");
+#	parser.add_option("-i", "--itpool", dest="itpool",default="data/incltranspool/",help="Included transactions directory. default - data/incltranspool/");
+#	parser.add_option("-s", "--state", dest="state",default="data/common/state.json",help="Statefile. default - data/common/state.json");
 
 	# (options, args) = parser.parse_args()
 #	wallet=Walletmanager(option.walletfile);

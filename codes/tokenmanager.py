@@ -13,7 +13,7 @@ from codes.transactionmanager import Transactionmanager
 class Tokenmanager():
 
 	def __init__(self, tokenfile=None):
-		self.tokenrecordsfile="all_tokens.json";
+		self.tokenrecordsfile="data/common/all_tokens.json";
 		if tokenfile:
 			self.tokendata=self.loadtoken(tokenfile);
 			print("Loaded token from ",tokenfile)
@@ -130,7 +130,7 @@ class Tokenmanager():
 
 def main():
 	parser = OptionParser();
-	parser.add_option("-t", "--tokenfile", dest="tokenfile",default="tokennew.json",help="Input tokenfile. default - tokennew.json");
+	parser.add_option("-t", "--tokenfile", dest="tokenfile",default="data/tmp/tokennew.json",help="Input tokenfile. default - data/tmp/tokennew.json");
 	(options, args) = parser.parse_args()
 	newtoken=Tokenmanager()
 	print(newtoken.tokendata)

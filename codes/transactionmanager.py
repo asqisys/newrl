@@ -10,7 +10,7 @@ import binascii
 import base64
 
 class Transactionmanager:
-	def __init__(self, mempool="./mempool/",statefile="./state.json"):
+	def __init__(self, mempool="data/mempool/",statefile="./data/common/state.json"):
 #		self.public=
 #		hs=hashlib.blake2b()
 		self.transaction= {'timestamp': str(datetime.datetime.now()),
@@ -31,7 +31,7 @@ class Transactionmanager:
 		self.signatures=[]
 	#	self.validations=[]
 		self.mempool=mempool		#memory pool of transactions waiting to be validated and included in block
-		self.itpool="./incltranspool/"		#pool of included transactions
+		self.itpool="data/incltranspool/"		#pool of included transactions
 		self.statefile=statefile
 		self.validity=0
 
@@ -144,7 +144,7 @@ class Transactionmanager:
 		#need to add later a check for addresses mentioned in the transaction (vary by type) and the signing ones
 	#	addresses=[];
 	#	wfile="./tmpallw.json"
-	#	wfile="./all_wallets.json"
+	#	wfile="./data/common/all_wallets.json"
 		with open(self.statefile,"r") as statefile:
 	#	with open(wfile,"r") as statefile:
 			state=json.load(statefile);
@@ -433,8 +433,8 @@ def main():
 #	wm.walletlistupdater()	#can do this without kyc docs or with them
 #	wm.transactioncreator()
 	print(tm.transaction)
-#	filetest="./mempool/transaction-1-2021-06-24-589621.json"
-	filetest="./mempool/transaction-1-2021-06-24-204748.json"
+#	filetest="data/mempool/transaction-1-2021-06-24-589621.json"
+	filetest="data/mempool/transaction-1-2021-06-24-204748.json"
 	tmnew=Transactionmanager()
 	tmnew.loadtransactionpassive(filetest)
 #	print(tmnew.transaction)

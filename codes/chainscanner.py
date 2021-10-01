@@ -11,7 +11,7 @@ from codes.blockchain import Blockchain
 
 class Chainscanner():
 
-	def __init__(self, chainfile="chain.json"):
+	def __init__(self, chainfile="data/common/chain.json"):
 		self.blockchain = Blockchain(chainfile)
 #		print("Loaded chain from ",chainfile)
 		self.chainlength=len(self.blockchain.chain);
@@ -206,7 +206,7 @@ class Chainscanner():
 
 def main():
 	parser = OptionParser();
-	parser.add_option("-c", "--chainfile", dest="chainfile",default="chain.json",help="Input chainfile. default - chain.json");
+	parser.add_option("-c", "--chainfile", dest="chainfile",default="data/common/chain.json",help="Input chainfile. default - data/common/chain.json");
 	(options, args) = parser.parse_args()
 	cs=Chainscanner(options.chainfile)
 	print(cs.chainlength)

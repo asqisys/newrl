@@ -205,8 +205,8 @@ if __name__ == "__main__":
 	main();
 
 ##blockchain = Blockchain("inginesis.json")
-#blockchain = Blockchain("chain.json")
-##blockchain.loadfromfile("chain.json");
+#blockchain = Blockchain("data/common/chain.json")
+##blockchain.loadfromfile("data/common/chain.json");
 
 #latest_ts = blockchain.get_latest_ts();
 
@@ -236,9 +236,9 @@ if __name__ == "__main__":
 #	blockchain.mine_block(transactions);
 #	if blockchain.chain_valid(blockchain.chain):
 ##		chainjsonstr=json.dumps(blockchain.chain);
-#		with open("chain.json","w") as chainwrite:
+#		with open("data/common/chain.json","w") as chainwrite:
 #			json.dump(blockchain.chain, chainwrite);
-#		print("Wrote to chain.json");
+#		print("Wrote to data/common/chain.json");
 #	else:
 #		print("Invalid blockchain, not changing anything.")
 #else:

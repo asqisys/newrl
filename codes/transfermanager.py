@@ -10,9 +10,9 @@ from codes.transactionmanager import Transactionmanager
 
 class Transfermanager(Transactionmanager):
 #	def Transactionmanager.__init__(self, transferfile=None):
-	def __init__(self,mempool="./mempool/",statefile="./state.json",transferfile=None):
+	def __init__(self,mempool="data/mempool/",statefile="./data/common/state.json",transferfile=None):
 		Transactionmanager.__init__(self,mempool,statefile);
-#		self.tokenrecordsfile="all_tokens.json";
+#		self.tokenrecordsfile="data/common/all_tokens.json";
 		if transferfile:
 			self.transferdata=self.loadtransaction(transferfile);
 			print("Loaded transfer transaction from ",transferfile)
@@ -43,8 +43,8 @@ class Transfermanager(Transactionmanager):
 def main():
 	parser = OptionParser();
 	parser.add_option("-t", "--transferfile", dest="transferfile",default="transferex.json",help="Input transferfile. default - transferex.json");
-	parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="Mempool directory. default - ./mempool/");
-	parser.add_option("-s", "--statefile", dest="statefile",default="state.json",help="Input statefile. default - state.json");
+	parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
+	parser.add_option("-s", "--statefile", dest="statefile",default="data/common/state.json",help="Input statefile. default - data/common/state.json");
 	(options, args) = parser.parse_args()
 #	newtoken=Transfermanager(options.tokenfile)
 	newtransfer=Transfermanager(options.mempool, options.statefile)

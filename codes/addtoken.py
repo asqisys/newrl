@@ -11,18 +11,18 @@ from codes.blockchain import Blockchain
 from codes.tokenmanager import Tokenmanager
 
 # def main():
-def add_token(tokenfile="tokennew.json", mempool="./mempool/", statefile="state.json"):
+def add_token(tokenfile="data/tmp/tokennew.json", mempool="data/mempool/", statefile="data/common/state.json"):
 	# parser = OptionParser();
-	# parser.add_option("-t", "--tokenfile", dest="tokenfile",default="tokennew.json",help="Input tokenfile. default - tokennew.json");
-	# parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="Mempool directory. default - ./mempool/");
-	# parser.add_option("-s", "--statefile", dest="statefile",default="state.json",help="Input statefile. default - state.json");
+	# parser.add_option("-t", "--tokenfile", dest="tokenfile",default="data/tmp/tokennew.json",help="Input tokenfile. default - data/tmp/tokennew.json");
+	# parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="Mempool directory. default - data/mempool/");
+	# parser.add_option("-s", "--statefile", dest="statefile",default="data/common/state.json",help="Input statefile. default - data/common/state.json");
 	# (options, args) = parser.parse_args()
 	newtoken=Tokenmanager()
 	print(newtoken.tokendata)
 	print(newtoken.istokeninrecords())
-#	newtoken.dumptokendata("firsttoken.json")
+#	newtoken.dumptokendata("data/tmp/firsttoken.json")
 	transaction_file = newtoken.loadandcreate(tokenfile,mempool,statefile)
-	newtoken.dumptokendata("firsttoken.json")
+	newtoken.dumptokendata("data/tmp/firsttoken.json")
 	return transaction_file
 #	cs=chainscanner(options.tokenfile)
 #	print(cs.chainlength)

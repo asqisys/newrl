@@ -1,4 +1,4 @@
-# Python programm to validate trnasctions starting with state.json and mempool
+# Python programm to validate trnasctions starting with data/common/state.json and mempool
 
 #in current version, it edits the transaction file or at least creates a new version of it post validation.. this works for permissioned variatn.. later, for decentralize dversion, we will need to alter the file altering with new validation receipt creation..
 
@@ -12,7 +12,7 @@ from codes.chainscanner import Chainscanner
 from codes.blockchain import Blockchain
 from codes.transactionmanager import Transactionmanager
 
-def econvalidator(mempool="./mempool/"):
+def econvalidator(mempool="data/mempool/"):
 #	print("hellooooo babies!")
 	filenames = os.listdir(mempool);
 	tm1=Transactionmanager()	
@@ -31,13 +31,13 @@ def main():
 
 	parser = OptionParser()
 	parser.add_option("-t", "--transfile", dest="transfile",default=None,help="Input transactionfile. default - None");
-	parser.add_option("-s", "--state", dest="state",default="state.json",help="Statefile. default - state.json");
-	parser.add_option("-m", "--mempool", dest="mempool",default="./mempool/",help="mempool directory. default - ./mempool/");	
+	parser.add_option("-s", "--state", dest="state",default="data/common/state.json",help="Statefile. default - data/common/state.json");
+	parser.add_option("-m", "--mempool", dest="mempool",default="data/mempool/",help="mempool directory. default - data/mempool/");	
 	(options, args) = parser.parse_args()
 	#blockchain = Blockchain("inginesis.json")
 #	blockchain = Blockchain(options.chainfile)
 #	blockchain = Blockchain();
-#	blockchain.loadfromfile("chain.json");
+#	blockchain.loadfromfile("data/common/chain.json");
 
 	ts=str(datetime.datetime.now());
 	tm=Transactionmanager(options.mempool, options.state)
@@ -67,7 +67,7 @@ def main():
 #	newstate={'all_wallets':all_wallets,'all_tokens':all_tokens,'all_balances':all_balances}
 	
 #	if os.path.exists(options.state):
-#		statearchivefile='./statearchive/statefile_'+str(self.transaction['type'])+"-"+ts[0:10]+"-"+ts[-6:]+".json"
+#		statearchivefile='data/statearchive/statefile_'+str(self.transaction['type'])+"-"+ts[0:10]+"-"+ts[-6:]+".json"
 #		shutil.copystat(options.state,statearchivefile)
 #		print("Copied existing state file - ",options.state," - to ",statearchivefile)
 #	with open(options.state,'w') as writefile:
@@ -79,11 +79,11 @@ if __name__ == "__main__":
 
 
 
-def validate(transfile, mempool="./mempool/", state="state.json"):
+def validate(transfile, mempool="data/mempool/", state="data/common/state.json"):
 	#blockchain = Blockchain("inginesis.json")
 #	blockchain = Blockchain(options.chainfile)
 #	blockchain = Blockchain();
-#	blockchain.loadfromfile("chain.json");
+#	blockchain.loadfromfile("data/common/chain.json");
 
 	ts=str(datetime.datetime.now());
 	tm=Transactionmanager(mempool, state)

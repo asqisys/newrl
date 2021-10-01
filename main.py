@@ -42,13 +42,13 @@ async def create_transfer(
 #        type=5
     type=int(transfer_type)
     fulltrandata={"transaction":{"timestamp": "", "trans_code": "000000", "type":type, "currency": "INR", "fee": 0.0, "descr":"", "valid": 1, "block_index": 0, "specific_data": trandata},"signatures":[]}
-    with open("transfernew.json", 'w') as file:
+    with open("data/tmp/transfernew.json", 'w') as file:
         json.dump(fulltrandata,file)
 
-    transfer = addtransfer.create_transfer(transferfile="transfernew.json")
-#    with open("./transfernew.json","r") as tfile:
+    transfer = addtransfer.create_transfer(transferfile="data/tmp/transfernew.json")
+#    with open("./data/tmp/transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse("transfernew.json", filename="transferfile.json")
+    transferfile = FileResponse("data/tmp/transfernew.json", filename="transferfile.json")
     return transferfile
 
 @app.post("/transfer")
@@ -72,7 +72,7 @@ async def get_wallet_file(transferfile: UploadFile = File(...)):
     f1 = save_file_and_get_path(transferfile)
     with open(f1, 'r+') as file:
         data=json.load(file)
-        walletfile = data["transaction"]["specific_data"]["wallet_address"] + "_wallet.json"
+        walletfile = "data/wallets" + data["transaction"]["specific_data"]["wallet_address"] + "_wallet.json"
     return FileResponse(walletfile, filename="walletfile.json")
 
 @app.post("/sign")
@@ -102,9 +102,9 @@ async def create_token(
     "tokencode": 0,"tokenname":token_name, "tokentype": token_type, "tokenattributes": {}, "first_owner": first_owner, "custodian": custodian,
     "legaldochash": legal_doc, "amount_created": int(amount_created), "value_created": int(value_created), "disallowed": [], "sc_flag": False
     }
-    with open("tokennew.json", 'w') as file:
+    with open("data/tmp/tokennew.json", 'w') as file:
         json.dump(tokendata,file)
-    transaction_file = addtoken.add_token("tokennew.json")
+    transaction_file = addtoken.add_token("data/tmp/tokennew.json")
     return FileResponse(transaction_file, filename="transaction_file.json")
 
 
@@ -115,11 +115,11 @@ async def run_updater():
 
 @app.get("/download-chain")
 async def download_chain():
-    return FileResponse("chain.json", filename="chain.json")
+    return FileResponse("data/common/chain.json", filename="chain.json")
 
 @app.get("/download-state")
 async def download_state():
-    return FileResponse("state.json", filename="state.json")
+    return FileResponse("data/common/state.json", filename="state.json")
 
 @app.post("/get-balance")
 async def get_balance(req: BalanceRequest):
