@@ -1,3 +1,5 @@
+import sys
+
 from codes.chainscanner import Chainscanner
 import json
 from request_models import BalanceRequest, BalanceType, TransferRequest
@@ -134,7 +136,16 @@ async def get_balance(req: BalanceRequest):
 
 
 if __name__ == "__main__":
-	uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+    is_test = False
+    if len(sys.argv) > 1 and sys.argv[1] == '--test':
+        is_test = True
+    
+    if is_test:
+        print('Running testnet')
+        uvicorn.run("main:app", host="0.0.0.0", port=9090, reload=True)
+    else:
+        print('Runnint Newrl mainnet')
+        uvicorn.run("main:app", host="0.0.0.0", port=8080)
 
 def custom_openapi():
     if app.openapi_schema:
