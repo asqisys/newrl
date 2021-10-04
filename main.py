@@ -142,7 +142,7 @@ if __name__ == "__main__":
     
     if is_test:
         print('Running testnet')
-        uvicorn.run("main:app", host="0.0.0.0", port=9090, reload=True)
+        uvicorn.run("main:app", host="0.0.0.0", port=8085, reload=True)
     else:
         print('Runnint Newrl mainnet')
         uvicorn.run("main:app", host="0.0.0.0", port=8080)
