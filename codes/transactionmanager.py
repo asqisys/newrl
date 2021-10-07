@@ -10,7 +10,7 @@ import binascii
 import base64
 
 class Transactionmanager:
-	def __init__(self, mempool="data/mempool/",statefile="./data/common/state.json"):
+	def __init__(self, mempool="data/mempool/",statefile="data/common/state.json"):
 #		self.public=
 #		hs=hashlib.blake2b()
 		self.transaction= {'timestamp': str(datetime.datetime.now()),

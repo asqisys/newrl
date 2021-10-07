@@ -13,6 +13,7 @@ from fastapi.params import File
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from codes import validator
 from codes import signmanager
@@ -66,7 +67,7 @@ async def create_transfer(transfer_request: TransferRequest):
 
 @app.post("/transfer")
 async def transfer(transferfile: UploadFile = File(...)):
-    """Executes a transaction"""
+    """Execute a transaction from a given wallet file. Alternate to /create-transfer"""
     transferfile_path = save_file_and_get_path(transferfile)
     transfer = addtransfer.create_transfer(transferfile=transferfile_path)
     response_file = FileResponse(transferfile_path, filename="transfer_transaction.json")
@@ -136,10 +137,11 @@ async def create_token(
     return FileResponse(transaction_file, filename="create_token_transaction.json")
 
 
-@app.post("/run-updater")
+@app.post("/run-updater", response_class=HTMLResponse)
 async def run_updater():
     log = updater.run_updater()
-    return {"status": "SUCCESS", "log": log}
+    HTMLResponse(content=log, status_code=200)
+    return log
 
 @app.get("/download-chain")
 async def download_chain():

@@ -10,7 +10,7 @@ from codes.transactionmanager import Transactionmanager
 
 class Transfermanager(Transactionmanager):
 #	def Transactionmanager.__init__(self, transferfile=None):
-	def __init__(self,mempool="data/mempool/",statefile="./data/common/state.json",transferfile=None):
+	def __init__(self,mempool="data/mempool/",statefile="data/common/state.json",transferfile=None):
 		Transactionmanager.__init__(self,mempool,statefile);
 #		self.tokenrecordsfile="data/common/all_tokens.json";
 		if transferfile:
