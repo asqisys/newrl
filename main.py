@@ -39,7 +39,7 @@ async def create_transfer(transfer_request: TransferRequest):
 #        type=4
 #    if transfer_type.lower()=="type5":
 #        type=5
-    type = int(transfer_request.transfer_type)
+    type = transfer_request.transfer_type
     fulltrandata = {
         "transaction": {
             "timestamp": "",
