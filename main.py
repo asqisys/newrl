@@ -1,6 +1,6 @@
 from codes.chainscanner import Chainscanner
 import json
-from request_models import BalanceRequest, BalanceType, TransferRequest
+from request_models import BalanceRequest, BalanceType, CreateTokenRequest, TransferRequest
 from typing import Optional
 from starlette.responses import FileResponse
 from utils import save_file_and_get_path
@@ -11,6 +11,7 @@ from fastapi.params import File
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from codes import validator
 from codes import signmanager
@@ -24,24 +25,35 @@ app = FastAPI(
 )
 
 @app.post("/create-transfer")
-async def create_transfer(
-    transfer_type,
-    asset1_code,
-    asset2_code,
-    wallet1_address,
-    wallet2_address,
-    asset1_quantity,
-    asset2_quantity
-    ):
+async def create_transfer(transfer_request: TransferRequest):
+    """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
     trandata={
-    "asset1_code":int(asset1_code), "asset2_code":int(asset2_code), "wallet1":wallet1_address, "wallet2":wallet2_address, "asset1_number":int(asset1_quantity),"asset2_number":int(asset2_quantity)
+        "asset1_code":int(transfer_request.asset1_code), 
+        "asset2_code":int(transfer_request.asset2_code), 
+        "wallet1": transfer_request.wallet1_address, 
+        "wallet2": transfer_request.wallet2_address, 
+        "asset1_number":int(transfer_request.asset1_qty),
+        "asset2_number":int(transfer_request.asset2_qty)
     }
 #    if transfer_type.lower()=="type4":
 #        type=4
 #    if transfer_type.lower()=="type5":
 #        type=5
-    type=int(transfer_type)
-    fulltrandata={"transaction":{"timestamp": "", "trans_code": "000000", "type":type, "currency": "INR", "fee": 0.0, "descr":"", "valid": 1, "block_index": 0, "specific_data": trandata},"signatures":[]}
+    type = transfer_request.transfer_type
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type":type,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": trandata
+        },
+        "signatures": []
+    }
     with open("transfernew.json", 'w') as file:
         json.dump(fulltrandata,file)
 
@@ -53,22 +65,25 @@ async def create_transfer(
 
 @app.post("/transfer")
 async def transfer(transferfile: UploadFile = File(...)):
+    """Execute a transaction from a given wallet file. Alternate to /create-transfer"""
     transferfile_path = save_file_and_get_path(transferfile)
     transfer = addtransfer.create_transfer(transferfile=transferfile_path)
-    response_file = FileResponse(transferfile_path, filename="transferfile.json")
+    response_file = FileResponse(transferfile_path, filename="transfer_transaction.json")
     return response_file
     
 @app.post("/add-wallet")
 async def add_wallet_api(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
     ownertype: str = "1", jurisdiction: str = "910",
     kyc1: UploadFile = File(...), kyc2: UploadFile = File(...)):
+    """Add a new wallet under a specified custodian"""
     f1 = save_file_and_get_path(kyc1)
     f2 = save_file_and_get_path(kyc2)
     transferfile = add_wallet(f1, f2, custodian_address)
-    return FileResponse(transferfile, filename="transferfile.json")
+    return FileResponse(transferfile, filename="add_wallet_transaction.json")
 
 @app.post("/get-wallet-file")
 async def get_wallet_file(transferfile: UploadFile = File(...)):
+    """Returns the wallet file from the add_wallet_transaction.json"""
     f1 = save_file_and_get_path(transferfile)
     with open(f1, 'r+') as file:
         data=json.load(file)
@@ -77,6 +92,7 @@ async def get_wallet_file(transferfile: UploadFile = File(...)):
 
 @app.post("/sign")
 async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile = File(...)):
+    """Custodian wallet file can be used to sign a transaction"""
     transactionfile_path = save_file_and_get_path(transactionfile)
     wallet_file = save_file_and_get_path(wallet_file)
     singed_transaction_file = signmanager.sign(wallet_file, transactionfile_path)
@@ -84,23 +100,34 @@ async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile 
 
 @app.post("/validate")
 async def validate(transactionfile: UploadFile = File(...)):
+    """Validate a given transaction file if it's included in chain"""
     transactionfile_path = save_file_and_get_path(transactionfile)
     response = validator.validate(transactionfile_path)
     return {"status": "SUCCESS", "response": response}
 
 @app.post("/create-token")
 async def create_token(
-    token_name,
-    token_type,
-    first_owner,
-    custodian,
-    legal_doc,
-    amount_created,
-    value_created,
+    request: CreateTokenRequest
+    # token_name,
+    # token_type,
+    # first_owner,
+    # custodian,
+    # legal_doc,
+    # amount_created,
+    # value_created,
 ):
-    tokendata={
-    "tokencode": 0,"tokenname":token_name, "tokentype": token_type, "tokenattributes": {}, "first_owner": first_owner, "custodian": custodian,
-    "legaldochash": legal_doc, "amount_created": int(amount_created), "value_created": int(value_created), "disallowed": [], "sc_flag": False
+    tokendata = {
+        "tokencode": 0,
+        "tokenname": request.token_name,
+        "tokentype": request.token_type,
+        "tokenattributes": {},
+        "first_owner": request.first_owner,
+        "custodian": request.custodian,
+        "legaldochash": request.legal_doc,
+        "amount_created": int(request.amount_created),
+        "value_created": int(request.value_created),
+        "disallowed": [],
+        "sc_flag": False
     }
     with open("tokennew.json", 'w') as file:
         json.dump(tokendata,file)
@@ -108,10 +135,11 @@ async def create_token(
     response_file = FileResponse(tokenfile_path, filename="newtoken.json")
     return response_file
 
-@app.post("/run-updater")
+@app.post("/run-updater", response_class=HTMLResponse)
 async def run_updater():
     log = updater.run_updater()
-    return {"status": "SUCCESS", "log": log}
+    HTMLResponse(content=log, status_code=200)
+    return log
 
 @app.get("/download-chain")
 async def download_chain():
