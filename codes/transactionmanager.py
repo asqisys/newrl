@@ -53,7 +53,11 @@ class Transactionmanager:
 	def transactioncreator(self,tran_data_all):
 	#standard data concerns static fields, specific data covers fields that are type specific
 		tran_data=tran_data_all['transaction'];
-		self.transaction['timestamp']=tran_data['timestamp'];
+		if not tran_data['timestamp']:
+			self.transaction['timestamp']= str(datetime.datetime.now())
+		else:
+			self.transaction['timestamp']=tran_data['timestamp'];
+		
 		self.transaction['type']=tran_data['type'];
 		self.transaction['currency']=tran_data['currency'];
 		self.transaction['fee']=tran_data['fee'];
@@ -67,10 +71,10 @@ class Transactionmanager:
 #			self.transaction['kyc_doc_hashes']=specific_data['kyc_doc_hashes'];
 #			self.transaction['wallet_address']=specific_data['wallet_address'];
 		self.transaction['specific_data']=tran_data['specific_data'];
-		str=json.dumps(self.transaction).encode()
-#		encstr=codecs.encode(str, 'hex')
+		trstr=json.dumps(self.transaction).encode()
+#		encstr=codecs.encode(trstr, 'hex')
 		hs=hashlib.blake2b(digest_size=20)
-		hs.update(str)
+		hs.update(trstr)
 		self.transaction['trans_code']=hs.hexdigest()
 	#	print("tcode while creating is ",self.transaction['trans_code'])
 		self.signatures=tran_data_all['signatures']
@@ -92,12 +96,12 @@ class Transactionmanager:
 		with open(file,"r") as readfile:
 			print("Now reading from ",file)
 			trandata=json.load(readfile);
-		self.transactioncreator(trandata)
+		newtrandata=self.transactioncreator(trandata)
 #		transactiondata['transaction'] = self.transactioncreator(trandata)['transaction'];
 #		transactiondata['signatures'] = self.transactioncreator(trandata)['signatures'];
 #		transactiondata['transaction'] = trandata['transaction']
 #		transactiondata['signatures'] = trandata['signatures']
-		return trandata
+		return newtrandata
 	
 	def dumptransaction(self,file=None):	#dumps active transaction into a stated file or in mempool by default
 		ts=self.transaction['timestamp'];
