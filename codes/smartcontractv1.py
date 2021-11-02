@@ -14,51 +14,53 @@ from transactionmanager import Transactionmanager
 class Smartloan:
     def __init__(self,filename=None):
         self.loandata={};
-#        self.tokencode=2;	#the token that is borrowed, typically smt
-#        self.loanamount=0;	# amount borrowed of that token in numbers
-#        self.int_rate=0.05;	# absolute value of annual interest rate, annually compounded
-#        self.start_date=None;	# date of lending
-#        self.tenor=365;		# tenor in days
-#        self.ltv=0.5;		# loan to value ratio, used only for enforcing the condition as applicable
-#        self.sec_token_code=0;	# token code of security used
-#        self.sec_token_amount=0;	# amount in number of tokens of security
-#        self.borrowerwallet=None;	# borrower, typically single
-#        self.lenders=[];		# lender, can be one or more
-#        self.secproviders=[];	# security providers, can include borrower and zero or more others
-#        self.special_params={}		# generic dict of additional parameters that users can apply as desired
         if filename:
             self.load_params(filename);
+        else:
+            self.loandata={
+                "tokencode"=0;	#the token that is borrowed, typically smt
+                "loanamount"=0;	# amount borrowed of that token in numbers
+                "int_rate"=0;	# absolute value of annual interest rate, annually compounded, stated in percent and two decimals as integer
+                "start_date"=None;	# date of lending
+                "tenor"=0;		# tenor in days
+                "ltv"=0;		# loan to value ratio, stated in percent and two decimals as integer
+                "sec_token_code"=0;	# token code of security used; if left blank or 0, the loan is unsecured
+                "sec_token_amount"=0;	# amount in number of tokens of security
+                "borrowerwallet"=None;	# borrower, typically single
+                "lenderwallet"=None;	# lender, can be a person or a smart contract
+                "secprovider"=None;	# security provider, can be a person or a smart contract
+                "special_params"={}	# generic dict of additional parameters that users can apply as desired
+                    }
+
 
     def load_params(self,filename):
         with open filename as ipfile:
             self.loandata=json.load(ipfile);
-#        self.tokencode=loandata['tokencode'];	#the token that is borrowed, typically smt
-#        self.loanamount=loandata['loanamount'];	# amount borrowed of that token in numbers
-#        self.int_rate=loandata['int_rate'];	# absolute value of annual interest rate, annually compounded
-#        self.start_date=loandata['start_date'];	# date of lending
-#        self.tenor=loandata['tenor'];		# tenor in days
-#        self.ltv=loandata['ltv'];		# loan to value ratio, used only for enforcing the condition as applicable
-#        self.sec_token_code=loandata['sec_token_code'];		# token code of security used
-#        self.sec_token_amount=loandata['sec_token_amount'];	# amount in number of tokens of security
-#        self.borrowerwallet=loandata['borrowerwallet'];		# borrower, typically single
-#        self.lenders=loandata['lenders'];			# lender wallets and their proportions, can be one or more
-#        self.secproviders=loandata['secproviders'];	        # security providers, can include borrower and zero or more others
-#        self.special_params=loandata['special_params']		# generic dict of additional parameters that users can apply as desired
 
-    def create_loan_transaction(self):	#creates the loan transaction for signing by participants
+    # smart contracts move through a two step process of proposal and execution
+    # the propose_tx function will create a tx of type 3 that is the definition of the contract; this can be proposed by any valid wallet
+    
+    def create_loan_transaction(self):	#creates the contract wallet and relevant transactions for signing by participants
         transaction={'timestamp':str(datetime.datetime.now()),
-                    'type':6,
+                    'type':3,
                     'currency':"INR",
 		    'fee':0.0 ,
                     'descr':"New smartloan creation",
                     'valid':1,
-                    'block_index': 0,
+                    'block_index':0,
                     'specific_data':self.loandata}
         trans=Transactionmanager(mempool, statefile);
         signatures=[]
         transactiondata={'transaction':transaction,'signatures':signatures}
         trans.transactioncreator(transactiondata);
         trans.dumptransaction();
+
+    def propose_loan_tx(self):  #carries out the applicable tx creation for a smart contract
+        #create a contract wallet
+        
+        #list the SC in SC database
+        #create the child transactions required for the smart contract execution
+
 
     def sign_loan_transaction(self):	# signs a given loan transaction using the transaction signature code
         
