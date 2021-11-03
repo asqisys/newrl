@@ -56,8 +56,8 @@ class Smartloan:
         trans.dumptransaction();
 
     def propose_loan_tx(self):  #carries out the applicable tx creation for a smart contract
-        #create a contract wallet
-        
+        #create a contract wallet and post it in state.json #this code will need to run only once, otherwise there will be multiple wallet creations
+        #we can use the idea of linked wallets to maintain KYC
         #list the SC in SC database
         #create the child transactions required for the smart contract execution
 
