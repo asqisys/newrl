@@ -9,29 +9,59 @@ import datetime
 import binascii
 import base64
 
-from transactionmanager import Transactionmanager
+from codes.transactionmanager import Transactionmanager
+from codes.kycwallet import Walletmanager
 
-class Smartloan:
+class SecLoan1:
     def __init__(self,filename=None):
         self.loandata={};
         if filename:
             self.load_params(filename);
         else:
-            self.loandata={
-                "tokencode"=0;	#the token that is borrowed, typically smt
-                "loanamount"=0;	# amount borrowed of that token in numbers
-                "int_rate"=0;	# absolute value of annual interest rate, annually compounded, stated in percent and two decimals as integer
-                "start_date"=None;	# date of lending
-                "tenor"=0;		# tenor in days
-                "ltv"=0;		# loan to value ratio, stated in percent and two decimals as integer
-                "sec_token_code"=0;	# token code of security used; if left blank or 0, the loan is unsecured
-                "sec_token_amount"=0;	# amount in number of tokens of security
-                "borrowerwallet"=None;	# borrower, typically single
-                "lenderwallet"=None;	# lender, can be a person or a smart contract
-                "secprovider"=None;	# security provider, can be a person or a smart contract
-                "special_params"={}	# generic dict of additional parameters that users can apply as desired
+            self.contractparams={
+                "name"="SecLoan1",
+                "version":"1.0.0",
+                "actmode":"hybrid",
+                "livestatus":True,
+                "next_act_ts":str(datetime.datetime.now()),
+                "signatories":[],
+                "parentcontractaddress":None,
+                "oracleids":[],
+                "selfdestruct":True
+                "contractspecs"={
+                    "tokencode":0;	#the token that is borrowed, typically smt
+                    "loanamount":0;	# amount borrowed of that token in numbers
+                    "int_rate":0;	# absolute value of annual interest rate, annually compounded, stated in percent and two decimals as integer
+                    "start_date":None;	# date of lending
+                    "tenor":0;		# tenor in days
+                    "ltv":0;		# loan to value ratio, stated in percent and two decimals as integer
+                    "sec_token_code":0;	# token code of security used; if left blank or 0, the loan is unsecured
+                    "sec_token_amount":0;	# amount in number of tokens of security
+                    "borrowerwallet":None;	# borrower, typically single
+                    "lenderwallet":None;	# lender, can be a person or a smart contract
+                    "secprovider":None;	# security provider, can be a person or a smart contract
+                    "special_params":{}	# generic dict of additional parameters that users can apply as desired
                     }
-
+                "legalparams":{},
+                }
+            
+        #initialization also implies a transaction for contract address creation
+        private_key_bytes = os.urandom(32)
+        key = ecdsa.SigningKey.from_string(private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
+        key_bytes = key.to_string()
+        public_key = codecs.encode(key_bytes, 'hex')
+        public_key_bytes = codecs.decode(public_key, 'hex')
+        hash = keccak.new(digest_bits=256)
+        hash.update(public_key_bytes)
+        keccak_digest = hash.hexdigest()
+        self.contractaddress = '0x' + keccak_digest[-40:]
+        # we have ignored the private key and public key of this because we do not want to transact through key-based signing for a contract
+        # now we need to update the contract parameters in SC database; for now we are appending to the allcontracts.json
+        contractdata={"contractaddress":self.contractaddress,
+                      "contractparams":self.contractparams,
+                      "ts":str(datetime.datetime.now())
+                      }
+        #code to append contractdata into allcontracts.json / to be replaced by code for appending contractdata into allcontracts db
 
     def load_params(self,filename):
         with open filename as ipfile:
@@ -100,3 +130,5 @@ class Smartloan:
 
     def release_collateral(self):
         
+def sc_smartloan(filename=None):
+# not sure if we need this.. just placeholder for now
