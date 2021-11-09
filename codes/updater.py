@@ -12,6 +12,8 @@ from codes.blockchain import Blockchain
 from codes.transactionmanager import Transactionmanager
 from codes.chainscanner import Chainscanner
 
+import sqlite3
+
 def chainmatch(chain1, chain2):
 	len1=len(chain1)
 	len2=len(chain2)
@@ -203,6 +205,7 @@ def run_updater():
 		all_tokens=cs.getalltokens()
 		all_balances=cs.getallbalances()
 		newstate={'all_wallets':all_wallets,'all_tokens':all_tokens,'all_balances':all_balances}
+		update_db_states(newstate)
 		if os.path.exists(options.state):
 			ts=str(datetime.datetime.now());
 			statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
@@ -252,6 +255,43 @@ def run_updater():
 	return logger.get_logs()	
 #	logger.log(blockchain.chain)
 #	logger.log(blockchain.get_latest_ts())
+
+def update_db_states(state):
+	all_wallets = state['all_wallets']
+	all_tokens = state['all_tokens']
+	all_balances = state['all_balances']
+	print(all_wallets, all_tokens, all_balances)
+
+	con = sqlite3.connect('newrl.db')
+	cur = con.cursor()
+
+	for wallet in all_wallets:
+		doc_hash_1 = wallet['kyc_doc_hashes'][0] if len(wallet['kyc_doc_hashes']) > 0 else ''
+		doc_hash_2 = wallet['kyc_doc_hashes'][1] if len(wallet['kyc_doc_hashes']) > 1 else ''
+		cur.execute(f'''INSERT OR IGNORE INTO wallets
+					(wallet_address, wallet_public, custodian_wallet, kyc_doc1_hash, kyc_doc2_hash, ownertype, jurisdiction)
+					VALUES (
+						'{wallet['wallet_address']}', '{wallet['wallet_public']}', '{wallet['custodian_wallet']}', '{doc_hash_1}', '{doc_hash_2}', {wallet['ownertype']}, {wallet['jurisd']}
+					)''')
+	
+	for token in all_tokens:
+		token_attributes = json.dumps(token['token_attributes']) if 'token_attributes' in token else ''
+		cur.execute(f'''INSERT OR IGNORE INTO tokens
+				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
+				 VALUES (
+					'{token['tokencode']}', '{token['tokentype']}', '{token['tokenname']}', '{token['first_owner']}', '{token['custodian']}', '{token['legaldochash']}', {token['amount_created']}, {token['value_created']}, {token['sc_flag']}, '{token_attributes}'
+				)''')
+
+	for balance in all_balances:
+		balance_amount = token['balance'] if 'balance' in token else 0
+		cur.execute(f'''INSERT OR REPLACE INTO balances
+				(wallet_address, tokencode, balance)
+				 VALUES (
+					'{balance['wallet_address']}', {balance['tokencode']}, {balance_amount}
+				)''')
+	con.commit()
+	con.close()
+
 
 if __name__ == "__main__":
 	main();

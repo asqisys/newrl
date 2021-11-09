@@ -9,6 +9,8 @@ import datetime
 import binascii
 import base64
 
+import sqlite3
+
 class Transactionmanager:
 	def __init__(self, mempool="./mempool/",statefile="./state.json"):
 #		self.public=
@@ -34,6 +36,9 @@ class Transactionmanager:
 		self.itpool="./incltranspool/"		#pool of included transactions
 		self.statefile=statefile
 		self.validity=0
+
+		self.con = sqlite3.connect('newrl.db')
+		self.cur = self.con.cursor()
 
 	def getvalidadds(self):
 		trans=self.transaction
@@ -118,6 +123,23 @@ class Transactionmanager:
 		#	json.dump(self.transaction, writefile);
 			json.dump(transaction_all, writefile);
 			print("Wrote to ",file)
+		
+		transaction = transaction_all['transaction']
+		specific_data = json.dumps(transaction['specific_data']) if 'specific_data' in transaction else ''
+		self.cur.execute(f'''INSERT OR IGNORE INTO transactions
+				(transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
+				 VALUES (
+					'{transaction['trans_code']}', 
+					'{transaction['timestamp']}',
+					{transaction['type']},
+					'{transaction['currency']}',
+					{transaction['fee']},
+					'{transaction['descr']}',
+					{transaction['valid']},
+					'{specific_data}'
+				)''')
+		self.con.commit()
+		self.con.close()
 		return file
 
 	def signtransaction(self,keybytes,address):	#this takes keybytes and not binary string and not base64 string

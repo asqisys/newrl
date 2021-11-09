@@ -7,6 +7,8 @@ import os
 import shutil
 from optparse import OptionParser
 
+import sqlite3
+
 from codes.blockchain import Blockchain
 
 class Chainscanner():
@@ -16,6 +18,9 @@ class Chainscanner():
 #		print("Loaded chain from ",chainfile)
 		self.chainlength=len(self.blockchain.chain);
 		self.latestts=self.blockchain.get_latest_ts();
+
+		self.con = sqlite3.connect('newrl.db')
+		self.cur = self.con.cursor()
 
 	def chainstatus(self):
 		if self.blockchain.chain_valid(self.blockchain.chain):
@@ -158,6 +163,9 @@ class Chainscanner():
 		return balances
 		
 	def getbaladdtoken(self, address, tokencode):
+		balance = self.cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': address, 'tokencode': tokencode})
+		for row in balance:
+			return row[0]
 		#function to get latest balance of a given wallet for a given token
 		balance=0;
 		index=1;
