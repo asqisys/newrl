@@ -14,56 +14,88 @@ from codes.kycwallet import Walletmanager
 
 class SecLoan1(SCmaster):
     def __init__(self,filename=None):
+        #action1: address creation for the contract
         SCmaster.__init__(self,filename);
 
-#        self.contractparams={};
-#        if filename:
-#            self.load_params(filename);
-#        else:
-#            print("No file to load. Exiting")
-#            return False    #should we also add an exit() after this?
+    def create_child_txs(self):
+        #action2: token creation for the loan
+        loantokentx=self.create_loan_token();
+        lendtransfertx=self.transferlend();
+        sectransfertx=self.transfersec();
+        return loantokentx,lendtransfertx,sectransfertx;
         
-#        #initialization also implies a transaction for contract address creation
-#        private_key_bytes = os.urandom(32)
-#        key = ecdsa.SigningKey.from_string(private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
-#        key_bytes = key.to_string()
-#        public_key = codecs.encode(key_bytes, 'hex')
-#        public_key_bytes = codecs.decode(public_key, 'hex')
-#        hash = keccak.new(digest_bits=256)
-#        hash.update(public_key_bytes)
-#        keccak_digest = hash.hexdigest()
-#        self.contractaddress = '0x' + keccak_digest[-40:]
-#        # we have ignored the private key and public key of this because we do not want to transact through key-based signing for a contract
-#        # now we need to update the contract parameters in SC database; for now we are appending to the allcontracts.json
-#        contractdata={"contractaddress":self.contractaddress,
-#                      "contractparams":self.contractparams,
-#                      "ts_init":str(datetime.datetime.now())
-                      }
-#        #code to append contractdata into allcontracts.json / to be replaced by code for appending contractdata into allcontracts db
-
-#    def load_params(self,filename):
-#        with open filename as ipfile:
-#            self.contractparams=json.load(ipfile);
-
     def deploy(self,name=None):	# carries out the loan execution steps upon inclusion of the transaction in a block
-        #action1: token creation for the loan
-        if not name:
-            name="Secloantoken"+self.contractaddress[:5]
+        if getbalance(self.contractaddress,self.loantokencode)>= self.contractparams['contractspecs']['loanamount'] and getbalance(self.contractaddress,self.contractparams['contractspecs']['tokencode'])>= self.contractparams['contractspecs']['loanamount'] and getbalance(self.contractaddress,self.contractparams['contractspecs']['sec_token_code']>=self.contractparams['contractspecs']['sec_token_amount']:
+            #code for deployment
+            pass
+
+    def create_loan_token(self):
+        name="Secloantoken"+self.contractaddress[:5]
         tokendata={"tokencode": 0,
                    "tokenname": name,
                    "tokentype": 62,
                    "tokenattributes": self.contractparams,
-                   "first_owner": self.contractparams['contractspecs']['lenderwallet'],
+                   "first_owner": self.contractaddress,   #first owner is contract address till the contract is executed
                    "custodian": self.contractparams['contractspecs']['borrowerwallet'],
-                   "legaldochash": "",
+                   "legaldochash": self.contractparams['legalparams'],
                    "amount_created": self.contractparams['contractspecs']['loanamount'],
                    "value_created": self.contractparams['contractspecs']['loanamount'],
                    "disallowed": [],
-                   "sc_flag": True}
-        
+                   "sc_flag": True,
+                   "sc_address": self.contractaddress}
+        loantoken=tokenmanager();
+        tx = loantoken.sccreate(tokendata);
+        self.loantokencode = tx['transaction']['specific_data']['tokencode']
+        return tx
 
-    def create_loan_token(self):
+    def transferlend(self):
+        transferdata={'transaction':
+                      {"timestamp": str(datetime.datetime.now()),
+                      "trans_code": "000000",
+                      "type": 5,
+                      "currency": "INR",
+                      "fee": 0.0,
+                      "descr": "",
+                      "valid": 1,
+                      "block_index": 0,
+                      "specific_data": {"asset1_code": self.contractparams['contractspecs']['tokencode'],
+                                        "asset2_code": 0,
+                                        "wallet1": self.contractparams['contractspecs']['lenderwallet'],
+                                        "wallet2": self.contractaddress,
+                                        "asset1_number": self.contractparams['contractspecs']['loanamount'],
+                                        "asset2_number": 0}},
+                      "signatures":[]}
+        translend=Transactionmanager()
+        tx=translend.transactioncreator(transferdata)
+        return tx
 
+    def transfersec(self):
+        transferdata={'transaction':
+                      {"timestamp": str(datetime.datetime.now()),
+                      "trans_code": "000000",
+                      "type": 5,
+                      "currency": "INR",
+                      "fee": 0.0,
+                      "descr": "",
+                      "valid": 1,
+                      "block_index": 0,
+                      "specific_data": {"asset1_code": self.contractparams['contractspecs']['sec_token_code'],
+                                        "asset2_code": 0,
+                                        "wallet1": self.contractparams['contractspecs']['secprovider'],
+                                        "wallet2": self.contractaddress,
+                                        "asset1_number": self.contractparams['contractspecs']['sec_token_amount'],
+                                        "asset2_number": 0}},
+                      "signatures":[]}
+        transsec=Transactionmanager()
+        tx=transsec.transactioncreator(transferdata)
+        return tx
+
+    def checkstatus(self):
+        #returns status without adding a chain transaction; status is one of : awaiting tx confirmations, awaiting deployment, live, terminated, etc
+        pass
+
+    def 
+    
     def calc_repayment(self):
         repayment=self.loanamount*(1+self.int_rate*self.tenor)
         return repayment;

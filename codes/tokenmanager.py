@@ -91,6 +91,33 @@ class Tokenmanager():
 			trans.transactioncreator(transactiondata);
 			trans.dumptransaction();
 
+	def sccreate(self,tokendata):
+	#this function loads data from a contract call, with an intent to create a new token
+	#it ignore token code if any, increments it by 1 from tokenreocrds file and re-writes the tokenfile as well
+		self.tokendata=tokendata;
+		tokenrecordsfile=self.tokenrecordsfile;
+		if self.istokeninrecords():
+			print("Either token already in record or token code reused. Set tokencode in file to 0 and try again if trying to add a new token. Else ignore")
+			return False
+		else:
+			maxtcode=self.maxtokencode()
+			self.tokendata["tokencode"]=maxtcode+1;
+			self.create_token()
+			transaction={'timestamp':str(datetime.datetime.now()),
+			#	'trans_code':"000000"
+				'type':2,
+				'currency':"INR",
+				'fee':0.0 ,
+				'descr':"New token creation",
+				'valid':1,
+				'block_index': 0,
+				'specific_data':self.tokendata}			
+			trans=Transactionmanager(mempool, statefile);
+			signatures=[]
+			transactiondata={'transaction':transaction,'signatures':signatures}
+			transaction_all=trans.transactioncreator(transactiondata);
+			return transaction_all;
+
 	def istokeninrecords(self):
 		tokenrecordsfile=self.tokenrecordsfile;
 		with open(tokenrecordsfile,"r+") as tokenrecords:

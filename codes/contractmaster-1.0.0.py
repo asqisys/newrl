@@ -34,8 +34,7 @@ class SCmaster:
         # now we need to update the contract parameters in SC database; for now we are appending to the allcontracts.json
         self.contractdata={"contractaddress":self.contractaddress,
                       "contractparams":self.contractparams,
-                      "ts_init":str(datetime.datetime.now())
-                      }
+                      "ts_init":str(datetime.datetime.now())}
         #code to append contractdata into allcontracts.json / to be replaced by code for appending contractdata into allcontracts db
 
     def load_params(self,filename):
@@ -58,5 +57,33 @@ class SCmaster:
         trans.transactioncreator(transactiondata);
         trans.dumptransaction(txfilename);  #the tx is created at the location txfilename
 
+    def create_child_tx(self):
+        #this is not a chain call, it just creates child txs and returns them to the calling function/api
+        pass
+
     def deploy(self):
         pass
+
+    def run(self):
+        pass
+
+    def revert(self):
+        #reverts to the state before the contract, assuming a failed subset of the contract transaction
+        pass
+
+    def selfdestruct(self, signatures):
+        #self destructs subject to conditions for the same e.g. a loan contract cannot be destroyed once set up unless all parties sign
+        validflag=False;
+        #code to check if all signatories required to sign for self destruct have signed to set validflag=True
+        if validflag:
+            self.terminate();
+
+    def terminate(self,balancerecipient):
+        #logical conclusion of a contract at the end of its life
+        #code to check for conditions of the contract for its logical termination
+        # if the conditions are satisfied
+        if validflag:
+            self.contractdata['contractparams']['livestatus']=False
+            send(self.balance,balancerecipient) #need to define these actions more specifically, but this is the broad idea similar to SC in ethereum
+        
+            
