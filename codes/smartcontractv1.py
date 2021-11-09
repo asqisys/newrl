@@ -14,7 +14,7 @@ from codes.kycwallet import Walletmanager
 
 class SecLoan1:
     def __init__(self,filename=None):
-        self.loandata={};
+        self.contractparams={};
         if filename:
             self.load_params(filename);
         else:
@@ -28,7 +28,7 @@ class SecLoan1:
                 "parentcontractaddress":None,
                 "oracleids":[],
                 "selfdestruct":True
-                "contractspecs"={
+                "contractspecs":{
                     "tokencode":0;	#the token that is borrowed, typically smt
                     "loanamount":0;	# amount borrowed of that token in numbers
                     "int_rate":0;	# absolute value of annual interest rate, annually compounded, stated in percent and two decimals as integer
