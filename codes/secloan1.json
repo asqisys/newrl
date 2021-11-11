@@ -1,0 +1,26 @@
+self.contractparams={
+		"creator"="addressofcreator"
+                "name"="SecLoan1",
+                "version":"1.0.0",
+                "actmode":"hybrid",
+                "status":0,	#status convention: 0 or None is not setup yet, 1 is setup but not deployed, 2 is setup and deployed and -1 is terminated
+                "next_act_ts":None,
+                "signatories":[],
+                "parentcontractaddress":None,
+                "oracleids":[],
+                "selfdestruct":True
+                "contractspecs":{
+                    "tokencode":0;	#the token that is borrowed, typically smt
+                    "loanamount":0;	# amount borrowed of that token in numbers
+                    "repayment":0;	# absolute value of final amount due
+                    "due_date":None;	# due date in "%Y-%m-%d %H:%M:%S" format
+                    "ltv":0;		# loan to value ratio, stated in percent and two decimals as integer
+                    "sec_token_code":0;	# token code of security used; if left blank or 0, the loan is unsecured
+                    "sec_token_amount":0;	# amount in number of tokens of security
+                    "borrowerwallet":None;	# borrower, typically single
+                    "lenderwallet":None;	# lender, can be a person or a smart contract
+                    "secprovider":None;	# security provider, can be a person or a smart contract
+                    "special_params":{}	# generic dict of additional parameters that users can apply as desired
+                    }
+                "legalparams":{},
+                }
