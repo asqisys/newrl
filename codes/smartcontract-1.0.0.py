@@ -13,7 +13,7 @@ from codes.transactionmanager import Transactionmanager
 from codes.chainscanner import Chainscanner
 
 class SecLoan1():
-    self.codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
+    codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
     def __init__(self,contractaddress=None):
         self.template="secloan1"
         self.version="1.0.0"
@@ -53,6 +53,7 @@ class SecLoan1():
         # we have ignored the private key and public key of this because we do not want to transact through key-based signing for a contract
 
         # next we set up the contract status as live
+        params={}
         params['name']=self.template
         params['version']=self.version
         params['status']=1
@@ -76,6 +77,7 @@ class SecLoan1():
         #it should take as input contractaddress and output the contractparams as they are in the db as of the time of calling it
         #the output will populate self.contractparams to be used by other functions
         #########
+        pass
 
     #the below function creates the transaction of a give type
     def create_tx(self,ttype,tspdata,currency="INR",fee=0.0,mempool="./mempool",statefile="./state.json",descr=None): 
@@ -112,7 +114,7 @@ class SecLoan1():
         sectransfertx=self.transfersec();
         return loantokentx,lendtransfertx,sectransfertx;    #calling api will get three json objects
         
-    def getcontaddbal(self,,chainfile="./chain.json"):
+    def getcontaddbal(self,chainfile="./chain.json"):
         cs=Chainscanner(chainfile)
         contloanbal=cs.getbaladdtoken(self.contractaddress,self.contractparams['contractspecs']['loantokencode'])
         conttokbal=cs.getbaladdtoken(self.contractaddress,self.contractparams['contractspecs']['tokencode'])
