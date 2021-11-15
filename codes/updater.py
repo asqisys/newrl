@@ -283,11 +283,11 @@ def update_db_states(transactions):
                         cur.execute(f'''INSERT OR IGNORE INTO tokens
 				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
 				 VALUES (
-					{token['tokencode']}, '{token['tokentype']}', '{token['tokenname']}', '{token['first_owner']}', '{token['custodian']}', '{token['legaldochash']}', {token['amount_created']}, {token['value_created']}, {token['sc_flag']}, '{token_attributes}'
+					{token['tokencode']}, '{token['tokentype']}', '{token['tokenname']}', '{token['first_owner']}', '{token['custodian']}', '{token['legaldochash']}', {token['amount_created']}, {token['value_created']}, {token['sc_flag']}, '{token['token_attributes']}'
 				)''')
-                        balance=int(self.cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': token['first_owner'], 'tokencode': token['tokencode']}) or 0)
+                        balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': token['first_owner'], 'tokencode': token['tokencode']}) or 0)
                         balance=balance + token['amount_created']
-        		cur.execute(f'''INSERT OR REPLACE INTO balances
+                cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
 				 VALUES (
 					'{token['first_owner']}', {token['tokencode']}, {balance}
@@ -297,17 +297,17 @@ def update_db_states(transactions):
                         sender1=transaction['specific_data']['wallet1']
                         sender2=transaction['specific_data']['wallet2']
                         tokencode1=transaction['specific_data']['asset1_code']
-                        amount1=int(transaction['specific_data']['asset1_number']) or 0)
-                        sender1balance=int(self.cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode1}) or 0)
-                        sender2balance=int(self.cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode1}) or 0)
+                        amount1=int(transaction['specific_data']['asset1_number'] or 0)
+                        sender1balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode1}) or 0)
+                        sender2balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode1}) or 0)
                         sender1balance1 = sender1balance1 - amount1
                         sender2balance1 = sender2balance1 + amount1
-        		cur.execute(f'''INSERT OR REPLACE INTO balances
+                        cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
 				 VALUES (
 					'{sender1}', {tokencode1}, {sender1balance1}
 				)''')                                                
-        		cur.execute(f'''INSERT OR REPLACE INTO balances
+                        cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
 				 VALUES (
 					'{sender2}', {tokencode1}, {sender2balance1}
@@ -315,24 +315,26 @@ def update_db_states(transactions):
 
                         tokencode2=transaction['specific_data']['asset2_code']
                         amount2=int(transaction['specific_data']['asset2_number'] or 0)
-                        sender1balance2=int(self.cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode2}) or 0)
-                        sender2balance2=int(self.cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode2}) or 0)
+                        sender1balance2=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode2}) or 0)
+                        sender2balance2=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode2}) or 0)
                         sender1balance2 = sender1balance2 + amount2
                         sender2balance2 = sender2balance2 - amount2
-        		cur.execute(f'''INSERT OR REPLACE INTO balances
+                        cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
 				 VALUES (
 					'{sender1}', {tokencode2}, {sender1balance2}
 				)''')                                                
-        		cur.execute(f'''INSERT OR REPLACE INTO balances
+                        cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
 				 VALUES (
 					'{sender2}', {tokencode2}, {sender2balance2}
 				)''')
         		
-	con.commit()
-	con.close()
+        con.commit()
+        con.close()
 
+def main():
+	pass
 
 if __name__ == "__main__":
 	main();
