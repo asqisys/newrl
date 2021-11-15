@@ -286,7 +286,7 @@ def update_db_states(transactions):
 				)''')
                         balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': token['first_owner'], 'tokencode': token['tokencode']}) or 0)
                         balance=balance + token['amount_created']
-                cur.execute(f'''INSERT OR REPLACE INTO balances
+                        cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
 				 VALUES (
 					'{token['first_owner']}', {token['tokencode']}, {balance}
