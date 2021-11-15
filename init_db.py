@@ -40,11 +40,12 @@ cur.execute('''
 
 cur.execute('''
                 CREATE TABLE IF NOT EXISTS blocks
-                (block_index integer,
+                (block_index integer PRIMARY KEY,
                 timestamp text,
                 proof integer,
                 previous_hash text,
-                hash text)
+                hash text,
+                transactions_hash text)
                 ''')
 
 cur.execute('''

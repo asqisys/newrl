@@ -124,22 +124,21 @@ class Transactionmanager:
 			json.dump(transaction_all, writefile);
 			print("Wrote to ",file)
 		
-		transaction = transaction_all['transaction']
-		specific_data = json.dumps(transaction['specific_data']) if 'specific_data' in transaction else ''
-		self.cur.execute(f'''INSERT OR IGNORE INTO transactions
-				(transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
-				 VALUES (
-					'{transaction['trans_code']}', 
-					'{transaction['timestamp']}',
-					{transaction['type']},
-					'{transaction['currency']}',
-					{transaction['fee']},
-					'{transaction['descr']}',
-					{transaction['valid']},
-					'{specific_data}'
-				)''')
-		self.con.commit()
-		self.con.close()
+		# transaction = transaction_all['transaction']
+		# specific_data = json.dumps(transaction['specific_data']) if 'specific_data' in transaction else ''
+		# self.cur.execute(f'''INSERT OR IGNORE INTO transactions
+		# 		(transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
+		# 		 VALUES (
+		# 			'{transaction['trans_code']}', 
+		# 			'{transaction['timestamp']}',
+		# 			{transaction['type']},
+		# 			'{transaction['currency']}',
+		# 			{transaction['fee']},
+		# 			'{transaction['descr']}',
+		# 			{transaction['valid']},
+		# 			'{specific_data}'
+		# 		)''')
+		# self.con.commit()
 		return file
 
 	def signtransaction(self,keybytes,address):	#this takes keybytes and not binary string and not base64 string
