@@ -7,7 +7,6 @@ import os
 import shutil
 from optparse import OptionParser
 from utils import BufferedLog
-
 from codes.blockchain import Blockchain
 from codes.transactionmanager import Transactionmanager
 from codes.chainscanner import Chainscanner
