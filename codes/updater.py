@@ -206,7 +206,7 @@ def run_updater():
 		all_tokens=cs.getalltokens()
 		all_balances=cs.getallbalances()
 		newstate={'all_wallets':all_wallets,'all_tokens':all_tokens,'all_balances':all_balances}
-		update_db_states(newstate)
+#		update_db_states(newstate)
 		if os.path.exists(options.state):
 			ts=str(datetime.datetime.now());
 			statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
@@ -297,8 +297,8 @@ def update_db_states(transactions):
                         sender2=transaction['specific_data']['wallet2']
                         tokencode1=transaction['specific_data']['asset1_code']
                         amount1=int(transaction['specific_data']['asset1_number'] or 0)
-                        sender1balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode1}) or 0)
-                        sender2balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode1}) or 0)
+                        sender1balance1=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode1}) or 0)
+                        sender2balance1=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode1}) or 0)
                         sender1balance1 = sender1balance1 - amount1
                         sender2balance1 = sender2balance1 + amount1
                         cur.execute(f'''INSERT OR REPLACE INTO balances
