@@ -317,19 +317,19 @@ def update_db_states(transactions):
             tokencode2 = transaction_data['asset2_code']
             amount2 = int(transaction_data['asset2_number'] or 0)
             transfer_tokens_and_update_balances(
-                cur, sender1, sender2, tokencode2, amount2)
+                cur, sender2, sender1, tokencode2, amount2)
 
     con.commit()
     con.close()
 
 
-def transfer_tokens_and_update_balances(cur, sender1, sender2, tokencode, amount):
-    sender1balance2 = get_wallet_token_balance(cur, sender1, tokencode)
-    sender2balance2 = get_wallet_token_balance(cur, sender2, tokencode)
-    sender1balance2 = sender1balance2 + amount
-    sender2balance2 = sender2balance2 - amount
-    update_wallet_token_balance(cur, sender1, tokencode, sender1balance2)
-    update_wallet_token_balance(cur, sender2, tokencode, sender2balance2)
+def transfer_tokens_and_update_balances(cur, sender, reciever, tokencode, amount):
+    sender_balance = get_wallet_token_balance(cur, sender, tokencode)
+    reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
+    sender_balance = sender_balance - amount
+    reciever_balance = reciever_balance + amount
+    update_wallet_token_balance(cur, sender, tokencode, sender_balance)
+    update_wallet_token_balance(cur, reciever, tokencode, reciever_balance)
 
 
 def update_wallet_token_balance(cur, wallet_address, token_code, balance):
