@@ -209,8 +209,13 @@ class Chainscanner():
 				return True
 		return False
 
-#	print(blockchain.chain)
-#	print(blockchain.get_latest_ts())
+def get_wallet_token_balance(cur, wallet_address, token_code):
+	balance_cursor = cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {
+					'address': wallet_address, 'tokencode': token_code})
+	balance_row = balance_cursor.fetchone()
+	balance = balance_row[0] if balance_row is not None else 0
+	return balance
+
 
 def main():
 	parser = OptionParser();

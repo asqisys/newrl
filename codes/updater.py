@@ -9,7 +9,7 @@ from optparse import OptionParser
 from utils import BufferedLog
 from codes.blockchain import Blockchain
 from codes.transactionmanager import Transactionmanager
-from codes.chainscanner import Chainscanner
+from codes.chainscanner import Chainscanner, get_wallet_token_balance
 
 import sqlite3
 
@@ -258,83 +258,91 @@ def run_updater():
 #	logger.log(blockchain.get_latest_ts())
 
 def update_db_states(transactions):
-        con = sqlite3.connect('newrl.db')
-        cur = con.cursor()
+    con = sqlite3.connect('newrl.db')
+    cur = con.cursor()
 
-        for transaction in transactions:                
-                if transaction['type']==1:	#this is a wallet creation transaction
-                        wallet={'wallet_address':transaction['specific_data']['wallet_address'],
-					'wallet_public':transaction['specific_data']['wallet_public'],
-					'custodian_wallet':transaction['specific_data']['custodian_wallet'],
-					'kyc_docs':transaction['specific_data']['kyc_docs'],
-					'kyc_doc_hashes':transaction['specific_data']['kyc_doc_hashes'],
-					'ownertype':transaction['specific_data']['ownertype'],
-					'jurisd':transaction['specific_data']['jurisd'],
-					'specific_data':transaction['specific_data']['specific_data']}
-                        cur.execute(f'''INSERT OR IGNORE INTO wallets
-					(wallet_address, wallet_public, custodian_wallet, kyc_docs, kyc_doc_hashes, ownertype, jurisdiction)
-					VALUES (
-						'{wallet['wallet_address']}', '{wallet['wallet_public']}', '{wallet['custodian_wallet']}', '{wallet['kyc_docs']}', '{wallet['kyc_doc_hashes']}', {wallet['ownertype']}, {wallet['jurisd']}
-					)''')
-                
-                if transaction['type']==2:	#this is a token creation transaction
-                        token = json.dumps(transaction['specific_data']) if 'specific_data' in transaction else ''
-                        cur.execute(f'''INSERT OR IGNORE INTO tokens
+    for transaction in transactions:
+        transaction_data = transaction['specific_data']
+
+        if transaction['type'] == 1:  # this is a wallet creation transaction
+            wallet = transaction_data
+            kyc_doc_json = get_kyc_doc_hash_json(wallet['kyc_docs'], wallet['kyc_doc_hashes'])
+            data_json = json.dumps(wallet['specific_data'])
+            query_params = (wallet['wallet_address'],
+                            wallet['wallet_public'],
+                            wallet['custodian_wallet'],
+							kyc_doc_json,
+                            wallet['ownertype'],
+                            wallet['jurisd'],
+                            data_json
+                            )
+            cur.execute(f'''INSERT OR IGNORE INTO wallets
+					(wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction, specific_data)
+					VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
+
+        if transaction['type'] == 2:  # this is a token creation transaction
+            token = transaction_data
+            token_attributes_json = json.dumps(token['tokenattributes'])
+            query_params = (
+                token['tokencode'],
+                token['tokenname'],
+                token['tokentype'],
+                token['first_owner'],
+                token['custodian'],
+                token['legaldochash'],
+                token['amount_created'],
+                token['value_created'],
+                token['sc_flag'],
+                token_attributes_json
+            )
+            cur.execute(f'''INSERT OR IGNORE INTO tokens
 				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
-				 VALUES (
-					{token['tokencode']}, '{token['tokentype']}', '{token['tokenname']}', '{token['first_owner']}', '{token['custodian']}', '{token['legaldochash']}', {token['amount_created']}, {token['value_created']}, {token['sc_flag']}, '{token['token_attributes']}'
-				)''')
-                        balance=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': token['first_owner'], 'tokencode': token['tokencode']}) or 0)
-                        balance=balance + token['amount_created']
-                        cur.execute(f'''INSERT OR REPLACE INTO balances
-				(wallet_address, tokencode, balance)
-				 VALUES (
-					'{token['first_owner']}', {token['tokencode']}, {balance}
-				)''')                        
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
 
-                if transaction['type']==4 or transaction['type']==5:	#this is a transfer tx
-                        sender1=transaction['specific_data']['wallet1']
-                        sender2=transaction['specific_data']['wallet2']
-                        tokencode1=transaction['specific_data']['asset1_code']
-                        amount1=int(transaction['specific_data']['asset1_number'] or 0)
-                        sender1balance1=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode1}) or 0)
-                        sender2balance1=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode1}) or 0)
-                        sender1balance1 = sender1balance1 - amount1
-                        sender2balance1 = sender2balance1 + amount1
-                        cur.execute(f'''INSERT OR REPLACE INTO balances
-				(wallet_address, tokencode, balance)
-				 VALUES (
-					'{sender1}', {tokencode1}, {sender1balance1}
-				)''')                                                
-                        cur.execute(f'''INSERT OR REPLACE INTO balances
-				(wallet_address, tokencode, balance)
-				 VALUES (
-					'{sender2}', {tokencode1}, {sender2balance1}
-				)''')                                                
+            balance = get_wallet_token_balance(
+                cur, token['first_owner'], token['tokencode'])
+            balance = balance + token['amount_created']
+            update_wallet_token_balance(
+                cur, token['first_owner'], token['tokencode'], balance)
 
-                        tokencode2=transaction['specific_data']['asset2_code']
-                        amount2=int(transaction['specific_data']['asset2_number'] or 0)
-                        sender1balance2=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender1, 'tokencode': tokencode2}) or 0)
-                        sender2balance2=int(cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {'address': sender2, 'tokencode': tokencode2}) or 0)
-                        sender1balance2 = sender1balance2 + amount2
-                        sender2balance2 = sender2balance2 - amount2
-                        cur.execute(f'''INSERT OR REPLACE INTO balances
+        if transaction['type'] == 4 or transaction['type'] == 5:  # this is a transfer tx
+            sender1 = transaction_data['wallet1']
+            sender2 = transaction_data['wallet2']
+
+            tokencode1 = transaction_data['asset1_code']
+            amount1 = int(transaction_data['asset1_number'] or 0)
+            transfer_tokens_and_update_balances(
+                cur, sender1, sender2, tokencode1, amount1)
+
+            tokencode2 = transaction_data['asset2_code']
+            amount2 = int(transaction_data['asset2_number'] or 0)
+            transfer_tokens_and_update_balances(
+                cur, sender1, sender2, tokencode2, amount2)
+
+    con.commit()
+    con.close()
+
+
+def transfer_tokens_and_update_balances(cur, sender1, sender2, tokencode, amount):
+    sender1balance2 = get_wallet_token_balance(cur, sender1, tokencode)
+    sender2balance2 = get_wallet_token_balance(cur, sender2, tokencode)
+    sender1balance2 = sender1balance2 + amount
+    sender2balance2 = sender2balance2 - amount
+    update_wallet_token_balance(cur, sender1, tokencode, sender1balance2)
+    update_wallet_token_balance(cur, sender2, tokencode, sender2balance2)
+
+
+def update_wallet_token_balance(cur, wallet_address, token_code, balance):
+    cur.execute(f'''INSERT OR REPLACE INTO balances
 				(wallet_address, tokencode, balance)
-				 VALUES (
-					'{sender1}', {tokencode2}, {sender1balance2}
-				)''')                                                
-                        cur.execute(f'''INSERT OR REPLACE INTO balances
-				(wallet_address, tokencode, balance)
-				 VALUES (
-					'{sender2}', {tokencode2}, {sender2balance2}
-				)''')
-        		
-        con.commit()
-        con.close()
+				 VALUES (?, ?, ?)''', (wallet_address, token_code, balance))
 
-def main():
-	pass
 
-if __name__ == "__main__":
-	main();
-
+def get_kyc_doc_hash_json(kyc_docs, kyc_doc_hashes):
+	doc_list = []
+	for idx, doc in enumerate(kyc_docs):
+		doc_list.append({
+			'type': doc,
+			'hash': kyc_doc_hashes[idx]
+		})
+	return json.dumps(doc_list)

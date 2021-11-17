@@ -10,10 +10,10 @@ cur.execute('''
                 wallet_public text,
                 wallet_private text,
                 custodian_wallet text,
-                kyc_doc1_hash text,
-                kyc_doc2_hash text,
-                ownertype integer,
-                jurisdiction integer)
+                kyc_docs text,
+                owner_type integer,
+                jurisdiction integer,
+                specific_data text)
                 ''')
 
 cur.execute('''
