@@ -1,3 +1,5 @@
+# Tests for db
+
 import sqlite3
 
 con = sqlite3.connect('newrl.db')
@@ -7,7 +9,7 @@ cur = con.cursor()
 # # Create table
 # cur.execute('''
 #                 CREATE TABLE wallets
-#                 (wallet_address text, 
+#                 (wallet_address text,
 #                 wallet_public text,
 #                 wallet_private text,
 #                 custodian_wallet text,
@@ -30,7 +32,7 @@ cur = con.cursor()
 # )''')
 
 for row in cur.execute('SELECT * FROM wallets'):
-        print(row)
+    print(row)
 
 # Save (commit) the changes
 # con.commit()
