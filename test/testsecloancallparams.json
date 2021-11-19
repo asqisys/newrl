@@ -1,0 +1,28 @@
+{"contractparams": 
+    {
+        "creator":"addressofcreator",
+        "name":"SecLoan1",
+        "version":"1.0.0",
+        "actmode":"hybrid",
+        "status":0,
+        "next_act_ts":null,
+        "signatories":[],
+        "parentcontractaddress":null,
+        "oracleids":[],
+        "selfdestruct":true,
+        "contractspecs":{
+                "tokencode":0,
+                "loanamount":0,
+                "repayment":0,
+                "due_date":null,
+                "ltv":0,
+                "sec_token_code":0,
+                "sec_token_amount":0,
+                "borrowerwallet":null,
+                "lenderwallet":null,
+                "secprovider":null,
+                "special_params":{}
+                },
+            "legalparams":{}
+}
+}
