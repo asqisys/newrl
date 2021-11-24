@@ -8,12 +8,12 @@ import json
 import datetime
 import base64
 
-from .constants import MEMPOOL_PATH
+from .constants import ALL_WALLETS_FILE, MEMPOOL_PATH
 from .transactionmanager import Transactionmanager
 
 
 class Walletmanager:
-    def __init__(self, walletfile="all_wallets.json"):
+    def __init__(self, walletfile=ALL_WALLETS_FILE):
         #		self.public=
         self.wallet = {"address": None,
                        "public": None,

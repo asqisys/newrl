@@ -6,16 +6,16 @@ import shutil
 from optparse import OptionParser
 
 from .blockchain import Blockchain
-from .constants import MEMPOOL_PATH
+from .constants import ALL_WALLETS_FILE, CHAIN_FILE, MEMPOOL_PATH, STATE_FILE
 
 
 def main():
     parser = OptionParser()
 #	parser.add_option("-g", "--genfile", dest="genfile",default="genesis.json",help="Input genesisfile. default - genesis.json");
     parser.add_option("-c", "--chainfile", dest="chainfile",
-                      default="chain.json", help="Input chainfile. default -chain.json")
+                      default=CHAIN_FILE, help="Input chainfile. default -chain.json")
     parser.add_option("-s", "--statefile", dest="statefile",
-                      default="state.json", help="Input statefile. default - state.json")
+                      default=STATE_FILE, help="Input statefile. default - state.json")
 
     (options, args) = parser.parse_args()
     #blockchain = Blockchain("inginesis.json")
@@ -33,11 +33,11 @@ def main():
     with open("empty.json", "w") as writefile:
         json.dump(empty, writefile)
 
-    if not os.path.exists("all_wallets.json"):
+    if not os.path.exists(ALL_WALLETS_FILE):
         #	shutil.copy("creatorwalletdata.json","all_wallets.json")
         print("all_wallets.json does not exist, creating. Signing won't work till valid addresses added to it.")
         allw = []
-        with open("all_wallets.json", "w") as writefile:
+        with open(ALL_WALLETS_FILE, "w") as writefile:
             json.dump(allw, writefile)
     else:
         print("all_wallets.json already exists. Signing will work for addresses in it.")

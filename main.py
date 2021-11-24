@@ -1,5 +1,6 @@
 from codes.chainscanner import Chainscanner
 import json
+from codes.constants import ALL_WALLETS_FILE, CHAIN_FILE, NEW_TOKEN, NEW_TRANSFER, STATE_FILE, TMP_PATH
 from codes.kycwallet import Walletmanager
 from codes.tokenmanager import Tokenmanager
 from codes.transfermanager import Transfermanager
@@ -56,15 +57,15 @@ async def create_transfer(transfer_request: TransferRequest):
         },
         "signatures": []
     }
-    with open("transfernew.json", 'w') as file:
+    with open(NEW_TRANSFER, 'w') as file:
         json.dump(fulltrandata, file)
 
-    newtransfer = Transfermanager(transferfile="transfernew.json")
-    newtransfer.loadandcreate(transferfile="transfernew.json")
+    newtransfer = Transfermanager(transferfile=NEW_TRANSFER)
+    newtransfer.loadandcreate(transferfile=NEW_TRANSFER)
 #    with open("./transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
     transferfile = FileResponse(
-        "transfernew.json", filename="transferfile.json")
+        NEW_TRANSFER, filename="transferfile.json")
     return transferfile
 
 
@@ -89,7 +90,7 @@ async def add_wallet_api(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c
     idfile = f1
     adfile = f2
     kyccust = "0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42"
-    walletfile = "all_wallets.json"
+    walletfile = ALL_WALLETS_FILE
     ownertype = 1
     jurisdiction = 910
 
@@ -103,7 +104,7 @@ async def add_wallet_api(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c
     transferfile, keysdata = wm.wallet_maker(
         kyccust, kycdocs, files, ownertype, jurisdiction, specific_data)
 #	wm.kycdocslinker(files,kycdocs)
-    with open(keysdata[0]['address'] + "_wallet.json", "w") as writefile:
+    with open(TMP_PATH + keysdata[0]['address'] + "_wallet.json", "w") as writefile:
         json.dump(keysdata, writefile)
     # wm.walletlistupdater()
     return FileResponse(transferfile, filename="add_wallet_transaction.json")
@@ -115,7 +116,7 @@ async def get_wallet_file(transferfile: UploadFile = File(...)):
     f1 = save_file_and_get_path(transferfile)
     with open(f1, 'r+') as file:
         data = json.load(file)
-        walletfile = data["transaction"]["specific_data"]["wallet_address"] + "_wallet.json"
+        walletfile = TMP_PATH + data["transaction"]["specific_data"]["wallet_address"] + "_wallet.json"
     return FileResponse(walletfile, filename="walletfile.json")
 
 
@@ -161,10 +162,10 @@ async def create_token(
         "disallowed": [],
         "sc_flag": False
     }
-    with open("tokennew.json", 'w') as file:
+    with open(NEW_TOKEN, 'w') as file:
         json.dump(tokendata, file)
     newtoken = Tokenmanager()
-    newtoken.loadandcreate("tokennew.json")
+    newtoken.loadandcreate(NEW_TOKEN)
     newtoken.dumptokendata("firsttoken.json")
     tokenfile_path = "firsttoken.json"
     response_file = FileResponse(tokenfile_path, filename="newtoken.json")
@@ -180,12 +181,12 @@ async def run_updater():
 
 @app.get("/download-chain")
 async def download_chain():
-    return FileResponse("chain.json", filename="chain.json")
+    return FileResponse(CHAIN_FILE, filename=CHAIN_FILE)
 
 
 @app.get("/download-state")
 async def download_state():
-    return FileResponse("state.json", filename="state.json")
+    return FileResponse(STATE_FILE, filename=STATE_FILE)
 
 
 @app.post("/get-balance")
