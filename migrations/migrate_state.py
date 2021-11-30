@@ -11,12 +11,16 @@ with open('../state.json', 'r') as read_file:
   print(state_data)
 
 for wallet in state_data['all_wallets']:
-  doc_hash_1 = wallet['kyc_doc_hashes'][0] if len(wallet['kyc_doc_hashes']) > 0 else ''
-  doc_hash_2 = wallet['kyc_doc_hashes'][1] if len(wallet['kyc_doc_hashes']) > 1 else ''
-  db_wallet_data = (wallet['wallet_address'], wallet['wallet_public'], wallet['custodian_wallet'], doc_hash_1, doc_hash_2, wallet['ownertype'], wallet['jurisd'])
+  kyc_docs = []
+  for doc_hash in wallet['kyc_doc_hashes']:
+    kyc_docs.append({
+      'type': 1, 'hash': doc_hash,
+    })
+  kyc_docs = json.dumps(kyc_docs)
+  db_wallet_data = (wallet['wallet_address'], wallet['wallet_public'], wallet['custodian_wallet'], kyc_docs, wallet['ownertype'], wallet['jurisd'])
   cur.execute(f'''INSERT OR IGNORE INTO wallets
-					(wallet_address, wallet_public, custodian_wallet, kyc_doc1_hash, kyc_doc2_hash, ownertype, jurisdiction)
-					VALUES (?, ?, ?, ?, ?, ?, ?)''', db_wallet_data)
+					(wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction)
+					VALUES (?, ?, ?, ?, ?, ?)''', db_wallet_data)
 
 for token in state_data['all_tokens']:
   token_attributes = json.dumps(token['token_attributes']) if 'token_attributes' in token else ''
