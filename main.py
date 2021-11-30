@@ -1,4 +1,4 @@
-from codes.chainscanner import Chainscanner
+from codes.chainscanner import Chainscanner, download_chain, download_state
 import json
 from codes.kycwallet import Walletmanager
 from codes.tokenmanager import Tokenmanager
@@ -179,13 +179,13 @@ async def run_updater():
 
 
 @app.get("/download-chain")
-async def download_chain():
-    return FileResponse("chain.json", filename="chain.json")
+async def download_chain_api():
+    return download_chain()
 
 
 @app.get("/download-state")
-async def download_state():
-    return FileResponse("state.json", filename="state.json")
+async def download_state_api():
+    return download_state()
 
 
 @app.post("/get-balance")
