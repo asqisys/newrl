@@ -41,6 +41,8 @@ def run_updater():
 #	blockchain = Blockchain();
 #	blockchain.loadfromfile("chain.json");
 
+
+
     destchain = globaldir+CHAIN_FILE
     deststate = globaldir+STATE_FILE
     if os.path.exists(destchain):
@@ -87,6 +89,8 @@ def run_updater():
         if "transaction" in filename:
             transfiles.append(filename)
 
+    con = sqlite3.connect('../newrl.db')
+    cur = con.cursor()
     for filename in transfiles:
         file = mempool+filename
     #	if "validation" in file:	#the validation files
@@ -152,13 +156,18 @@ def run_updater():
                 #	logger.log("Found valid transaction, adding to block. Moving file to ",incltrans)
                 logger.log(
                     "Found valid transaction, checking if it is already included")
-                alltranids = cs_prev.getalltransids()
-                for tranid in alltranids:
-                    if tranid['trans_code'] == transaction['trans_code']:
-                        logger.log(
-                            "Transaction with id ", transaction['trans_code'], " is already included in block number ", tranid['blockindex'])
-                        traninclusionflag = True
-                        break
+                # alltranids = cs_prev.getalltransids()
+                transactions_cursor = cur.execute('SELECT * FROM transactions where transaction_code=?', (transaction['trans_code'])).fetchall()
+                row = transactions_cursor.fetchone()
+                if row is not None:
+                    traninclusionflag = True
+                    continue
+                # for tranid in alltranids:
+                #     if tranid['trans_code'] == transaction['trans_code']:
+                #         logger.log(
+                #             "Transaction with id ", transaction['trans_code'], " is already included in block number ", tranid['blockindex'])
+                #         traninclusionflag = True
+                #         break
                 if traninclusionflag:  # the current transaction is already included in some earlier block
                     continue  # this takes the process to the next transaction
 
