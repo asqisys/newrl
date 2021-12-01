@@ -10,9 +10,6 @@ import sqlite3
 class Blockchain:
 
     def __init__(self, genesisfile=None):
-        self.con = sqlite3.connect('newrl.db')
-        self.cur = self.con.cursor()
-
         self.chain = []
         self.genesisfile = genesisfile
         if genesisfile:
@@ -44,8 +41,10 @@ class Blockchain:
 #		self.create_block(block['timestamp'],block['proof'], 0, block['text'])
 
     def create_block(self, timestamp, proof, previous_hash, text):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         print("adding a block")
-        block_index = self.get_last_block_index() + 1
+        block_index = self.get_last_block_index(cur) + 1
         block = {'index': block_index,
                  'timestamp': timestamp,
                  'proof': proof,
@@ -56,12 +55,13 @@ class Blockchain:
         transactions_hash = self.hash(text['transactions'])
         db_block_data = (block_index, timestamp, proof,
                          previous_hash, block_hash, transactions_hash)
-        self.cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
-        self.con.commit()
+        cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
+        con.commit()
+        con.close()
         return block
 
-    def get_last_block_index(self):
-        last_block_cursor = self.cur.execute(
+    def get_last_block_index(self, cur):
+        last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
         last_block = last_block_cursor.fetchone()
         return last_block[0] if last_block_cursor is not None else 0
@@ -115,10 +115,13 @@ class Blockchain:
 
 # Mining a new block
     def mine_block(self, text):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         print("starting the mining step 1")
-        last_block_cursor = self.cur.execute(
+        last_block_cursor = cur.execute(
             'SELECT hash FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
+        con.close()
         previous_hash = last_block[0] if last_block is not None else 0
         # print(last_block)
         # previous_block = self.chain[-1]
@@ -174,6 +177,8 @@ class Blockchain:
         return latest_ts
 
     def add_transactions_to_block(self, block_index, transactions):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         print(block_index, transactions)
         for transaction in transactions:
             specific_data = json.dumps(
@@ -189,9 +194,10 @@ class Blockchain:
                 transaction['valid'],
                 specific_data
             )
-            self.cur.execute(f'''INSERT OR IGNORE INTO transactions
+            cur.execute(f'''INSERT OR IGNORE INTO transactions
 				(block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+        con.close()
 
     def loadfromfile(self, chainfile):
         try:
