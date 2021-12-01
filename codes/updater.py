@@ -208,70 +208,70 @@ def run_updater():
     # the chain is updated. Now we update the state db using transaction data
     update_db_states(transactionsdata['transactions'])
 
-    if blockchain.chain_valid(blockchain.chain):
-        #		chainjsonstr=json.dumps(blockchain.chain);
-        with open(CHAIN_FILE, "w") as chainwrite:
-            json.dump(blockchain.chain, chainwrite)
-        logger.log("Wrote to ", CHAIN_FILE)
-        # updating state now
-        cs = Chainscanner(CHAIN_FILE)
-        all_wallets = cs.getallwallets()
-        all_tokens = cs.getalltokens()
-        all_balances = cs.getallbalances()
-        newstate = {'all_wallets': all_wallets,
-                    'all_tokens': all_tokens, 'all_balances': all_balances}
-#		update_db_states(newstate)
-        # if os.path.exists(STATE_FILE):
-        # 	ts=str(datetime.datetime.now());
-        # 	statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
-        # 	shutil.move(STATE_FILE,statearchivefile)
-        # 	logger.log("Moved existing state file - ",STATE_FILE," - to ",statearchivefile)
-        with open(STATE_FILE, 'w') as writefile:
-            json.dump(newstate, writefile)
-            logger.log("Wrote new state to ", STATE_FILE)
+#     if blockchain.chain_valid(blockchain.chain):
+#         #		chainjsonstr=json.dumps(blockchain.chain);
+#         with open(CHAIN_FILE, "w") as chainwrite:
+#             json.dump(blockchain.chain, chainwrite)
+#         logger.log("Wrote to ", CHAIN_FILE)
+#         # updating state now
+#         cs = Chainscanner(CHAIN_FILE)
+#         all_wallets = cs.getallwallets()
+#         all_tokens = cs.getalltokens()
+#         all_balances = cs.getallbalances()
+#         newstate = {'all_wallets': all_wallets,
+#                     'all_tokens': all_tokens, 'all_balances': all_balances}
+# #		update_db_states(newstate)
+#         # if os.path.exists(STATE_FILE):
+#         # 	ts=str(datetime.datetime.now());
+#         # 	statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
+#         # 	shutil.move(STATE_FILE,statearchivefile)
+#         # 	logger.log("Moved existing state file - ",STATE_FILE," - to ",statearchivefile)
+#         with open(STATE_FILE, 'w') as writefile:
+#             json.dump(newstate, writefile)
+#             logger.log("Wrote new state to ", STATE_FILE)
 
-        logger.log("Local chain updated. Now attempting to update global chain.")
-        destchain = globaldir+CHAIN_FILE
-        deststate = globaldir+STATE_FILE
-        if os.path.exists(destchain):
-            logger.log("Found global chain to update")
-            try:
-                with open(destchain, "r") as gcfile:
-                    globalchain = json.load(gcfile)
-                logger.log("Loaded globalchain")
-            except:
-                logger.log(
-                    "Could not load globalchain. Exiting without updating global. Investigate.")
-                globalchain = []
-                return logger.get_logs()
-                # return True
+#         logger.log("Local chain updated. Now attempting to update global chain.")
+#         destchain = globaldir+CHAIN_FILE
+#         deststate = globaldir+STATE_FILE
+#         if os.path.exists(destchain):
+#             logger.log("Found global chain to update")
+#             try:
+#                 with open(destchain, "r") as gcfile:
+#                     globalchain = json.load(gcfile)
+#                 logger.log("Loaded globalchain")
+#             except:
+#                 logger.log(
+#                     "Could not load globalchain. Exiting without updating global. Investigate.")
+#                 globalchain = []
+#                 return logger.get_logs()
+#                 # return True
 
-            # globalchain exists but does not match, exit
-            if not chainmatch(globalchain, blockchain.chain):
-                logger.log(
-                    "Common portion of global and local chains do not match. Not updating global chain.")
-                return logger.get_logs()
-                # return True	#important to exit to avoid copying local to global
-        try:
-            # if globalchain does not exist, this will create it
-            shutil.copy(CHAIN_FILE, destchain)
-            logger.log("Updated global chain with local copy.")
-            os.chmod(destchain, 0o666)
-            logger.log("Changed mode to 666")
-        except:
-            logger.log(
-                "Couldn't upload global chain or change its mode to 666, investigate.")
-        try:
-            shutil.copy(STATE_FILE, deststate)
-            logger.log("Updated global state with local copy.")
-            os.chmod(deststate, 0o666)
-            logger.log("Changed mode to 666")
-        except:
-            logger.log(
-                "Couldn't update global state or change its mode to 666, investigate.")
+#             # globalchain exists but does not match, exit
+#             if not chainmatch(globalchain, blockchain.chain):
+#                 logger.log(
+#                     "Common portion of global and local chains do not match. Not updating global chain.")
+#                 return logger.get_logs()
+#                 # return True	#important to exit to avoid copying local to global
+#         try:
+#             # if globalchain does not exist, this will create it
+#             shutil.copy(CHAIN_FILE, destchain)
+#             logger.log("Updated global chain with local copy.")
+#             os.chmod(destchain, 0o666)
+#             logger.log("Changed mode to 666")
+#         except:
+#             logger.log(
+#                 "Couldn't upload global chain or change its mode to 666, investigate.")
+#         try:
+#             shutil.copy(STATE_FILE, deststate)
+#             logger.log("Updated global state with local copy.")
+#             os.chmod(deststate, 0o666)
+#             logger.log("Changed mode to 666")
+#         except:
+#             logger.log(
+#                 "Couldn't update global state or change its mode to 666, investigate.")
 
-    else:
-        logger.log("Invalid blockchain, not changing anything.")
+#     else:
+#         logger.log("Invalid blockchain, not changing anything.")
 
     return logger.get_logs()
 #	logger.log(blockchain.chain)
