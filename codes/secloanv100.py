@@ -8,6 +8,7 @@ import json
 import datetime
 import binascii
 import base64
+import sqlite3
 
 from codes.transactionmanager import Transactionmanager
 from codes.chainscanner import Chainscanner
@@ -73,6 +74,30 @@ class SecLoan1():
         self.contractparams=contractparams
         #########
         #code to append contractdata into allcontracts db
+        sdestr= 1 if contractparams['selfdestruct'] else 0
+    #    sdestr=contractparams['selfdestruct']
+        cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
+        cspecs=json.dumps(contractparams['contractspecs'])
+        legpars=json.dumps(contractparams['legalparams'])
+        qparams=(self.contractaddress,
+                contractparams['creator'],
+                contractparams['name'],
+                contractparams['version'],
+                contractparams['actmode'],
+                cstatus,
+                contractparams['next_act_ts'],
+                contractparams['signatories'],
+                contractparams['parentcontractaddress'],
+                contractparams['oracleids'],
+                contractparams['selfdestruct'],
+                cspecs,
+                legpars
+                )
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
+        cur.execute(f'''INSERT INTO contracts
+                (address, creator, name, version, actmode, status, next_act_ts, signatories, parent, oracles, selfdestruct, contractspecs, legalparams)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
         #########
         return self.contractaddress
 
