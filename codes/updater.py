@@ -89,7 +89,7 @@ def run_updater():
         if "transaction" in filename:
             transfiles.append(filename)
 
-    con = sqlite3.connect('../newrl.db')
+    con = sqlite3.connect('newrl.db')
     cur = con.cursor()
     for filename in transfiles:
         file = mempool+filename
@@ -288,7 +288,7 @@ def run_updater():
 
 
 def update_db_states(transactions):
-    con = sqlite3.connect('../newrl.db')
+    con = sqlite3.connect('newrl.db')
     cur = con.cursor()
 
     for transaction in transactions:
