@@ -157,7 +157,7 @@ def run_updater():
                 logger.log(
                     "Found valid transaction, checking if it is already included")
                 # alltranids = cs_prev.getalltransids()
-                transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'").fetchall()
+                transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'")
                 row = transactions_cursor.fetchone()
                 if row is not None:
                     traninclusionflag = True
