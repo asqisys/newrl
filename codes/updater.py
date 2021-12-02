@@ -288,7 +288,7 @@ def run_updater():
 
 
 def update_db_states(transactions):
-    con = sqlite3.connect('newrl.db')
+    con = sqlite3.connect('../newrl.db')
     cur = con.cursor()
 
     for transaction in transactions:
