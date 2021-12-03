@@ -173,10 +173,11 @@ def run_updater():
 
                 textarray.append(transaction)
                 signarray.append(signatures)
-                # try:
-                # 	shutil.move(file, incltrans);
-                # except:
-                # 	logger.log("Couldn't move,",file);
+                try:
+                    os.remove(file)
+                	# shutil.move(file, incltrans);
+                except:
+                	logger.log("Couldn't delete:",file)
                 # for vfile in specificvalfiles:
                 # 	try:
                 # 		shutil.move(vfile, options.itpool)
