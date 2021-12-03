@@ -6,12 +6,13 @@ import os
 import hashlib
 import json
 import datetime
+import time
 import binascii
 import base64
 import sqlite3
 
 from codes.transactionmanager import Transactionmanager
-from codes.chainscanner import Chainscanner
+from codes.chainscanner import Chainscanner, get_wallet_token_balance
 from codes.tokenmanager import Tokenmanager
 
 class SecLoan1():
@@ -19,7 +20,7 @@ class SecLoan1():
     def __init__(self,contractaddress=None):
         self.template="secloan1"
         self.version="1.0.0"
-        self.contractaddress=contractaddress    #this is for instances of this class created for tx creation and other non-chain work
+        self.address=contractaddress    #this is for instances of this class created for tx creation and other non-chain work
         if contractaddress:     #as in this is an existing contract
             self.loadcontract(contractaddress)  #this will populate the params for a given instance of the contract
         #instantiation convetion: for the first time instantiation of a contract, the contractaddress is None, this is to be immediately followed by setup call
@@ -52,7 +53,7 @@ class SecLoan1():
         hash = keccak.new(digest_bits=256)
         hash.update(public_key_bytes)
         keccak_digest = hash.hexdigest()
-        self.contractaddress = '0x' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
+        self.address = '0x' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
         # we have ignored the private key and public key of this because we do not want to transact through key-based signing for a contract
 
         # next we set up the contract status as live
@@ -67,48 +68,72 @@ class SecLoan1():
         #status convention: 0 or None is not setup yet, 1 is setup but not deployed, 2 is setup and deployed, 3 is expired and -1 is terminated
         
         # now we need to update the contract parameters in SC database; for now we are appending to the allcontracts.json
-        self.contractdata={"contractaddress":self.contractaddress,
-                      "contractparams":contractparams,
-                      "ts_init":str(datetime.datetime.now())}
-        print(self.contractdata)
+        contractparams['ts_init'] = time.mktime(datetime.datetime.now().timetuple())
+        #contractparams['ts_init']=str(datetime.datetime.now()
+        contractparams['address']= self.address
         self.contractparams=contractparams
         #########
         #code to append contractdata into allcontracts db
-        sdestr= 1 if contractparams['selfdestruct'] else 0
-    #    sdestr=contractparams['selfdestruct']
+        sdestr=0 if not contractparams['selfdestruct'] else int(contractparams['selfdestruct'])
         cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
         cspecs=json.dumps(contractparams['contractspecs'])
         legpars=json.dumps(contractparams['legalparams'])
-        qparams=(self.contractaddress,
+        qparams=(self.address,
                 contractparams['creator'],
+                contractparams['ts_init'],
                 contractparams['name'],
                 contractparams['version'],
                 contractparams['actmode'],
                 cstatus,
                 contractparams['next_act_ts'],
                 contractparams['signatories'],
-                contractparams['parentcontractaddress'],
+                contractparams['parent'],
                 contractparams['oracleids'],
-                contractparams['selfdestruct'],
+                sdestr,
                 cspecs,
                 legpars
                 )
         con = sqlite3.connect('newrl.db')
         cur = con.cursor()
         cur.execute(f'''INSERT INTO contracts
-                (address, creator, name, version, actmode, status, next_act_ts, signatories, parent, oracles, selfdestruct, contractspecs, legalparams)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
+                (address, creator, ts_init, name, version, actmode, status, next_act_ts, signatories, parent, oracles, selfdestruct, contractspecs, legalparams)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
         con.commit()
         con.close()
         #########
-        return self.contractaddress
+        return self.address
 
     def loadcontract(self,contractaddress):
         #this loads the contract from the state db
         #it should take as input contractaddress and output the contractparams as they are in the db as of the time of calling it
         #the output will populate self.contractparams to be used by other functions
-        #########
-        pass
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
+        contract_cursor = cur.execute('SELECT * FROM contracts WHERE address = :address', {
+                    'address': contractaddress})
+        contract_row = contract_cursor.fetchone()
+        contract = contract_row if contract_row is not None else 0
+        con.close()
+        ### currently this gets only the first item in the contract row i.e. the address itself.
+        ### need to use suitable code to get the full record
+        print(contract)
+        self.contractparams={}
+        self.contractparams['address']=contractaddress
+        self.contractparams['creator']=contract[1]
+        self.contractparams['ts_init']=contract[2]
+        self.contractparams['name']=contract[3]
+        self.contractparams['version']=contract[4]
+        self.contractparams['actmode']=contract[5]
+        self.contractparams['status']=contract[6]
+        self.contractparams['next_act_ts']=contract[7]
+        self.contractparams['signatories']=contract[8]
+        self.contractparams['parent']=contract[9]
+        self.contractparams['oracleids']=contract[10]
+        self.contractparams['selfdestruct']=contract[11]
+        self.contractparams['contractspecs']=contract[12]
+        self.contractparams['legalparams']=contract[13]
+        print(self.contractparams)
+        return self.contractparams
 
     #the below function creates the transaction of a give type
     def create_tx(self,ttype,tspdata,currency="INR",fee=0.0,mempool="./mempool",statefile="./state.json",descr=None): 

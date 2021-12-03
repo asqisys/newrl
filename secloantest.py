@@ -30,8 +30,9 @@ def test_secloan1():
         }
     }
     callparamjson=json.dumps(callparams)
-    loan1=secloanv100.SecLoan1()
-    loan1.setup(callparamjson)
-    loan1.create_loan_token()
+#    loan1=secloanv100.SecLoan1()
+#    loan1.setup(callparamjson)
+#    loan1.create_loan_token()
+    loan1=secloanv100.SecLoan1("0x6c08e77f695e38394fb8dd1a58f42b7394dac9a7")
 if __name__ == '__main__':
     test_secloan1()
