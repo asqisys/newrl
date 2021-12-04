@@ -1,6 +1,6 @@
 import sqlite3
 
-con = sqlite3.connect('newrl.db')
+con = sqlite3.connect('../newrl.db')
 
 cur = con.cursor()
 

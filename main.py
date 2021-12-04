@@ -146,7 +146,6 @@ async def create_token(
     request: CreateTokenRequest
 ):
     token_data = {
-        "tokencode": 0,
         "tokenname": request.token_name,
         "tokentype": request.token_type,
         "tokenattributes": request.token_attributes,
