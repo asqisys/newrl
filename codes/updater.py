@@ -325,11 +325,13 @@ def update_db_states(transactions):
                 token['amount_created'],
                 token['value_created'],
                 token['sc_flag'],
+                transaction['trans_code'],
                 token_attributes_json
             )
             cur.execute(f'''INSERT OR IGNORE INTO tokens
-				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
+                amount_created, value_created, sc_flag, parent_transaction_code, token_attributes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
 
             balance = get_wallet_token_balance(
                 cur, token['first_owner'], token['tokencode'])

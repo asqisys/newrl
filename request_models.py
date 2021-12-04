@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum
+from typing import List, Optional
 
 
 class BalanceType(Enum):
@@ -34,5 +35,8 @@ class CreateTokenRequest(BaseModel):
     first_owner: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
     custodian: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
     legal_doc: str = '686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401'
-    amount_created: float = 1000000.0
-    value_created: float = 10000.0
+    amount_created: int = 1000000
+    value_created: int = 10000
+    disallowed_regions: Optional[List[str]] = []
+    is_smart_contract_token: bool = False
+    token_attributes: dict

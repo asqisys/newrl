@@ -28,6 +28,7 @@ cur.execute('''
                 value_created real,
                 sc_flag integer,
                 disallowed text,
+                parent_transaction_code text,
                 token_attributes text)
                 ''')
 
