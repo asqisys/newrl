@@ -3,29 +3,13 @@
 import json
 import os
 import shutil
-from optparse import OptionParser
 
 from .blockchain import Blockchain
-from .constants import MEMPOOL_PATH
+from .constants import ALL_WALLETS_FILE, CHAIN_FILE, MEMPOOL_PATH
 
 
 def main():
-    parser = OptionParser()
-#	parser.add_option("-g", "--genfile", dest="genfile",default="genesis.json",help="Input genesisfile. default - genesis.json");
-    parser.add_option("-c", "--chainfile", dest="chainfile",
-                      default="chain.json", help="Input chainfile. default -chain.json")
-    parser.add_option("-s", "--statefile", dest="statefile",
-                      default="state.json", help="Input statefile. default - state.json")
-
-    (options, args) = parser.parse_args()
-    #blockchain = Blockchain("inginesis.json")
-    if not options.chainfile or not options.statefile:
-        print("No chainfile or statefile specified, exiting.")
-    #	exit()
-        return False
-
-    blockchain = Blockchain(options.chainfile)
-    statefile = options.statefile
+    blockchain = Blockchain(CHAIN_FILE)
     print("Loaded chain validity status : ",
           blockchain.chain_valid(blockchain.chain))
 

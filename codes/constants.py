@@ -1,6 +1,7 @@
 # Global constants in this file
 
 MEMPOOL_PATH = 'data/mempool/'
+TMP_PATH = 'tmp/'
 STATE_DB = 'newrl_state.db'
 CHAIN_DB = 'newrl_chain.db'
 PORT = 8080
