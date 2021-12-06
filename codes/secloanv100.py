@@ -13,7 +13,7 @@ import sqlite3
 
 from codes.transactionmanager import Transactionmanager
 from codes.chainscanner import Chainscanner, get_wallet_token_balance
-from codes.tokenmanager import Tokenmanager
+from codes.tokenmanager import create_token_transaction
 
 class SecLoan1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
@@ -202,22 +202,24 @@ class SecLoan1():
             return False
 
     def create_loan_token(self):
-        name="Secloantoken"+self.contractaddress[:5]
+        name="Secloantoken"+self.address[:5]
+        contractspecs=json.loads(self.contractparams['contractspecs'])
         tokendata={"tokencode": 0,
                    "tokenname": name,
                    "tokentype": 62,
                    "tokenattributes": self.contractparams,
-                   "first_owner": self.contractaddress,   #first owner is contract address till the contract is executed
-                   "custodian": self.contractparams['contractspecs']['borrowerwallet'],
+                   "first_owner": self.address,   #first owner is contract address till the contract is executed
+                   "custodian": contractspecs['borrowerwallet'],
                    "legaldochash": self.contractparams['legalparams'],
-                   "amount_created": self.contractparams['contractspecs']['loanamount'],
-                   "value_created": self.contractparams['contractspecs']['loanamount'],
+                   "amount_created": contractspecs['loanamount'],
+                   "value_created": contractspecs['loanamount'],
                    "disallowed": [],
                    "sc_flag": True,
-                   "sc_address": self.contractaddress}
-        loantoken=Tokenmanager();
-        tx = loantoken.sccreate(tokendata);
-        self.contractparams['contractspecs']['loantokencode'] = tx['transaction']['specific_data']['tokencode']
+                   "sc_address": self.address}
+        tx=create_token_transaction(token_data=tokendata);
+        #tx = loantoken.sccreate(tokendata);
+        #self.contractparams['contractspecs']['loantokencode'] = tx['transaction']['specific_data']['tokencode']
+        print(tx)
         return tx
 
     def transferlend(self):

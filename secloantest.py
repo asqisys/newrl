@@ -22,8 +22,8 @@ def test_secloan1():
                 "ltv":0,
                 "sec_token_code":0,
                 "sec_token_amount":0,
-                "borrowerwallet":None,
-                "lenderwallet":None,
+                "borrowerwallet":"abcdef",
+                "lenderwallet":"324543",
                 "secprovider":None,
                 "special_params":{}
                 },
@@ -33,6 +33,7 @@ def test_secloan1():
 #    loan1=secloanv100.SecLoan1()
 #    loan1.setup(callparamjson)
 #    loan1.create_loan_token()
-    loan1=secloanv100.SecLoan1("0x7094d659c9d7682b3ea2b7314684b621be55f6da")
+    loan1=secloanv100.SecLoan1("0xa87cfed9b43a84d621b6ab4e2b928ac9c7e6c5df")
+    loan1.create_loan_token()
 if __name__ == '__main__':
     test_secloan1()

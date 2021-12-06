@@ -129,10 +129,10 @@ class Transactionmanager:
         transaction_all = {'transaction': self.transaction,
                            'signatures': self.signatures}
     #	print(self.signatures)
-        with open(file, "w") as writefile:
-            #	json.dump(self.transaction, writefile);
-            json.dump(transaction_all, writefile)
-            print("Wrote to ", file)
+    #    with open(file, "w") as writefile:
+    #        #	json.dump(self.transaction, writefile);
+    #        json.dump(transaction_all, writefile)
+    #        print("Wrote to ", file)
 
         # transaction = transaction_all['transaction']
         # specific_data = json.dumps(transaction['specific_data']) if 'specific_data' in transaction else ''
@@ -149,7 +149,7 @@ class Transactionmanager:
         # 			'{specific_data}'
         # 		)''')
         # self.con.commit()
-        return file
+        return transaction_all
 
     # this takes keybytes and not binary string and not base64 string
     def signtransaction(self, keybytes, address):
