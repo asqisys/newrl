@@ -314,9 +314,12 @@ def update_db_states(transactions):
 
         if transaction['type'] == 2:  # this is a token creation transaction
             token = transaction_data
+            token_cursor = cur.execute("SELECT max(tokencode) FROM tokens").fetchone()
+            max_token_code = token_cursor[0] if token_cursor is not None else 0
+            max_token_code = max_token_code + 1
             token_attributes_json = json.dumps(token['tokenattributes'])
             query_params = (
-                token['tokencode'],
+                max_token_code,
                 token['tokenname'],
                 token['tokentype'],
                 token['first_owner'],
@@ -325,11 +328,13 @@ def update_db_states(transactions):
                 token['amount_created'],
                 token['value_created'],
                 token['sc_flag'],
+                transaction['trans_code'],
                 token_attributes_json
             )
             cur.execute(f'''INSERT OR IGNORE INTO tokens
-				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
+                amount_created, value_created, sc_flag, parent_transaction_code, token_attributes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
 
             balance = get_wallet_token_balance(
                 cur, token['first_owner'], token['tokencode'])

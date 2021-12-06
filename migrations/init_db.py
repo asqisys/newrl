@@ -1,6 +1,6 @@
 import sqlite3
 
-con = sqlite3.connect('newrl.db')
+con = sqlite3.connect('../newrl.db')
 
 cur = con.cursor()
 
@@ -28,6 +28,7 @@ cur.execute('''
                 value_created real,
                 sc_flag integer,
                 disallowed text,
+                parent_transaction_code text,
                 token_attributes text)
                 ''')
 
