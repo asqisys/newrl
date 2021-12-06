@@ -168,7 +168,11 @@ async def create_token(
 
 @app.post("/run-updater", response_class=HTMLResponse)
 async def run_updater():
-    log = updater.run_updater()
+    try:
+        log = updater.run_updater()
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
     HTMLResponse(content=log, status_code=200)
     return log
 
