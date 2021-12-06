@@ -30,7 +30,7 @@ class SecLoan1():
         #this is called by a tx type 3 signed by the creator, it calls the function setp with parameters as params
         #setup implies a transaction for contract address creation
         callparams=json.loads(callparamsjson)
-        contractparams=callparams['contractparams']
+        contractparams=callparams
         if contractparams['status']==-1:
             print("Contract is already terminated, cannot setup. Exiting.")
             return False
@@ -96,7 +96,7 @@ class SecLoan1():
         con = sqlite3.connect('newrl.db')
         cur = con.cursor()
         cur.execute(f'''INSERT INTO contracts
-                (address, creator, ts_init, name, version, actmode, status, next_act_ts, signatories, parent, oracles, selfdestruct, contractspecs, legalparams)
+                (address, creator, ts_init, name, version, actmode, status, next_act_ts, signatories, parent, oracleids, selfdestruct, contractspecs, legalparams)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
         con.commit()
         con.close()
@@ -114,9 +114,7 @@ class SecLoan1():
         contract_row = contract_cursor.fetchone()
         contract = contract_row if contract_row is not None else 0
         con.close()
-        ### currently this gets only the first item in the contract row i.e. the address itself.
-        ### need to use suitable code to get the full record
-        print(contract)
+        #print(contract)
         self.contractparams={}
         self.contractparams['address']=contractaddress
         self.contractparams['creator']=contract[1]
@@ -132,7 +130,7 @@ class SecLoan1():
         self.contractparams['selfdestruct']=contract[11]
         self.contractparams['contractspecs']=contract[12]
         self.contractparams['legalparams']=contract[13]
-        print(self.contractparams)
+        print("Loaded the contract with following data: \n",self.contractparams)
         return self.contractparams
 
     #the below function creates the transaction of a give type
