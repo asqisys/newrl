@@ -98,6 +98,8 @@ class SecLoan1():
         cur.execute(f'''INSERT INTO contracts
                 (address, creator, name, version, actmode, status, next_act_ts, signatories, parent, oracles, selfdestruct, contractspecs, legalparams)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
+        con.commit()
+        con.close()
         #########
         return self.contractaddress
 

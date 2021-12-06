@@ -1,4 +1,4 @@
-# Python programm to create object that enables addition of a block
+# Create an object for tokens on blockchain Newrl
 
 import datetime
 
