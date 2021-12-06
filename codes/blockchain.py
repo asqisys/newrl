@@ -10,42 +10,40 @@ import sqlite3
 class Blockchain:
 
     def __init__(self, genesisfile=None):
-        self.con = sqlite3.connect('newrl.db')
-        self.cur = self.con.cursor()
-
         self.chain = []
         self.genesisfile = genesisfile
-        if genesisfile:
-            self.loadfromfile(genesisfile)
-#			with open(genesisfile,"r") as file:
-#				print("Starting with genesis file: ",genesisfile)
-#				chain=json.load(file);
-#				block = chain[0];
-            block = self.chain[0]
-        else:
-            print("No genesis file, starting new chain with standard genesis params.")
-            timestamp = str(datetime.datetime.now())
-            transactions = [{'timestamp': timestamp, 'type': 0, 'currency': "INR", 'fee': 0.0,
-                             'descr': "Genesis Block", 'valid': 1, 'block_index': 0, 'specific_data': []}]
-            block = {'index': 1,
-                     'timestamp': timestamp,
-                     'proof': 0,
-                     'text': {'transactions': transactions},
-                     'previous_hash': 0}
-            proof = self.proof_of_work(block)
-            self.create_block(block['timestamp'], proof, 0, block['text'])
-            if self.chain_valid(self.chain):
-                with open("inginesis.json", "w") as chainwrite:  # "inginesis.json"
-                    json.dump(self.chain, chainwrite)
-                print("Overwrote inginesis.json")  # "inginesis.json"
+#         if genesisfile:
+#             self.loadfromfile(genesisfile)
+# #			with open(genesisfile,"r") as file:
+# #				print("Starting with genesis file: ",genesisfile)
+# #				chain=json.load(file);
+# #				block = chain[0];
+#         else:
+#             print("No genesis file, starting new chain with standard genesis params.")
+#             timestamp = str(datetime.datetime.now())
+#             transactions = [{'timestamp': timestamp, 'type': 0, 'currency': "INR", 'fee': 0.0,
+#                              'descr': "Genesis Block", 'valid': 1, 'block_index': 0, 'specific_data': []}]
+#             block = {'index': 1,
+#                      'timestamp': timestamp,
+#                      'proof': 0,
+#                      'text': {'transactions': transactions},
+#                      'previous_hash': 0}
+#             proof = self.proof_of_work(block)
+#             self.create_block(block['timestamp'], proof, 0, block['text'])
+#             if self.chain_valid(self.chain):
+#                 with open("inginesis.json", "w") as chainwrite:  # "inginesis.json"
+#                     json.dump(self.chain, chainwrite)
+#                 print("Overwrote inginesis.json")  # "inginesis.json"
 
 #		print("Genesis block is \n",block,"\n")
 #		print("The hash of genesis block is ",self.hash(block),"\n")
 #		self.create_block(block['timestamp'],block['proof'], 0, block['text'])
 
     def create_block(self, timestamp, proof, previous_hash, text):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         print("adding a block")
-        block_index = self.get_last_block_index() + 1
+        block_index = self.get_last_block_index(cur) + 1
         block = {'index': block_index,
                  'timestamp': timestamp,
                  'proof': proof,
@@ -56,15 +54,16 @@ class Blockchain:
         transactions_hash = self.hash(text['transactions'])
         db_block_data = (block_index, timestamp, proof,
                          previous_hash, block_hash, transactions_hash)
-        self.cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
-        self.con.commit()
+        cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
+        con.commit()
+        con.close()
         return block
 
-    def get_last_block_index(self):
-        last_block_cursor = self.cur.execute(
+    def get_last_block_index(self, cur):
+        last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
         last_block = last_block_cursor.fetchone()
-        return last_block[0] if last_block_cursor is not None else 0
+        return last_block[0]
 
     # proof of work which takes a block with proof set as 0 as input and returns the proof that makes its hash start with 0000
     def proof_of_work(self, block):
@@ -115,10 +114,13 @@ class Blockchain:
 
 # Mining a new block
     def mine_block(self, text):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         print("starting the mining step 1")
-        last_block_cursor = self.cur.execute(
+        last_block_cursor = cur.execute(
             'SELECT hash FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
+        con.close()
         previous_hash = last_block[0] if last_block is not None else 0
         # print(last_block)
         # previous_block = self.chain[-1]
@@ -146,34 +148,43 @@ class Blockchain:
         return response
 
     def get_latest_ts(self):
-        chain = self.chain
-        if len(chain) < 1:
-            print("very short chain; returning with min ts as latest")
-            latest_ts = datetime.datetime.strptime(
-                "2000-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
-            return latest_ts
-        latest_block = chain[len(chain)-1]
-#		if len(chain)==1:
-#			return latest_block['timestamp'][:-7]
-        try:
-            transactions = latest_block['text']['transactions']
-#			print("transactions of latest block are ",transactions)
-#			latest_ts = datetime.datetime.strptime("2000-01-01 00:00:00" ,"%Y-%m-%d %H:%M:%S");
-            latest_ts = datetime.datetime.strptime(
-                latest_block['timestamp'][:-7], "%Y-%m-%d %H:%M:%S")
-            # the above is useful for empty blocks
-            for transaction in transactions:
-                ts = datetime.datetime.strptime(
-                    transaction['timestamp'][:-7], "%Y-%m-%d %H:%M:%S")
-#				print("ts of a ne trans : ",ts)
-                if ts > latest_ts:
-                    latest_ts = ts
-        except:
-            latest_ts = datetime.datetime.strptime(
-                latest_block['timestamp'][:-7], "%Y-%m-%d %H:%M:%S")
-        return latest_ts
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
+        last_block_cursor = cur.execute(
+            f'''SELECT timestamp FROM blocks ORDER BY timestamp DESC LIMIT 1''')
+        last_block = last_block_cursor.fetchone()
+        ts = datetime.datetime.strptime(last_block[0], "%Y-%m-%d %H:%M:%S.%f")
+        return ts
+#         chain = self.chain
+#         if len(chain) < 1:
+#             print("very short chain; returning with min ts as latest")
+#             latest_ts = datetime.datetime.strptime(
+#                 "2000-01-01 00:00:00", "%Y-%m-%d %H:%M:%S")
+#             return latest_ts
+#         latest_block = chain[len(chain)-1]
+# #		if len(chain)==1:
+# #			return latest_block['timestamp'][:-7]
+#         try:
+#             transactions = latest_block['text']['transactions']
+# #			print("transactions of latest block are ",transactions)
+# #			latest_ts = datetime.datetime.strptime("2000-01-01 00:00:00" ,"%Y-%m-%d %H:%M:%S");
+#             latest_ts = datetime.datetime.strptime(
+#                 latest_block['timestamp'][:-7], "%Y-%m-%d %H:%M:%S")
+#             # the above is useful for empty blocks
+#             for transaction in transactions:
+#                 ts = datetime.datetime.strptime(
+#                     transaction['timestamp'][:-7], "%Y-%m-%d %H:%M:%S")
+# #				print("ts of a ne trans : ",ts)
+#                 if ts > latest_ts:
+#                     latest_ts = ts
+#         except:
+#             latest_ts = datetime.datetime.strptime(
+#                 latest_block['timestamp'][:-7], "%Y-%m-%d %H:%M:%S")
+#         return latest_ts
 
     def add_transactions_to_block(self, block_index, transactions):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         print(block_index, transactions)
         for transaction in transactions:
             specific_data = json.dumps(
@@ -189,9 +200,10 @@ class Blockchain:
                 transaction['valid'],
                 specific_data
             )
-            self.cur.execute(f'''INSERT OR IGNORE INTO transactions
+            cur.execute(f'''INSERT OR IGNORE INTO transactions
 				(block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+        con.close()
 
     def loadfromfile(self, chainfile):
         try:

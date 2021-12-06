@@ -1,24 +1,28 @@
-from codes.chainscanner import Chainscanner
 import json
-from codes.kycwallet import Walletmanager
-from codes.tokenmanager import Tokenmanager
-from codes.transfermanager import Transfermanager
-from request_models import BalanceRequest, BalanceType, CreateTokenRequest, TransferRequest
-from typing import Optional
-from starlette.responses import FileResponse
-from codes.utils import save_file_and_get_path
-from codes.transactionmanager import Transactionmanager
+import logging
+
 from fastapi.datastructures import UploadFile
 from fastapi.params import File
 import uvicorn
 from fastapi.openapi.utils import get_openapi
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from starlette.responses import FileResponse
+
+from codes.chainscanner import Chainscanner, download_chain, download_state
+from codes.kycwallet import Walletmanager
+from codes.tokenmanager import create_token_transaction
+from codes.transfermanager import Transfermanager
+from request_models import BalanceRequest, BalanceType, CreateTokenRequest, TransferRequest
+from codes.utils import save_file_and_get_path
+from codes.transactionmanager import Transactionmanager
 
 from codes import validator
 from codes import signmanager
 from codes import updater
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="The Newrl APIs",
@@ -140,34 +144,25 @@ async def validate(transactionfile: UploadFile = File(...)):
 @app.post("/create-token")
 async def create_token(
     request: CreateTokenRequest
-    # token_name,
-    # token_type,
-    # first_owner,
-    # custodian,
-    # legal_doc,
-    # amount_created,
-    # value_created,
 ):
-    tokendata = {
-        "tokencode": 0,
+    token_data = {
         "tokenname": request.token_name,
         "tokentype": request.token_type,
-        "tokenattributes": {},
+        "tokenattributes": request.token_attributes,
         "first_owner": request.first_owner,
         "custodian": request.custodian,
         "legaldochash": request.legal_doc,
-        "amount_created": int(request.amount_created),
-        "value_created": int(request.value_created),
-        "disallowed": [],
-        "sc_flag": False
+        "amount_created": request.amount_created,
+        "value_created": request.value_created,
+        "disallowed": request.disallowed_regions,
+        "sc_flag": request.is_smart_contract_token
     }
-    with open("tokennew.json", 'w') as file:
-        json.dump(tokendata, file)
-    newtoken = Tokenmanager()
-    newtoken.loadandcreate("tokennew.json")
-    newtoken.dumptokendata("firsttoken.json")
-    tokenfile_path = "firsttoken.json"
-    response_file = FileResponse(tokenfile_path, filename="newtoken.json")
+    try:
+        token_create_transaction_filename = create_token_transaction(token_data)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    response_file = FileResponse(token_create_transaction_filename, filename="token_create_transaction.json")
     return response_file
 
 
@@ -179,13 +174,13 @@ async def run_updater():
 
 
 @app.get("/download-chain")
-async def download_chain():
-    return FileResponse("chain.json", filename="chain.json")
+async def download_chain_api():
+    return download_chain()
 
 
 @app.get("/download-state")
-async def download_state():
-    return FileResponse("state.json", filename="state.json")
+async def download_state_api():
+    return download_state()
 
 
 @app.post("/get-balance")

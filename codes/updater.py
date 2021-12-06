@@ -41,6 +41,8 @@ def run_updater():
 #	blockchain = Blockchain();
 #	blockchain.loadfromfile("chain.json");
 
+
+
     destchain = globaldir+CHAIN_FILE
     deststate = globaldir+STATE_FILE
     if os.path.exists(destchain):
@@ -87,6 +89,8 @@ def run_updater():
         if "transaction" in filename:
             transfiles.append(filename)
 
+    con = sqlite3.connect('newrl.db')
+    cur = con.cursor()
     for filename in transfiles:
         file = mempool+filename
     #	if "validation" in file:	#the validation files
@@ -152,22 +156,28 @@ def run_updater():
                 #	logger.log("Found valid transaction, adding to block. Moving file to ",incltrans)
                 logger.log(
                     "Found valid transaction, checking if it is already included")
-                alltranids = cs_prev.getalltransids()
-                for tranid in alltranids:
-                    if tranid['trans_code'] == transaction['trans_code']:
-                        logger.log(
-                            "Transaction with id ", transaction['trans_code'], " is already included in block number ", tranid['blockindex'])
-                        traninclusionflag = True
-                        break
+                # alltranids = cs_prev.getalltransids()
+                transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'")
+                row = transactions_cursor.fetchone()
+                if row is not None:
+                    traninclusionflag = True
+                    continue
+                # for tranid in alltranids:
+                #     if tranid['trans_code'] == transaction['trans_code']:
+                #         logger.log(
+                #             "Transaction with id ", transaction['trans_code'], " is already included in block number ", tranid['blockindex'])
+                #         traninclusionflag = True
+                #         break
                 if traninclusionflag:  # the current transaction is already included in some earlier block
                     continue  # this takes the process to the next transaction
 
                 textarray.append(transaction)
                 signarray.append(signatures)
-                # try:
-                # 	shutil.move(file, incltrans);
-                # except:
-                # 	logger.log("Couldn't move,",file);
+                try:
+                    os.remove(file)
+                	# shutil.move(file, incltrans);
+                except:
+                	logger.log("Couldn't delete:",file)
                 # for vfile in specificvalfiles:
                 # 	try:
                 # 		shutil.move(vfile, options.itpool)
@@ -208,70 +218,70 @@ def run_updater():
     # the chain is updated. Now we update the state db using transaction data
     update_db_states(transactionsdata['transactions'])
 
-    if blockchain.chain_valid(blockchain.chain):
-        #		chainjsonstr=json.dumps(blockchain.chain);
-        with open(CHAIN_FILE, "w") as chainwrite:
-            json.dump(blockchain.chain, chainwrite)
-        logger.log("Wrote to ", CHAIN_FILE)
-        # updating state now
-        cs = Chainscanner(CHAIN_FILE)
-        all_wallets = cs.getallwallets()
-        all_tokens = cs.getalltokens()
-        all_balances = cs.getallbalances()
-        newstate = {'all_wallets': all_wallets,
-                    'all_tokens': all_tokens, 'all_balances': all_balances}
-#		update_db_states(newstate)
-        # if os.path.exists(STATE_FILE):
-        # 	ts=str(datetime.datetime.now());
-        # 	statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
-        # 	shutil.move(STATE_FILE,statearchivefile)
-        # 	logger.log("Moved existing state file - ",STATE_FILE," - to ",statearchivefile)
-        with open(STATE_FILE, 'w') as writefile:
-            json.dump(newstate, writefile)
-            logger.log("Wrote new state to ", STATE_FILE)
+#     if blockchain.chain_valid(blockchain.chain):
+#         #		chainjsonstr=json.dumps(blockchain.chain);
+#         with open(CHAIN_FILE, "w") as chainwrite:
+#             json.dump(blockchain.chain, chainwrite)
+#         logger.log("Wrote to ", CHAIN_FILE)
+#         # updating state now
+#         cs = Chainscanner(CHAIN_FILE)
+#         all_wallets = cs.getallwallets()
+#         all_tokens = cs.getalltokens()
+#         all_balances = cs.getallbalances()
+#         newstate = {'all_wallets': all_wallets,
+#                     'all_tokens': all_tokens, 'all_balances': all_balances}
+# #		update_db_states(newstate)
+#         # if os.path.exists(STATE_FILE):
+#         # 	ts=str(datetime.datetime.now());
+#         # 	statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
+#         # 	shutil.move(STATE_FILE,statearchivefile)
+#         # 	logger.log("Moved existing state file - ",STATE_FILE," - to ",statearchivefile)
+#         with open(STATE_FILE, 'w') as writefile:
+#             json.dump(newstate, writefile)
+#             logger.log("Wrote new state to ", STATE_FILE)
 
-        logger.log("Local chain updated. Now attempting to update global chain.")
-        destchain = globaldir+CHAIN_FILE
-        deststate = globaldir+STATE_FILE
-        if os.path.exists(destchain):
-            logger.log("Found global chain to update")
-            try:
-                with open(destchain, "r") as gcfile:
-                    globalchain = json.load(gcfile)
-                logger.log("Loaded globalchain")
-            except:
-                logger.log(
-                    "Could not load globalchain. Exiting without updating global. Investigate.")
-                globalchain = []
-                return logger.get_logs()
-                # return True
+#         logger.log("Local chain updated. Now attempting to update global chain.")
+#         destchain = globaldir+CHAIN_FILE
+#         deststate = globaldir+STATE_FILE
+#         if os.path.exists(destchain):
+#             logger.log("Found global chain to update")
+#             try:
+#                 with open(destchain, "r") as gcfile:
+#                     globalchain = json.load(gcfile)
+#                 logger.log("Loaded globalchain")
+#             except:
+#                 logger.log(
+#                     "Could not load globalchain. Exiting without updating global. Investigate.")
+#                 globalchain = []
+#                 return logger.get_logs()
+#                 # return True
 
-            # globalchain exists but does not match, exit
-            if not chainmatch(globalchain, blockchain.chain):
-                logger.log(
-                    "Common portion of global and local chains do not match. Not updating global chain.")
-                return logger.get_logs()
-                # return True	#important to exit to avoid copying local to global
-        try:
-            # if globalchain does not exist, this will create it
-            shutil.copy(CHAIN_FILE, destchain)
-            logger.log("Updated global chain with local copy.")
-            os.chmod(destchain, 0o666)
-            logger.log("Changed mode to 666")
-        except:
-            logger.log(
-                "Couldn't upload global chain or change its mode to 666, investigate.")
-        try:
-            shutil.copy(STATE_FILE, deststate)
-            logger.log("Updated global state with local copy.")
-            os.chmod(deststate, 0o666)
-            logger.log("Changed mode to 666")
-        except:
-            logger.log(
-                "Couldn't update global state or change its mode to 666, investigate.")
+#             # globalchain exists but does not match, exit
+#             if not chainmatch(globalchain, blockchain.chain):
+#                 logger.log(
+#                     "Common portion of global and local chains do not match. Not updating global chain.")
+#                 return logger.get_logs()
+#                 # return True	#important to exit to avoid copying local to global
+#         try:
+#             # if globalchain does not exist, this will create it
+#             shutil.copy(CHAIN_FILE, destchain)
+#             logger.log("Updated global chain with local copy.")
+#             os.chmod(destchain, 0o666)
+#             logger.log("Changed mode to 666")
+#         except:
+#             logger.log(
+#                 "Couldn't upload global chain or change its mode to 666, investigate.")
+#         try:
+#             shutil.copy(STATE_FILE, deststate)
+#             logger.log("Updated global state with local copy.")
+#             os.chmod(deststate, 0o666)
+#             logger.log("Changed mode to 666")
+#         except:
+#             logger.log(
+#                 "Couldn't update global state or change its mode to 666, investigate.")
 
-    else:
-        logger.log("Invalid blockchain, not changing anything.")
+#     else:
+#         logger.log("Invalid blockchain, not changing anything.")
 
     return logger.get_logs()
 #	logger.log(blockchain.chain)
@@ -304,9 +314,12 @@ def update_db_states(transactions):
 
         if transaction['type'] == 2:  # this is a token creation transaction
             token = transaction_data
+            token_cursor = cur.execute("SELECT max(tokencode) FROM tokens").fetchone()
+            max_token_code = token_cursor[0] if token_cursor is not None else 0
+            max_token_code = max_token_code + 1
             token_attributes_json = json.dumps(token['tokenattributes'])
             query_params = (
-                token['tokencode'],
+                max_token_code,
                 token['tokenname'],
                 token['tokentype'],
                 token['first_owner'],
@@ -315,11 +328,13 @@ def update_db_states(transactions):
                 token['amount_created'],
                 token['value_created'],
                 token['sc_flag'],
+                transaction['trans_code'],
                 token_attributes_json
             )
             cur.execute(f'''INSERT OR IGNORE INTO tokens
-				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
+                amount_created, value_created, sc_flag, parent_transaction_code, token_attributes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
 
             balance = get_wallet_token_balance(
                 cur, token['first_owner'], token['tokencode'])
