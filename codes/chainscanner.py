@@ -230,6 +230,13 @@ def download_state():
     }
     return state
 
+def get_transaction(transaction_code):
+        con = sqlite3.connect('newrl.db')
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        transaction_cursor = cur.execute('SELECT * FROM transactions where transaction_code=?', (transaction_code,)).fetchone()
+        return dict(transaction_cursor)
+
 def download_chain():
     con = sqlite3.connect('newrl.db')
     con.row_factory = sqlite3.Row
