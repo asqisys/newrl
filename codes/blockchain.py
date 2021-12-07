@@ -203,6 +203,7 @@ class Blockchain:
             cur.execute(f'''INSERT OR IGNORE INTO transactions
 				(block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+        con.commit()
         con.close()
 
     def loadfromfile(self, chainfile):
