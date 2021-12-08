@@ -51,3 +51,12 @@ class CreateWalletRequest(BaseModel):
     jurisdiction: str = "910"
     kyc_docs: List[KYCDoc] = [{'type': 1, 'hash': '686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401'}]
     specific_data: dict
+
+
+class AddWalletRequest(BaseModel):
+    custodian_address: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
+    ownertype: str = "1"
+    jurisdiction: str = "910"
+    kyc_docs: List[KYCDoc] = [{'type': 1, 'hash': '686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401'}]
+    specific_data: dict
+    public_key: str
