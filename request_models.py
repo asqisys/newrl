@@ -40,3 +40,14 @@ class CreateTokenRequest(BaseModel):
     disallowed_regions: Optional[List[str]] = []
     is_smart_contract_token: bool = False
     token_attributes: dict
+
+class KYCDoc(BaseModel):
+    type: int
+    hash: str
+
+class CreateWalletRequest(BaseModel):
+    custodian_address: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
+    ownertype: str = "1"
+    jurisdiction: str = "910"
+    kyc_docs: List[KYCDoc] = [{'type': 1, 'hash': '686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401'}]
+    specific_data: dict

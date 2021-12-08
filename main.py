@@ -10,10 +10,10 @@ from fastapi.responses import HTMLResponse
 from starlette.responses import FileResponse
 
 from codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
-from codes.kycwallet import Walletmanager
+from codes.kycwallet import get_digest, make_wallet
 from codes.tokenmanager import create_token_transaction
 from codes.transfermanager import Transfermanager
-from request_models import BalanceRequest, BalanceType, CreateTokenRequest, TransferRequest
+from request_models import BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest
 from codes.utils import save_file_and_get_path
 from codes.transactionmanager import Transactionmanager
 
@@ -84,33 +84,21 @@ async def transfer(transferfile: UploadFile = File(...)):
 
 
 @app.post("/add-wallet")
-async def add_wallet_api(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
-                         ownertype: str = "1", jurisdiction: str = "910",
-                         kyc1: UploadFile = File(...), kyc2: UploadFile = File(...)):
+async def add_wallet_api(req: CreateWalletRequest):
     """Add a new wallet under a specified custodian"""
-    f1 = save_file_and_get_path(kyc1)
-    f2 = save_file_and_get_path(kyc2)
-    idfile = f1
-    adfile = f2
-    kyccust = "0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42"
-    walletfile = "all_wallets.json"
-    ownertype = 1
-    jurisdiction = 910
+    req = req.dict()
+    add_wallet_transaction = make_wallet(
+        req['custodian_address'], req['kyc_docs'], 
+        req['ownertype'], req['jurisdiction'], req['specific_data'])
 
-    wm = Walletmanager(walletfile)
-    files = []
-    files.append(idfile)
-    files.append(adfile)
-    kycdocs = [1, 2]
-    specific_data = []
-    kyccust = kyccust
-    transferfile, keysdata = wm.wallet_maker(
-        kyccust, kycdocs, files, ownertype, jurisdiction, specific_data)
-#	wm.kycdocslinker(files,kycdocs)
-    with open(keysdata[0]['address'] + "_wallet.json", "w") as writefile:
-        json.dump(keysdata, writefile)
-    # wm.walletlistupdater()
-    return FileResponse(transferfile, filename="add_wallet_transaction.json")
+    return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
+
+
+@app.post("/get-file-hash")
+async def validate(transactionfile: UploadFile = File(...)):
+    """Get hash code for a file. Ideally done at the application side"""
+    file_tmp_path = save_file_and_get_path(transactionfile)
+    return get_digest(file_tmp_path)
 
 
 @app.post("/get-wallet-file")
