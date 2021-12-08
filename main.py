@@ -72,17 +72,6 @@ async def create_transfer(transfer_request: TransferRequest):
     return transferfile
 
 
-@app.post("/transfer")
-async def transfer(transferfile: UploadFile = File(...)):
-    """Execute a transaction from a given wallet file. Alternate to /create-transfer"""
-    transferfile_path = save_file_and_get_path(transferfile)
-    newtransfer = Transfermanager(transferfile=transferfile_path)
-    newtransfer.loadandcreate(transferfile=transferfile_path)
-    response_file = FileResponse(
-        transferfile_path, filename="transfer_transaction.json")
-    return response_file
-
-
 @app.post("/generate-wallet-transaction")
 async def generate_wallet_api(req: CreateWalletRequest):
     """Add a new wallet under a specified custodian"""
