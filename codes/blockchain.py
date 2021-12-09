@@ -6,6 +6,8 @@ import json
 
 import sqlite3
 
+from codes.state_updater import update_db_states
+
 
 class Blockchain:
 
@@ -280,7 +282,9 @@ def add_block(block):
     con.commit()
     con.close()
 
-    add_transactions_to_block(block_index, block['text']['transactions'])
+    block_transactions = block['text']['transactions']
+    add_transactions_to_block(block_index, block_transactions)
+    update_db_states(block_transactions)
 
 def add_transactions_to_block(block_index, transactions):
         con = sqlite3.connect('newrl.db')
