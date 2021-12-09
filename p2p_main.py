@@ -1,8 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
+from codes.chainscanner import download_chain, download_state, get_transaction
 from codes.p2p.sync_chain import get_block, get_blocks, get_last_block_index, sync_chain_from_node
 
 from codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
+from migrations.init_db import clear_db, init_db
 from p2p_request_models import TransactionsRequest
 
 
@@ -36,6 +38,23 @@ async def sync_mempool_transactions_api():
 async def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.com'):
     return sync_chain_from_node(url)
 
+@app.get("/get-transaction")
+async def get_transaction_api(transaction_code: str):
+    return get_transaction(transaction_code)
+
+@app.get("/download-chain")
+async def download_chain_api():
+    return download_chain()
+
+@app.get("/download-state")
+async def download_state_api():
+    return download_state()
+
+@app.post("/clear-db-test-only")
+async def clear_db_api():
+    """ For testing only. To be removed. Clear and initialise a fresh db """
+    clear_db()
+    init_db()
 
 if __name__ == "__main__":
     uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)
