@@ -10,10 +10,10 @@ from fastapi.responses import HTMLResponse
 from starlette.responses import FileResponse
 
 from codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
-from codes.kycwallet import Walletmanager
+from codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, make_wallet
 from codes.tokenmanager import create_token_transaction
 from codes.transfermanager import Transfermanager
-from request_models import BalanceRequest, BalanceType, CreateTokenRequest, TransferRequest
+from request_models import AddWalletRequest, BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest
 from codes.utils import save_file_and_get_path
 from codes.transactionmanager import Transactionmanager
 
@@ -72,45 +72,37 @@ async def create_transfer(transfer_request: TransferRequest):
     return transferfile
 
 
-@app.post("/transfer")
-async def transfer(transferfile: UploadFile = File(...)):
-    """Execute a transaction from a given wallet file. Alternate to /create-transfer"""
-    transferfile_path = save_file_and_get_path(transferfile)
-    newtransfer = Transfermanager(transferfile=transferfile_path)
-    newtransfer.loadandcreate(transferfile=transferfile_path)
-    response_file = FileResponse(
-        transferfile_path, filename="transfer_transaction.json")
-    return response_file
+@app.post("/generate-wallet-transaction")
+async def generate_wallet_api(req: CreateWalletRequest):
+    """Generate a new wallet"""
+    try:
+        req = req.dict()
+        add_wallet_transaction = make_wallet(
+            req['custodian_address'], req['kyc_docs'], 
+            req['ownertype'], req['jurisdiction'], req['specific_data'])
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
 
+    return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
 
-@app.post("/add-wallet")
-async def add_wallet_api(custodian_address: str = "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848",
-                         ownertype: str = "1", jurisdiction: str = "910",
-                         kyc1: UploadFile = File(...), kyc2: UploadFile = File(...)):
-    """Add a new wallet under a specified custodian"""
-    f1 = save_file_and_get_path(kyc1)
-    f2 = save_file_and_get_path(kyc2)
-    idfile = f1
-    adfile = f2
-    kyccust = "0x7e433fd1cc776d17d4ad94daa2e1fc52ef967b42"
-    walletfile = "all_wallets.json"
-    ownertype = 1
-    jurisdiction = 910
+@app.post("/add-wallet-to-chain")
+async def add_wallet_to_chain_api(req: AddWalletRequest):
+    """Get a transaction file for adding an existing wallet to chain"""
+    try:
+        req_dict = req.dict()
+        add_wallet_transaction = add_wallet(req.custodian_address, req_dict['kyc_docs'], req.ownertype, 
+            req.jurisdiction, req.public_key, req.specific_data)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
 
-    wm = Walletmanager(walletfile)
-    files = []
-    files.append(idfile)
-    files.append(adfile)
-    kycdocs = [1, 2]
-    specific_data = []
-    kyccust = kyccust
-    transferfile, keysdata = wm.wallet_maker(
-        kyccust, kycdocs, files, ownertype, jurisdiction, specific_data)
-#	wm.kycdocslinker(files,kycdocs)
-    with open(keysdata[0]['address'] + "_wallet.json", "w") as writefile:
-        json.dump(keysdata, writefile)
-    # wm.walletlistupdater()
-    return FileResponse(transferfile, filename="add_wallet_transaction.json")
+@app.post("/get-file-hash")
+async def validate(transactionfile: UploadFile = File(...)):
+    """Get hash code for a file. Ideally done at the application side"""
+    file_tmp_path = save_file_and_get_path(transactionfile)
+    return get_digest(file_tmp_path)
 
 
 @app.post("/get-wallet-file")
@@ -202,6 +194,18 @@ async def get_balance(req: BalanceRequest):
     elif req.balance_type == BalanceType.ALL_WALLETS_FOR_TOKEN:
         balance = chain_scanner.getbalancesbytoken(int(req.token_code))
     return balance
+
+@app.get("/get-address-from-publickey")
+async def get_address_from_public_key_api(public_key: str):
+    try:
+        address = get_address_from_public_key(public_key)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/generate-wallet-address")
+async def generate_wallet_address_api():
+    return generate_wallet_address()
 
 
 if __name__ == "__main__":
