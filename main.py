@@ -9,7 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from starlette.responses import FileResponse
 
-from codes.chainscanner import Chainscanner, download_chain, download_state
+from codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from codes.kycwallet import Walletmanager
 from codes.tokenmanager import create_token_transaction
 from codes.transfermanager import Transfermanager
@@ -168,10 +168,18 @@ async def create_token(
 
 @app.post("/run-updater", response_class=HTMLResponse)
 async def run_updater():
-    log = updater.run_updater()
+    try:
+        log = updater.run_updater()
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
     HTMLResponse(content=log, status_code=200)
     return log
 
+
+@app.get("/get-transaction")
+async def get_transaction_api(transaction_code: str):
+    return get_transaction(transaction_code)
 
 @app.get("/download-chain")
 async def download_chain_api():

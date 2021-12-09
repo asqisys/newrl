@@ -335,12 +335,10 @@ def update_db_states(transactions):
 				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
                 amount_created, value_created, sc_flag, parent_transaction_code, token_attributes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
-
-            balance = get_wallet_token_balance(
-                cur, token['first_owner'], token['tokencode'])
-            balance = balance + token['amount_created']
+            
+            balance = token['amount_created']
             update_wallet_token_balance(
-                cur, token['first_owner'], token['tokencode'], balance)
+                cur, token['first_owner'], max_token_code, balance)
 
         if transaction['type'] == 4 or transaction['type'] == 5:  # this is a transfer tx
             sender1 = transaction_data['wallet1']
