@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from codes.p2p.sync_chain import get_block, get_blocks, get_last_block_index
 
 from codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
 from p2p_request_models import TransactionsRequest
@@ -18,6 +19,14 @@ async def list_mempool_transactions_api():
 @app.post("/get-mempool-transactions")
 async def get_mempool_transactions_api(req: TransactionsRequest):
     return get_mempool_transactions(req.transaction_codes)
+
+@app.post("/get-blocks")
+async def get_mempool_transactions_api(req: TransactionsRequest):
+    return get_blocks(req.transaction_codes)
+
+@app.post("/get-last-block-index")
+async def get_last_block_index_api():
+    return get_last_block_index()
 
 @app.post("/sync-mempool-transactions")
 async def sync_mempool_transactions_api():
