@@ -6,7 +6,7 @@ def update_db_states(transactions):
     cur = con.cursor()
 
     for transaction in transactions:
-        if (isinstance(transaction['specific_data']), str):
+        if isinstance(transaction['specific_data'], str):
             transaction_data = json.loads(transaction['specific_data'])
         else:
             transaction_data = transaction['specific_data']
