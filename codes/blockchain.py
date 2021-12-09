@@ -59,7 +59,24 @@ class Blockchain:
         con.close()
         return block
 
-    def get_last_block_index(self, cur):
+    def get_block(self, block_index):
+        con = sqlite3.connect('newrl.db')
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        block_cursor = cur.execute('SELECT * FROM blocks where block_index=?', (block_index,)).fetchone()
+        block = dict(block_cursor)
+        
+        transactions_cursor = cur.execute('SELECT * FROM transactions where block_index=?', (block_index,)).fetchall()
+        transactions = [dict(ix) for ix in transactions_cursor]
+        block['text'] = {
+            'transactions': transactions
+        }
+        
+        return block
+    
+    def get_last_block_index(self):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
         last_block = last_block_cursor.fetchone()

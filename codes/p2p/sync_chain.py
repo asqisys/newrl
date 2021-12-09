@@ -4,6 +4,21 @@ from codes import blockchain
 from codes.updater import update_db_states
 
 
+def get_blocks(block_indexes):
+    blocks = []
+    for block_index in block_indexes:
+        blocks.append(get_block(block_index))
+    return blocks
+
+def get_block(block_index):
+    chain = blockchain.Blockchain()
+    return chain.get_block(block_index)
+
+def get_last_block_index():
+    chain = blockchain.Blockchain()
+    last_block = chain.get_last_block_index()
+    return last_block
+
 def sync_chain():
     chain = blockchain.Blockchain()
     last_block = chain.get_last_block_index()
