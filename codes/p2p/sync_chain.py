@@ -1,5 +1,6 @@
 import json
 import os
+import requests
 from codes import blockchain
 from codes.updater import update_db_states
 
@@ -25,6 +26,19 @@ def sync_chain():
     # TODO: Request subsequent blocks from others
     # TODO: Update the state based on the recieved blocks
 
+
+def sync_chain_from_node(url):
+    their_last_block_index = int(requests.get(url + '/get-last-block-index').text)
+    my_last_block = get_last_block_index()
+
+    while my_last_block <= their_last_block_index:
+        my_last_block += 1
+        blocks_request = {'transaction_codes': my_last_block}
+        blocks_data = requests.post(url + '/get-blocks', json=blocks_request).json()
+        for block in blocks_data:
+            print(block)
+
+    return their_last_block_index
 
 def processBlock(block):
     # Block validation
