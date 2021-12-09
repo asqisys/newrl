@@ -55,6 +55,7 @@ async def clear_db_api():
     """ For testing only. To be removed. Clear and initialise a fresh db """
     clear_db()
     init_db()
+    return True
 
 if __name__ == "__main__":
     uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)
