@@ -45,7 +45,7 @@ class Blockchain:
         con = sqlite3.connect('newrl.db')
         cur = con.cursor()
         print("adding a block")
-        block_index = self.get_last_block_index(cur) + 1
+        block_index = get_last_block_index(cur) + 1
         block = {'index': block_index,
                  'timestamp': timestamp,
                  'proof': proof,
@@ -76,13 +76,6 @@ class Blockchain:
         
         return block
     
-    def get_last_block_index(self):
-        con = sqlite3.connect('newrl.db')
-        cur = con.cursor()
-        last_block_cursor = cur.execute(
-            f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
-        last_block = last_block_cursor.fetchone()
-        return last_block[0] if last_block is not None else 0
 
     # proof of work which takes a block with proof set as 0 as input and returns the proof that makes its hash start with 0000
     def proof_of_work(self, block):
@@ -308,3 +301,11 @@ def add_transactions_to_block(block_index, transactions):
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
         con.commit()
         con.close()
+
+def get_last_block_index(self):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
+        last_block_cursor = cur.execute(
+            f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
+        last_block = last_block_cursor.fetchone()
+        return last_block[0] if last_block is not None else 0

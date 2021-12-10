@@ -8,7 +8,7 @@ import json
 import datetime
 import base64
 
-from .constants import MEMPOOL_PATH
+from .constants import TMP_PATH
 from .transactionmanager import Transactionmanager
 
 
@@ -55,7 +55,9 @@ def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_spec
         }
         
         trans = transactioncreator(wallet)
-        transactionfile = trans.dumptransaction()
+        ts = str(datetime.datetime.now())
+        file = TMP_PATH + "transaction-1-" + ts[0:10] + "-" + ts[-6:] + ".json"
+        transactionfile = trans.dumptransaction(file)
         return transactionfile
 
 
@@ -73,7 +75,9 @@ def make_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_data={
         
         print("Now adding transaction")
         trans = transactioncreator(wallet)
-        transactionfile = trans.dumptransaction()
+        ts = str(datetime.datetime.now())
+        file = TMP_PATH + "transaction-1-" + ts[0:10] + "-" + ts[-6:] + ".json"
+        transactionfile = trans.dumptransaction(file)
         return transactionfile
 
 def transactioncreator(wallet):
