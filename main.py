@@ -199,6 +199,7 @@ async def get_balance(req: BalanceRequest):
 async def get_address_from_public_key_api(public_key: str):
     try:
         address = get_address_from_public_key(public_key)
+        return address
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))

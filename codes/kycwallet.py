@@ -13,7 +13,7 @@ from .transactionmanager import Transactionmanager
 
 
 def get_address_from_public_key(public_key):
-    public_key_bytes = codecs.decode(public_key, 'hex')
+    public_key_bytes = base64.b64decode(public_key)
 
     hash = keccak.new(digest_bits=256)
     hash.update(public_key_bytes)
