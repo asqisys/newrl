@@ -128,8 +128,12 @@ async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile 
 @app.post("/validate")
 async def validate(transactionfile: UploadFile = File(...)):
     """Validate a given transaction file if it's included in chain"""
-    transactionfile_path = save_file_and_get_path(transactionfile)
-    response = validator.validate(transactionfile_path)
+    try:
+        transactionfile_path = save_file_and_get_path(transactionfile)
+        response = validator.validate(transactionfile_path)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
     return {"status": "SUCCESS", "response": response}
 
 

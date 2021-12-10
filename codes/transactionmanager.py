@@ -41,8 +41,6 @@ class Transactionmanager:
         self.statefile = STATE_FILE
         self.validity = 0
 
-        self.con = sqlite3.connect('newrl.db')
-        self.cur = self.con.cursor()
 
     def getvalidadds(self):
         trans = self.transaction
@@ -199,15 +197,7 @@ class Transactionmanager:
                       " is not relevant for this transaction.")
                 continue
             msgsign = signature['msgsign']
-            pubkey = None
-            for wallet in allwallets:
-                #		address=wallet['wallet_address']
-                address = wallet['wallet_address']
-        #		print("address is ",address," and signaddress was ",signaddress)
-                if address == signaddress:
-                    # this is in base64 coded form, not bytes, not binary string
-                    pubkey = wallet['wallet_public']
-            #		print("found this pubkey:", pubkey)
+            pubkey = get_public_key_from_address(signaddress)
     #		print("encoded pubkey from json file: ",pubkey)
             # here we decode the base64 form to get pubkeybytes
             pubkeybytes = base64.b64decode(pubkey)
@@ -469,3 +459,12 @@ class Transactionmanager:
 
 #	def legalvalidator(self):
         # check the token restrictions on ownertype and check the type of the recipient
+
+def get_public_key_from_address(address):
+    con = sqlite3.connect('newrl.db')
+    cur = con.cursor()
+    wallet_cursor = cur.execute('SELECT wallet_public FROM wallets WHERE wallet_address=?', (address, ))
+    public_key = wallet_cursor.fetchone()
+    if public_key is None:
+        raise Exception('Wallet with address not found')
+    return public_key[0]
