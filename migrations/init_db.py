@@ -8,7 +8,7 @@ def clear_db():
     cur.execute('DROP TABLE IF EXISTS wallets')
     cur.execute('DROP TABLE IF EXISTS tokens')
     cur.execute('DROP TABLE IF EXISTS balances')
-    cur.execute('DROP TABLE blocks')
+    cur.execute('DROP TABLE IF EXISTS blocks')
     cur.execute('DROP TABLE IF EXISTS transactions')
     cur.execute('DROP TABLE IF EXISTS transfers')
     con.commit()
