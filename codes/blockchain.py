@@ -6,6 +6,8 @@ import json
 
 import sqlite3
 
+from codes.state_updater import update_db_states
+
 
 class Blockchain:
 
@@ -59,11 +61,28 @@ class Blockchain:
         con.close()
         return block
 
-    def get_last_block_index(self, cur):
+    def get_block(self, block_index):
+        con = sqlite3.connect('newrl.db')
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        block_cursor = cur.execute('SELECT * FROM blocks where block_index=?', (block_index,)).fetchone()
+        block = dict(block_cursor)
+        
+        transactions_cursor = cur.execute('SELECT * FROM transactions where block_index=?', (block_index,)).fetchall()
+        transactions = [dict(ix) for ix in transactions_cursor]
+        block['text'] = {
+            'transactions': transactions
+        }
+        
+        return block
+    
+    def get_last_block_index(self):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
         last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
         last_block = last_block_cursor.fetchone()
-        return last_block[0]
+        return last_block[0] if last_block is not None else 0
 
     # proof of work which takes a block with proof set as 0 as input and returns the proof that makes its hash start with 0000
     def proof_of_work(self, block):
@@ -250,3 +269,42 @@ class Blockchain:
 #                	newblock = newchain.create_block(timestamp, proof, previous_hash, text)
 #	                block_index += 1;
 #        	return newchain;
+
+
+def add_block(block):
+    con = sqlite3.connect('newrl.db')
+    cur = con.cursor()
+    block_index = block['block_index']
+    print('Adding block', block_index)
+    db_block_data = (block_index, block['timestamp'], block['proof'],
+                         block['previous_hash'], block['hash'], block['transactions_hash'])
+    cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
+    con.commit()
+    con.close()
+
+    block_transactions = block['text']['transactions']
+    add_transactions_to_block(block_index, block_transactions)
+    update_db_states(block_transactions)
+
+def add_transactions_to_block(block_index, transactions):
+        con = sqlite3.connect('newrl.db')
+        cur = con.cursor()
+        for transaction in transactions:
+            specific_data = json.dumps(
+                transaction['specific_data']) if 'specific_data' in transaction else ''
+            db_transaction_data = (
+                block_index,
+                transaction['transaction_code'],
+                transaction['timestamp'],
+                transaction['type'],
+                transaction['currency'],
+                transaction['fee'],
+                transaction['description'],
+                transaction['valid'],
+                specific_data
+            )
+            cur.execute(f'''INSERT OR IGNORE INTO transactions
+				(block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+        con.commit()
+        con.close()
