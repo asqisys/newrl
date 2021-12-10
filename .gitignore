@@ -2,6 +2,8 @@ venv/
 __pycache__/
 mempool/
 statearchive/
+tmp/
+newrl.db
 state.json
 chain.json
 tokennew.json
@@ -10,4 +12,3 @@ all_tokens.json
 all_wallets.json
 firsttoken.json
 newwallet.json
-newrl.db
