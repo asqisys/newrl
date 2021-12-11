@@ -32,11 +32,10 @@ def generate_wallet_address():
     key_bytes = key.to_string()
     public_key = codecs.encode(key_bytes, 'hex')
 
-    keydata['address'] = get_address_from_public_key(public_key)
-
     # the below section is to enable serialization while passing the keys through json
     private_key_final = base64.b64encode(private_key_bytes).decode('utf-8')
     public_key_final = base64.b64encode(key_bytes).decode('utf-8')
+    keydata['address'] = get_address_from_public_key(public_key_final)
     keydata['private'] = private_key_final
     keydata['public'] = public_key_final
 
@@ -61,7 +60,7 @@ def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_spec
         return transactionfile
 
 
-def make_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_data={}):
+def generate_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_data={}):
         newkeydata = generate_wallet_address()
         wallet = {
             'custodian_wallet': kyccustodian,

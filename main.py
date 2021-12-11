@@ -10,7 +10,7 @@ from fastapi.responses import HTMLResponse
 from starlette.responses import FileResponse
 
 from codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
-from codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, make_wallet
+from codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from codes.tokenmanager import create_token_transaction
 from codes.transfermanager import Transfermanager
 from request_models import AddWalletRequest, BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest
@@ -77,7 +77,7 @@ async def generate_wallet_api(req: CreateWalletRequest):
     """Generate a new wallet"""
     try:
         req = req.dict()
-        add_wallet_transaction = make_wallet(
+        add_wallet_transaction = generate_wallet(
             req['custodian_address'], req['kyc_docs'], 
             req['ownertype'], req['jurisdiction'], req['specific_data'])
     except Exception as e:
