@@ -1,5 +1,6 @@
 # program to create and manage objects for wallets
 import codecs
+from codes.chainscanner import get_wallet_token_balance
 import ecdsa
 from Crypto.Hash import keccak
 import os
@@ -11,34 +12,24 @@ import base64
 
 import sqlite3
 
-from .constants import MEMPOOL_PATH, STATE_FILE
+from .constants import ALLOWED_CUSTODIANS_FILE, MEMPOOL_PATH
 
 
 class Transactionmanager:
     def __init__(self):
-        #		self.public=
-        #		hs=hashlib.blake2b()
-        self.transaction = {'timestamp': str(datetime.datetime.now()),
-                            'trans_code': "0000",
-                            'type': 0,
-                            'currency': "INR",
-                            'fee': 0.0,
-                            'descr': None,
-                            'valid': 1,
-                            #		'block_index': 0,
-                            'specific_data': {}
-                            #					"custodian_wallet":None,
-                            #					"kyc_docs":[],
-                            #					"kyc_doc_hashes":[],
-                            #					"wallet_address":[],
-                            }
+        self.transaction = {
+            'timestamp': str(datetime.datetime.now()),
+            'trans_code': "0000",
+            'type': 0,
+            'currency': "INR",
+            'fee': 0.0,
+            'descr': None,
+            'valid': 1,
+            'specific_data': {}
+        }
 
         self.signatures = []
-    #	self.validations=[]
-        # memory pool of transactions waiting to be validated and included in block
         self.mempool = MEMPOOL_PATH
-        # self.itpool="./incltranspool/"		#pool of included transactions
-        self.statefile = STATE_FILE
         self.validity = 0
 
 
@@ -69,23 +60,13 @@ class Transactionmanager:
         self.transaction['currency'] = tran_data['currency']
         self.transaction['fee'] = tran_data['fee']
         self.transaction['descr'] = tran_data['descr']
-    #	self.transaction['valid']=tran_data['valid'];
         self.transaction['valid'] = 1  # default at creation is unverified
-    # self.transaction['block_index']=tran_data['block_index'];
-#		if standard_data['type']==1: #this is wallet creation
-#			self.transaction['custodian_wallet']=specific_data['custodian_wallet'];
-#			self.transaction['kyc_docs']=specific_data['kyc_docs'];
-#			self.transaction['kyc_doc_hashes']=specific_data['kyc_doc_hashes'];
-#			self.transaction['wallet_address']=specific_data['wallet_address'];
         self.transaction['specific_data'] = tran_data['specific_data']
         trstr = json.dumps(self.transaction).encode()
-#		encstr=codecs.encode(trstr, 'hex')
         hs = hashlib.blake2b(digest_size=20)
         hs.update(trstr)
         self.transaction['trans_code'] = hs.hexdigest()
-    #	print("tcode while creating is ",self.transaction['trans_code'])
         self.signatures = tran_data_all['signatures']
-    #	self.validations=tran_data_all['validations']
         transaction_all = {'transaction': self.transaction,
                            'signatures': self.signatures}
         return transaction_all
@@ -107,10 +88,6 @@ class Transactionmanager:
             print("Now reading from ", file)
             trandata = json.load(readfile)
         newtrandata = self.transactioncreator(trandata)
-#		transactiondata['transaction'] = self.transactioncreator(trandata)['transaction'];
-#		transactiondata['signatures'] = self.transactioncreator(trandata)['signatures'];
-#		transactiondata['transaction'] = trandata['transaction']
-#		transactiondata['signatures'] = trandata['signatures']
         return newtrandata
 
     # dumps active transaction into a stated file or in mempool by default
@@ -121,32 +98,11 @@ class Transactionmanager:
         if not file:
             file = self.mempool+"transaction-" + \
                 str(self.transaction['type'])+"-"+ts[0:10]+"-"+ts[-6:]+".json"
-    #	print("tcode while writing is ", self.transaction['trans_code'])
-    #	print(self.transaction)
-    #	transaction_all={'transaction':self.transaction,'signatures':self.signatures,'validations':self.validations}
         transaction_all = {'transaction': self.transaction,
                            'signatures': self.signatures}
-    #	print(self.signatures)
         with open(file, "w") as writefile:
-            #	json.dump(self.transaction, writefile);
             json.dump(transaction_all, writefile)
             print("Wrote to ", file)
-
-        # transaction = transaction_all['transaction']
-        # specific_data = json.dumps(transaction['specific_data']) if 'specific_data' in transaction else ''
-        # self.cur.execute(f'''INSERT OR IGNORE INTO transactions
-        # 		(transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
-        # 		 VALUES (
-        # 			'{transaction['trans_code']}',
-        # 			'{transaction['timestamp']}',
-        # 			{transaction['type']},
-        # 			'{transaction['currency']}',
-        # 			{transaction['fee']},
-        # 			'{transaction['descr']}',
-        # 			{transaction['valid']},
-        # 			'{specific_data}'
-        # 		)''')
-        # self.con.commit()
         return file
 
     # this takes keybytes and not binary string and not base64 string
@@ -172,13 +128,6 @@ class Transactionmanager:
 
     def verifytransigns(self):
         # need to add later a check for addresses mentioned in the transaction (vary by type) and the signing ones
-        #	addresses=[];
-        #	wfile="./tmpallw.json"
-        #	wfile="./all_wallets.json"
-        with open(self.statefile, "r") as statefile:
-            #	with open(wfile,"r") as statefile:
-            state = json.load(statefile)
-        allwallets = state["all_wallets"]
         validadds = self.getvalidadds()
         addvaliditydict = {}
         for valadd in validadds:
@@ -270,20 +219,10 @@ class Transactionmanager:
         # start with all holdings of the wallets involved and add validated transactions from mempool
         # from mempool only include transactions that reduce balance and not those that increase
         # check if the sender has enough balance to spend
-        with open(self.statefile, "r") as statefl:
-            try:
-                state = json.load(statefl)
-            except:
-                "Couldn't load state file, either missing or invalid. Exiting"
-                return False
         self.validity = 0
         if self.transaction['type'] == 1:
             custodian = self.transaction['specific_data']['custodian_wallet']
-            custvalidity = False
-            for wallet in state['all_wallets']:
-                if wallet['wallet_address'] == custodian:
-                    custvalidity = True
-            if not custvalidity:
+            if not is_wallet_valid(custodian):
                 print("No custodian address found")
             #	self.transaction['valid']=0
                 self.validity = 0
@@ -292,10 +231,10 @@ class Transactionmanager:
             #	self.transaction['valid']=1
                 self.validity = 1
             # additional check for allowed custodian addresses
-                if os.path.exists("allowed_custodians.json"):
-                    print("Found allowed_custodians.json; checking against it.")
+                if os.path.exists(ALLOWED_CUSTODIANS_FILE):
+                    print("Found allowed_custodians file; checking against it.")
                     custallowflag = False
-                    with open("allowed_custodians.json", "r") as custfile:
+                    with open(ALLOWED_CUSTODIANS_FILE, "r") as custfile:
                         allowedcust = json.load(custfile)
                     for cust in allowedcust:
                         if custodian == cust['address']:
@@ -313,13 +252,12 @@ class Transactionmanager:
             custodian = self.transaction['specific_data']['custodian']
             fovalidity = False
             custvalidity = False
-            for wallet in state['all_wallets']:
-                if wallet['wallet_address'] == firstowner:
-                    print("Valid first owner")
-                    fovalidity = True
-                if wallet['wallet_address'] == custodian:
-                    print("Valid custodian")
-                    custvalidity = True
+            if is_wallet_valid(firstowner):
+                print("Valid first owner")
+                fovalidity = True
+            if is_wallet_valid(custodian):
+                print("Valid custodian")
+                custvalidity = True
             if not fovalidity:
                 print("No first owner address found")
             #	self.transaction['valid']=0
@@ -340,19 +278,9 @@ class Transactionmanager:
             sender1 = self.transaction['specific_data']['wallet1']
             sender2 = self.transaction['specific_data']['wallet2']
             tokencode1 = self.transaction['specific_data']['asset1_code']
-        #	tokencode2=self.transaction['specific_data']['asset2_code']
-            # below, we include the starting balance as well as total payments in the mempool trnasactions
-            # already includes the current transaction
             token1mp = self.mempoolpayment(sender1, tokencode1)
-        #	token2mp=self.mempoolpayment(sender2,tokencode2);	#already includes the current trasanction
             token1amt = max(
                 self.transaction['specific_data']['asset1_number'], token1mp)
-        #	token2amt=max(self.transaction['specific_data']['asset2_number'],token2mp)
-            # the max above is required in case there is misspecification of mempool for any reason.
-        #	token1amt=self.transaction['specific_data']['asset1_number']+self.mempoolpayment(sender1,tokencode1)
-        #	token2amt=self.transaction['specific_data']['asset2_number']+self.mempoolpayment(sender2,tokencode2)
-        #	with open(self.statefile,"r") as statefl:
-        #		state=json.load(statefl);
             sender1valid = False
             sender2valid = False
 
@@ -365,11 +293,8 @@ class Transactionmanager:
                     self.transaction['specific_data']['asset2_number'], token2mp)
 
             # address validity applies to both senders in ttype 4 and 5; since sender2 is still receiving tokens
-            for wallet in state['all_wallets']:
-                if wallet['wallet_address'] == sender1:
-                    sender1valid = True
-                if wallet['wallet_address'] == sender2:
-                    sender2valid = True
+            sender1valid = is_wallet_valid(sender1)
+            sender2valid = is_wallet_valid(sender2)
             if not sender1valid:
                 print("Invalid sender1 wallet")
             #	self.transaction['valid']=0
@@ -383,29 +308,18 @@ class Transactionmanager:
 
             # tokenvalidity applies for both senders only in ttype 4
             token1valid = False
-        #	token2valid=True
             if ttype == 4:
                 # by keeping it here, we ensure that no code refers to token2valid for type5
                 token2valid = False
-            for token in state['all_tokens']:
-                if token['tokencode'] == tokencode1:
-                    token1valid = True
-                if ttype == 4:
-                    if token['tokencode'] == tokencode2:
-                        token2valid = True
+            token1valid = is_token_valid(tokencode1)
+            token2valid = ttype == 4 and is_token_valid(tokencode2)
             if not token1valid:
                 print("Invalid asset1 code")
-            #	self.transaction['valid']=0
                 self.validity = 0
-            #	return False
-            if ttype == 4:
-                if not token2valid:
+            if ttype == 4 and not token2valid:
                     print("Invalid asset1 code")
-            #		self.transaction['valid']=0
                     self.validity = 0
-            #		return False
-            if ttype == 4:
-                if token1valid and token2valid:
+            if ttype == 4 and token1valid and token2valid:
                     print("Valid tokens")
                     self.validity = 1
             else:  # this is ttype=5
@@ -413,20 +327,16 @@ class Transactionmanager:
                     print("Valid tokens")
                     self.validity = 1
 
-        #	if self.transaction['valid']==0:
             if self.validity == 0:
                 print("Transaction not valid due to invalid tokens or addresses")
                 return False
 
             # resetting to check the balances being sufficient, in futures, make different functions
             self.validity = 0
-            for balance in state['all_balances']:
-                if balance['wallet_address'] == sender1 and balance['tokencode'] == tokencode1:
-                    # unique combination of sender and token
-                    startingbalance1 = balance['balance']
-                if ttype == 4:
-                    if balance['wallet_address'] == sender2 and balance['tokencode'] == tokencode2:
-                        startingbalance2 = balance['balance']
+
+            startingbalance1 = get_wallet_token_balance(sender1, tokencode1)
+            if ttype == 4:
+                startingbalance2 = get_wallet_token_balance(sender2, tokencode2)
             if token1amt > startingbalance1:  # sender1 is trying to send more than she owns
                 print("sender1 is trying to send,", token1amt, "she owns,",
                       startingbalance1, " invalidating transaction")
@@ -451,7 +361,6 @@ class Transactionmanager:
                 #	self.transaction['valid']=1;
                     self.validity = 1
 
-    #	if self.transaction['valid']==1:
         if self.validity == 1:
             return True
         else:
@@ -468,3 +377,21 @@ def get_public_key_from_address(address):
     if public_key is None:
         raise Exception('Wallet with address not found')
     return public_key[0]
+
+def is_token_valid(token_code):
+    con = sqlite3.connect('newrl.db')
+    cur = con.cursor()
+    token_cursor = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token_code, ))
+    token = token_cursor.fetchone()
+    if token is None:
+        return False
+    return True
+
+def is_wallet_valid(address):
+    con = sqlite3.connect('newrl.db')
+    cur = con.cursor()
+    wallet_cursor = cur.execute('SELECT wallet_public FROM wallets WHERE wallet_address=?', (address, ))
+    wallet = wallet_cursor.fetchone()
+    if wallet is None:
+        return False
+    return True
