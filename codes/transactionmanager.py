@@ -72,6 +72,11 @@ class Transactionmanager:
         return transaction_all
 
     # this just loads the trasnactions passively, no change
+    def set_transaction_data(self, transaction_data):
+        self.transaction = transaction_data['transaction']
+        self.signatures = transaction_data['signatures']
+        return transaction_data
+    
     def loadtransactionpassive(self, file):
         transactiondata = {}
         with open(file, "r") as readfile:

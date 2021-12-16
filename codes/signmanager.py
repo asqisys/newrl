@@ -87,7 +87,7 @@ def sign(walletfile, transfile=None):
         return False
 
     tm = Transactionmanager()
-    tm.loadtransactionpassive(transfile)
+    tm.set_transaction_data(transfile)
 #	print("Current signatures are ",tm.signatures)
     if not addresschecker(tm.transaction, address):
         return False
@@ -104,6 +104,41 @@ def sign(walletfile, transfile=None):
         sign_status = tm.verifysign(signtrans, pubkeybytes, address)
         print("Status of signing: ", sign_status)
         return FileResponse(transfile, filename="signed_transferfile.json")
+        # return sign_status
+    else:
+        print("Signing failed. No change made to transaction's signature data")
+        return None
+
+# Refactored from above. above can be deleted
+def sign_transaction(wallet_data, transaction_data):
+    pvtkeybytes = None
+    pubkeybytes = None
+    
+    address = wallet_data['address']
+    pvtkeybytes = base64.b64decode(wallet_data['private'])
+    pubkeybytes = base64.b64decode(wallet_data['public'])
+    if not pvtkeybytes:
+        print("No private key found for the address")
+        return False
+
+    tm = Transactionmanager()
+    tm.set_transaction_data(transaction_data)
+    if not addresschecker(tm.transaction, address):
+        return False
+
+    signtransbytes = tm.signtransaction(pvtkeybytes, address)
+    print("signed msg signature is:", signtransbytes,
+          " and address is ", address)
+    signtrans = base64.b64encode(signtransbytes).decode('utf-8')
+#	print("storing this in encoded form is:",signtrans)
+    if signtrans:
+        transaction_file = tm.dumptransaction()
+        print("Successfully signed the transaction and updated its signatures data.")
+        sign_status = tm.verifysign(signtrans, pubkeybytes, address)
+        print("Status of signing: ", sign_status)
+        with open(transaction_file) as f:
+            return json.load(f)
+        # return FileResponse(transfile, filename="signed_transferfile.json")
         # return sign_status
     else:
         print("Signing failed. No change made to transaction's signature data")
