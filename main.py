@@ -132,7 +132,9 @@ async def validate(transactionfile: UploadFile = File(...)):
     """Validate a given transaction file if it's included in chain"""
     try:
         transactionfile_path = save_file_and_get_path(transactionfile)
-        response = validator.validate(transactionfile_path)
+        with open(transactionfile_path) as f:
+            transaction = json.loads(f)
+            response = validator.validate(transaction)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -242,6 +244,16 @@ async def sign_transaction(wallet_data: dict, transaction_data: dict):
     # wallet_file = save_file_and_get_path(wallet_file)
     singed_transaction_file = signmanager.sign_transaction(wallet_data, transaction_data)
     return singed_transaction_file
+
+@app.post("/validate-transaction", tags=[v2_tag])
+async def validate_transaction(transaction_data: dict):
+    """Validate a given transaction file if it's included in chain"""
+    try:
+        response = validator.validate(transaction_data)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "SUCCESS", "response": response}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
