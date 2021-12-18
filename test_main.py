@@ -144,37 +144,37 @@ def create_transfer(wallet1, wallet2, token1, token2):
     assert signed_transaction['signatures']
     assert len(signed_transaction['signatures']) == 1
 
+    response = client.post('/validate-transaction', json=signed_transaction)
+    assert response.status_code == 200
+
+    response = client.post('/run-updater')
+    assert response.status_code == 200
+
     response = client.post('/sign-transaction', json={
         "wallet_data": wallet2,
-        "transaction_data": unsigned_transaction
+        "transaction_data": signed_transaction
     })
     assert response.status_code == 200
     signed_transaction = response.json()
     assert signed_transaction['transaction']
     assert signed_transaction['signatures']
-    assert len(signed_transaction['signatures']) == 1
+    assert len(signed_transaction['signatures']) == 2
 
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater', json=signed_transaction)
+    response = client.post('/run-updater')
     assert response.status_code == 200
 
-    response = client.get('/download-state')
+
+    response = client.post('/get-balance', json={
+        "balance_type": "TOKEN_IN_WALLET",
+        "token_code": token1,
+        "wallet_address": wallet1['address']
+    })
     assert response.status_code == 200
-    state = response.json()
-
-    balances = state['balances']
-    balance = next(x for x in balances if x['wallet_address']
-                   == wallet1['address'] and x['tokencode'] == token1)
-    assert balance
-    assert balance['balance'] != 1000000
-
-    balance = next(x for x in balances if x['wallet_address']
-                   == wallet2['address'] and x['tokencode'] == token2)
-    assert balance
-    assert balance['balance'] != 1000000
-
+    balance = response.json()['balance']
+    assert balance != 1000000
 
 def test_read_main():
     custodian_wallet = {
@@ -185,9 +185,6 @@ def test_read_main():
 
     wallet1 = create_wallet()
     wallet2 = create_wallet()
-
-    print(wallet1)
-    print(wallet2)
 
     token1 = create_token(wallet1, custodian_wallet)
     token2 = create_token(wallet2, custodian_wallet)
