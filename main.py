@@ -29,10 +29,10 @@ app = FastAPI(
     description="This page covers all the public APIs available at present in the Newrl blockchain platform."
 )
 
-v1_tag = 'V1 Stable'
-v2_tag = 'V2 (Beta)'
+v1_tag = 'V1 For Humans'
+v2_tag = 'V2 For Machines'
 
-@app.post("/create-transfer", tags=['v1'])
+@app.post("/create-transfer", tags=[v1_tag, v2_tag])
 async def create_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
     trandata = {
@@ -74,7 +74,7 @@ async def create_transfer(transfer_request: TransferRequest):
     return transferfile
 
 
-@app.post("/generate-wallet-transaction", tags=['v1'])
+@app.post("/generate-wallet-transaction", tags=[v1_tag])
 async def generate_wallet_api(req: CreateWalletRequest):
     """Generate a new wallet"""
     try:
@@ -88,7 +88,7 @@ async def generate_wallet_api(req: CreateWalletRequest):
 
     return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
 
-@app.post("/add-wallet-to-chain", tags=['v1'])
+@app.post("/add-wallet-to-chain", tags=[v1_tag])
 async def add_wallet_to_chain_api(req: AddWalletRequest):
     """Get a transaction file for adding an existing wallet to chain"""
     try:
@@ -100,14 +100,14 @@ async def add_wallet_to_chain_api(req: AddWalletRequest):
         raise HTTPException(status_code=500, detail=str(e))
     return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
 
-@app.post("/get-file-hash", tags=['v1'])
+@app.post("/get-file-hash", tags=[v1_tag])
 async def validate(transactionfile: UploadFile = File(...)):
     """Get hash code for a file. Ideally done at the application side"""
     file_tmp_path = save_file_and_get_path(transactionfile)
     return get_digest(file_tmp_path)
 
 
-@app.post("/get-wallet-file", tags=['v1'])
+@app.post("/get-wallet-file", tags=[v1_tag])
 async def get_wallet_file(transferfile: UploadFile = File(...)):
     """Returns the wallet file from the add_wallet_transaction.json"""
     f1 = save_file_and_get_path(transferfile)
@@ -117,7 +117,7 @@ async def get_wallet_file(transferfile: UploadFile = File(...)):
     return FileResponse(walletfile, filename="walletfile.json")
 
 
-@app.post("/sign", tags=['v1'])
+@app.post("/sign", tags=[v1_tag])
 async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile = File(...)):
     """Custodian wallet file can be used to sign a transaction"""
     transactionfile_path = save_file_and_get_path(transactionfile)
@@ -127,7 +127,7 @@ async def sign(wallet_file: UploadFile = File(...), transactionfile: UploadFile 
     return singed_transaction_file
 
 
-@app.post("/validate", tags=['v1'])
+@app.post("/validate", tags=[v1_tag])
 async def validate(transactionfile: UploadFile = File(...)):
     """Validate a given transaction file if it's included in chain"""
     try:
@@ -141,7 +141,7 @@ async def validate(transactionfile: UploadFile = File(...)):
     return {"status": "SUCCESS", "response": response}
 
 
-@app.post("/create-token", tags=['v1'])
+@app.post("/create-token", tags=[v1_tag, v2_tag])
 async def create_token(
     request: CreateTokenRequest
 ):
@@ -166,7 +166,7 @@ async def create_token(
     return response_file
 
 
-@app.post("/run-updater", tags=['v1', v2_tag], response_class=HTMLResponse)
+@app.post("/run-updater", tags=[v1_tag, v2_tag], response_class=HTMLResponse)
 async def run_updater():
     try:
         log = updater.run_updater()
@@ -177,7 +177,7 @@ async def run_updater():
     return log
 
 
-@app.get("/get-transaction", tags=['v1', v2_tag])
+@app.get("/get-transaction", tags=[v1_tag, v2_tag])
 async def get_transaction_api(transaction_code: str):
     try:
         return get_transaction(transaction_code)
@@ -185,17 +185,17 @@ async def get_transaction_api(transaction_code: str):
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/download-chain", tags=['v1', v2_tag])
+@app.get("/download-chain", tags=[v1_tag, v2_tag])
 async def download_chain_api():
     return download_chain()
 
 
-@app.get("/download-state", tags=['v1', v2_tag])
+@app.get("/download-state", tags=[v1_tag, v2_tag])
 async def download_state_api():
     return download_state()
 
 
-@app.post("/get-balance", tags=['v1', v2_tag])
+@app.post("/get-balance", tags=[v1_tag, v2_tag])
 async def get_balance(req: BalanceRequest):
     chain_scanner = Chainscanner()
     if req.balance_type == BalanceType.TOKEN_IN_WALLET:
@@ -207,7 +207,7 @@ async def get_balance(req: BalanceRequest):
         balance = chain_scanner.getbalancesbytoken(int(req.token_code))
     return {'balance': balance}
 
-@app.get("/get-address-from-publickey", tags=['v1', v2_tag])
+@app.get("/get-address-from-publickey", tags=[v1_tag, v2_tag])
 async def get_address_from_public_key_api(public_key: str):
     try:
         address = get_address_from_public_key(public_key)
@@ -216,7 +216,7 @@ async def get_address_from_public_key_api(public_key: str):
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/generate-wallet-address", tags=['v1', v2_tag])
+@app.get("/generate-wallet-address", tags=[v1_tag, v2_tag])
 async def generate_wallet_address_api():
     return generate_wallet_address()
 
