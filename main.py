@@ -32,7 +32,7 @@ app = FastAPI(
 v1_tag = 'V1 For Humans'
 v2_tag = 'V2 For Machines'
 
-@app.post("/create-transfer", tags=[v1_tag, v2_tag])
+@app.post("/create-transfer", tags=[v1_tag])
 async def create_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
     trandata = {
@@ -141,7 +141,7 @@ async def validate(transactionfile: UploadFile = File(...)):
     return {"status": "SUCCESS", "response": response}
 
 
-@app.post("/create-token", tags=[v1_tag, v2_tag])
+@app.post("/create-token", tags=[v1_tag])
 async def create_token(
     request: CreateTokenRequest
 ):
@@ -236,6 +236,68 @@ async def add_wallet_api(req: AddWalletRequest):
     with open(add_wallet_transaction) as f:
         return json.load(f)
     # return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
+
+@app.post("/add-token", tags=[v2_tag])
+async def add_token(
+    request: CreateTokenRequest
+):
+    token_data = {
+        "tokenname": request.token_name,
+        "tokentype": request.token_type,
+        "tokenattributes": request.token_attributes,
+        "first_owner": request.first_owner,
+        "custodian": request.custodian,
+        "legaldochash": request.legal_doc,
+        "amount_created": request.amount_created,
+        "value_created": request.value_created,
+        "disallowed": request.disallowed_regions,
+        "sc_flag": request.is_smart_contract_token
+    }
+    try:
+        token_create_transaction_filename = create_token_transaction(token_data)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    with open(token_create_transaction_filename) as f:
+        return json.load(f)
+
+@app.post("/add-transfer", tags=[v2_tag])
+async def add_transfer(transfer_request: TransferRequest):
+    """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
+    trandata = {
+        "asset1_code": int(transfer_request.asset1_code),
+        "asset2_code": int(transfer_request.asset2_code),
+        "wallet1": transfer_request.wallet1_address,
+        "wallet2": transfer_request.wallet2_address,
+        "asset1_number": int(transfer_request.asset1_qty),
+        "asset2_number": int(transfer_request.asset2_qty)
+    }
+    type = transfer_request.transfer_type
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": type,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": trandata
+        },
+        "signatures": []
+    }
+    with open("transfernew.json", 'w') as file:
+        json.dump(fulltrandata, file)
+
+    newtransfer = Transfermanager(transferfile="transfernew.json")
+    newtransfer.loadandcreate(transferfile="transfernew.json")
+#    with open("./transfernew.json","r") as tfile:
+#        transferfile_path = save_file_and_get_path(tfile)
+    transferfile = FileResponse(
+        "transfernew.json", filename="transferfile.json")
+    with open("transfernew.json") as f:
+        return json.load(f)
 
 @app.post("/sign-transaction", tags=[v2_tag])
 async def sign_transaction(wallet_data: dict, transaction_data: dict):
