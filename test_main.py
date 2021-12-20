@@ -144,12 +144,6 @@ def create_transfer(wallet1, wallet2, token1, token2):
     assert signed_transaction['signatures']
     assert len(signed_transaction['signatures']) == 1
 
-    response = client.post('/validate-transaction', json=signed_transaction)
-    assert response.status_code == 200
-
-    response = client.post('/run-updater')
-    assert response.status_code == 200
-
     response = client.post('/sign-transaction', json={
         "wallet_data": wallet2,
         "transaction_data": signed_transaction
@@ -174,7 +168,34 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance != 1000000
+    assert balance == 999544.0
+
+    response = client.post('/get-balance', json={
+        "balance_type": "TOKEN_IN_WALLET",
+        "token_code": token2,
+        "wallet_address": wallet1['address']
+    })
+    assert response.status_code == 200
+    balance = response.json()['balance']
+    assert balance == 789
+
+    response = client.post('/get-balance', json={
+        "balance_type": "TOKEN_IN_WALLET",
+        "token_code": token1,
+        "wallet_address": wallet2['address']
+    })
+    assert response.status_code == 200
+    balance = response.json()['balance']
+    assert balance == 456
+
+    response = client.post('/get-balance', json={
+        "balance_type": "TOKEN_IN_WALLET",
+        "token_code": token2,
+        "wallet_address": wallet2['address']
+    })
+    assert response.status_code == 200
+    balance = response.json()['balance']
+    assert balance == 999211
 
 def test_read_main():
     custodian_wallet = {
