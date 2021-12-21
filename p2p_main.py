@@ -1,3 +1,4 @@
+from fastapi.exceptions import HTTPException
 from starlette.requests import Request
 import uvicorn
 from fastapi import FastAPI
@@ -39,7 +40,10 @@ async def sync_mempool_transactions_api():
 
 @app.post("/sync-chain-from-node", tags=[p2p_tag])
 async def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.com'):
-    return sync_chain_from_node(url)
+    try:
+        return sync_chain_from_node(url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail='No more blocks')
 
 @app.get("/get-transaction", tags=[p2p_tag])
 async def get_transaction_api(transaction_code: str):

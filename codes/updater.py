@@ -327,7 +327,7 @@ def update_db_states(transactions):
                 token['amount_created'],
                 token['value_created'],
                 token['sc_flag'],
-                transaction['trans_code'],
+                transaction['transaction_code'],
                 token_attributes_json
             )
             cur.execute(f'''INSERT OR IGNORE INTO tokens
