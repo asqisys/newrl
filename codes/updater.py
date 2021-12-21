@@ -358,8 +358,8 @@ def update_db_states(transactions):
 
 
 def transfer_tokens_and_update_balances(cur, sender, reciever, tokencode, amount):
-    sender_balance = get_wallet_token_balance(cur, sender, tokencode)
-    reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
+    sender_balance = get_wallet_token_balance(sender, tokencode)
+    reciever_balance = get_wallet_token_balance(reciever, tokencode)
     sender_balance = sender_balance - amount
     reciever_balance = reciever_balance + amount
     update_wallet_token_balance(cur, sender, tokencode, sender_balance)

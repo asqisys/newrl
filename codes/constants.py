@@ -8,3 +8,4 @@ CHAIN_DB = 'newrl_chain.db'
 PORT = 8080
 STATE_FILE = 'state.json'
 CHAIN_FILE = 'chain.json'
+ALLOWED_CUSTODIANS_FILE = 'allowed_custodians.json'

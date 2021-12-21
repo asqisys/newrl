@@ -9,7 +9,7 @@ from .transactionmanager import Transactionmanager
 from .constants import MEMPOOL_PATH
 
 
-def validate(transfile):
+def validate(transaction):
     #blockchain = Blockchain("inginesis.json")
     #	blockchain = Blockchain(options.chainfile)
     #	blockchain = Blockchain();
@@ -17,7 +17,7 @@ def validate(transfile):
 
     ts = str(datetime.datetime.now())
     tm = Transactionmanager()
-    tm.loadtransactionpassive(transfile)
+    tm.set_transaction_data(transaction)
     econ = tm.econvalidator()
     signvalid = tm.verifytransigns()
     valid = 0
