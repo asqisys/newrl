@@ -4,11 +4,11 @@ import uvicorn
 from fastapi import FastAPI
 from codes.chainscanner import download_chain, download_state, get_transaction
 from codes.p2p.peers import add_peer, clear_peers, get_peers
-from codes.p2p.sync_chain import get_block, get_blocks, get_last_block_index, sync_chain_from_node, sync_chain_from_peers
+from codes.p2p.sync_chain import get_block, get_blocks, get_last_block_index, receive_block, sync_chain_from_node, sync_chain_from_peers
 
 from codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
 from migrations.init_db import clear_db, init_db
-from p2p_request_models import TransactionsRequest
+from p2p_request_models import BlockAdditionRequest, BlockRequest, TransactionsRequest
 
 
 app = FastAPI(
@@ -27,8 +27,12 @@ async def get_mempool_transactions_api(req: TransactionsRequest):
     return get_mempool_transactions(req.transaction_codes)
 
 @app.post("/get-blocks", tags=[p2p_tag])
-async def get_mempool_transactions_api(req: TransactionsRequest):
-    return get_blocks(req.transaction_codes)
+async def get_mempool_transactions_api(req: BlockRequest):
+    return get_blocks(req.block_indexes)
+
+@app.post("/receive-block", tags=[p2p_tag])
+async def receive_block_api(req: BlockAdditionRequest):
+    return receive_block(req.block)
 
 @app.get("/get-last-block-index", tags=[p2p_tag])
 async def get_last_block_index_api():
@@ -56,6 +60,10 @@ async def sync_chain_from_peers_api():
 @app.get("/get-transaction", tags=[p2p_tag])
 async def get_transaction_api(transaction_code: str):
     return get_transaction(transaction_code)
+
+@app.get("/download-chain", tags=[p2p_tag])
+async def download_chain_api():
+    return download_chain()
 
 @app.get("/download-chain", tags=[p2p_tag])
 async def download_chain_api():

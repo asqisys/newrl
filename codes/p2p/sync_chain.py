@@ -12,6 +12,11 @@ def get_blocks(block_indexes):
         blocks.append(get_block(block_index))
     return blocks
 
+def receive_block(block):
+    print('Recieved block', block)
+    blockchain.add_block(block)
+    return True
+    
 def get_block(block_index):
     chain = blockchain.Blockchain()
     return chain.get_block(block_index)
