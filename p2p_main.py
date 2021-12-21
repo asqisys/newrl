@@ -61,16 +61,21 @@ async def clear_db_api():
     return True
 
 @app.get("/get-peers", tags=[p2p_tag])
-async def get_peers_api():
-    return get_peers()
+async def get_peers_api(request: Request):
+    return get_peers(request.client.host)
 
 @app.post("/add-peer", tags=[p2p_tag])
-async def get_peer_api(req: Request):
+async def add_peer_api(req: Request):
     return add_peer(req.client.host)
 
 @app.post("/clear-peers", tags=[p2p_tag])
 async def clear_peer_api(req: Request):
     return clear_peers()
+
+@app.post("/initiate-peer-connection", tags=[p2p_tag])
+async def initiate_peer_api(address: str):
+    "Test only, used to first connect a client"
+    return add_peer(address)
 
 
 if __name__ == "__main__":
