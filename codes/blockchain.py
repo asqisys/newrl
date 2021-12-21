@@ -45,7 +45,7 @@ class Blockchain:
         con = sqlite3.connect('newrl.db')
         cur = con.cursor()
         print("adding a block")
-        block_index = get_last_block_index(cur) + 1
+        block_index = get_last_block_index() + 1
         block = {'index': block_index,
                  'timestamp': timestamp,
                  'proof': proof,
@@ -302,7 +302,7 @@ def add_transactions_to_block(block_index, transactions):
         con.commit()
         con.close()
 
-def get_last_block_index(self):
+def get_last_block_index():
         con = sqlite3.connect('newrl.db')
         cur = con.cursor()
         last_block_cursor = cur.execute(

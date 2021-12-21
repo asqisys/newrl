@@ -16,8 +16,7 @@ def get_block(block_index):
     return chain.get_block(block_index)
 
 def get_last_block_index():
-    chain = blockchain.Blockchain()
-    last_block = chain.get_last_block_index()
+    last_block = blockchain.get_last_block_index()
     return last_block
 
 def sync_chain():
