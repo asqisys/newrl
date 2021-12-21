@@ -157,7 +157,7 @@ class Blockchain:
                     'previous_hash': block['previous_hash']}
         block_index = block['index']
         self.add_transactions_to_block(block_index, text['transactions'])
-        return response
+        return block
 
     def get_latest_ts(self):
         con = sqlite3.connect('newrl.db')
@@ -267,10 +267,12 @@ class Blockchain:
 def add_block(block):
     con = sqlite3.connect('newrl.db')
     cur = con.cursor()
-    block_index = block['block_index']
+    block_index = block['block_index'] if 'block_index' in block else block['index']
+    block_hash = block['hash'] if 'hash' in block else ''
+    transactions_hash = block['transactions_hash'] if 'transactions_hash' in block else ''
     print('Adding block', block_index)
     db_block_data = (block_index, block['timestamp'], block['proof'],
-                         block['previous_hash'], block['hash'], block['transactions_hash'])
+                         block['previous_hash'], block_hash, transactions_hash)
     cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
     con.commit()
     con.close()
@@ -287,12 +289,12 @@ def add_transactions_to_block(block_index, transactions):
                 transaction['specific_data']) if 'specific_data' in transaction else ''
             db_transaction_data = (
                 block_index,
-                transaction['transaction_code'],
+                transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code'],
                 transaction['timestamp'],
                 transaction['type'],
                 transaction['currency'],
                 transaction['fee'],
-                transaction['description'],
+                transaction['description'] if 'description' in transaction else transaction['descr'],
                 transaction['valid'],
                 specific_data
             )

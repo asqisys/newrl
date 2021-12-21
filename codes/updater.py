@@ -5,6 +5,10 @@ import json
 import os
 import shutil
 
+import requests
+
+from codes.p2p.peers import get_peers
+
 from .constants import STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
 from codes.utils import BufferedLog
 from codes.blockchain import Blockchain
@@ -214,9 +218,10 @@ def run_updater():
             logger.log("More than ", block_time_limit,
                        " hours since the last block, adding a new empty one")
 
-    blockchain.mine_block(transactionsdata)
+    block = blockchain.mine_block(transactionsdata)
     # the chain is updated. Now we update the state db using transaction data
     update_db_states(transactionsdata['transactions'])
+    broadcast_block(block)
 
 #     if blockchain.chain_valid(blockchain.chain):
 #         #		chainjsonstr=json.dumps(blockchain.chain);
@@ -371,3 +376,12 @@ def update_wallet_token_balance(cur, wallet_address, token_code, balance):
 				(wallet_address, tokencode, balance)
 				 VALUES (?, ?, ?)''', (wallet_address, token_code, balance))
 
+
+def broadcast_block(block):
+    peers = get_peers()
+
+    for peer in peers:
+        url = 'http://' + peer['address'] + ':8092'
+        print('Broadcasting to peer', url)
+        requests.post(url + '/receive-block', json={'block': block})
+    return True
