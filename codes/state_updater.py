@@ -29,8 +29,8 @@ def update_db_states(transactions):
 
         if transaction['type'] == 2:  # this is a token creation transaction
             token = transaction_data
-            token_cursor = cur.execute("SELECT max(tokencode) FROM tokens").fetchone()
-            max_token_code = token_cursor[0] if token_cursor is not None else 0
+            token_cursor = cur.execute("SELECT max(tokencode) FROM tokens").fetchone()[0]
+            max_token_code = token_cursor if token_cursor is not None else 0
             max_token_code = max_token_code + 1
             token_attributes_json = json.dumps(token['tokenattributes'])
             query_params = (

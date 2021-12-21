@@ -53,10 +53,6 @@ async def sync_chain_from_peers_api():
 async def sync_chain_from_peers_api():
     return sync_chain_from_peers()
 
-@app.post("/sync-chain-from-peers", tags=[p2p_tag])
-async def sync_chain_from_peers_api():
-    return sync_chain_from_peers()
-
 @app.get("/get-transaction", tags=[p2p_tag])
 async def get_transaction_api(transaction_code: str):
     return get_transaction(transaction_code)
@@ -77,8 +73,8 @@ async def clear_db_api():
     return True
 
 @app.get("/get-peers", tags=[p2p_tag])
-async def get_peers_api(request: Request):
-    return get_peers(request.client.host)
+async def get_peers_api():
+    return get_peers()
 
 @app.post("/add-peer", tags=[p2p_tag])
 async def add_peer_api(req: Request):

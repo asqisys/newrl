@@ -25,36 +25,38 @@ def sync_chain_from_node(url):
     their_last_block_index = int(requests.get(url + '/get-last-block-index').text)
     my_last_block = get_last_block_index()
 
-    while my_last_block <= their_last_block_index:
+    while my_last_block < their_last_block_index:
         my_last_block += 1
         blocks_request = {'transaction_codes': [my_last_block]}
         print(f'Asking block node {url} for block {my_last_block}')
-        blocks_data = requests.post(url + '/get-blocks', json=blocks_request).json()
-        print(blocks_data)
-        for block in blocks_data:
-            print(block)
-            blockchain.add_block(block)
-            break
+        try:
+            blocks_data = requests.post(url + '/get-blocks', json=blocks_request).json()
+            for block in blocks_data:
+                blockchain.add_block(block)
+                break
+        except Exception as e:
+            print('No more blocks')
 
-        return my_last_block
+        # return my_last_block
+
 
 def sync_chain_from_peers():
     peers = get_peers()
+    url = get_best_peer_to_sync(peers)
+    print('Syncing from peer', url)
+    sync_chain_from_node(url)
+
+
+# TODO - use mode of max last 
+def get_best_peer_to_sync(peers):
+    best_peer = None
+    best_peer_value = 0
+
     for peer in peers:
         url = 'http://' + peer['address'] + ':8092'
-        print()
         their_last_block_index = int(requests.get(url + '/get-last-block-index').text)
-        my_last_block = get_last_block_index()
-
-        while my_last_block <= their_last_block_index:
-            my_last_block += 1
-            blocks_request = {'transaction_codes': [my_last_block]}
-            print(f'Asking block node {url} for block {my_last_block}')
-            blocks_data = requests.post(url + '/get-blocks', json=blocks_request).json()
-            print(blocks_data)
-            for block in blocks_data:
-                print(block)
-                blockchain.add_block(block)
-                break
-
-            return my_last_block
+        print(f'Peer {url} has last block {their_last_block_index}')
+        if their_last_block_index > best_peer_value:
+            best_peer = url
+            best_peer_value = their_last_block_index
+    return best_peer
