@@ -21,7 +21,7 @@ def init_db():
     con.close()
 
 
-def get_peers(requester_address):
+def get_peers(requester_address=None):
     peers = []
     con = sqlite3.connect(p2p_db_path)
     con.row_factory = sqlite3.Row
@@ -31,7 +31,8 @@ def get_peers(requester_address):
         peers = [dict(ix) for ix in peer_cursor]
     except sqlite3.OperationalError as e:
         init_db()
-    add_peer(requester_address)
+    if requester_address:
+        add_peer(requester_address)
     return peers
 
 
