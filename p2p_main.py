@@ -49,6 +49,10 @@ async def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.c
 async def sync_chain_from_peers_api():
     return sync_chain_from_peers()
 
+@app.post("/sync-chain-from-peers", tags=[p2p_tag])
+async def sync_chain_from_peers_api():
+    return sync_chain_from_peers()
+
 @app.get("/get-transaction", tags=[p2p_tag])
 async def get_transaction_api(transaction_code: str):
     return get_transaction(transaction_code)
