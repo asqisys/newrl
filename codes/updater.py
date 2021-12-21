@@ -371,12 +371,3 @@ def update_wallet_token_balance(cur, wallet_address, token_code, balance):
 				(wallet_address, tokencode, balance)
 				 VALUES (?, ?, ?)''', (wallet_address, token_code, balance))
 
-
-def get_kyc_doc_hash_json(kyc_docs, kyc_doc_hashes):
-    doc_list = []
-    for idx, doc in enumerate(kyc_docs):
-        doc_list.append({
-            'type': doc,
-            'hash': kyc_doc_hashes[idx]
-        })
-    return json.dumps(doc_list)

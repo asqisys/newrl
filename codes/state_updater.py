@@ -13,8 +13,7 @@ def update_db_states(transactions):
 
         if transaction['type'] == 1:  # this is a wallet creation transaction
             wallet = transaction_data
-            kyc_doc_json = get_kyc_doc_hash_json(
-                wallet['kyc_docs'], wallet['kyc_doc_hashes'])
+            kyc_doc_json = json.dumps(wallet['kyc_docs'])
             data_json = json.dumps(wallet['specific_data'])
             query_params = (wallet['wallet_address'],
                             wallet['wallet_public'],
