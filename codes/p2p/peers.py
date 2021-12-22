@@ -45,7 +45,7 @@ def get_peers(requester_address=None):
 def add_peer(peer_address):
     peer_address = str(peer_address)
 
-    if peer_address == '127.0.0.1':
+    if peer_address == '127.0.0.1' or peer_address == 'newrl.net':
         return
         
     con = sqlite3.connect(p2p_db_path)
