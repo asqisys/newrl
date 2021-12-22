@@ -56,7 +56,6 @@ def add_peer(peer_address):
         con.commit()
     except Exception as e:
         print(e)
-        return False
     con.close()
     return {'address': peer_address}
 
@@ -111,16 +110,16 @@ def init_bootstrap_nodes():
     for peer in my_peers:
         address = peer['address']
         try:
-            response = register_me_with_them(address)
-            if response.status_code != 200:
-                remove_peer(peer)
+            if address != my_address:
+                response = register_me_with_them(address)
         except Exception as e:
             print(f'Peer unreachable, deleting: {peer}')
             remove_peer(peer['address'])
 
 
 def register_me_with_them(address):
-    return requests.post('http://' + address + ':8092/add-peer').json()
+    response = requests.post('http://' + address + ':8092/add-peer')
+    return response.json()
 
 if __name__ == '__main__':
     p2p_db_path = '../' + p2p_db_path
