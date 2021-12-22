@@ -99,5 +99,8 @@ async def initiate_peer_api(address: str):
 
 
 if __name__ == "__main__":
-    init_bootstrap_nodes()
+    try:
+        init_bootstrap_nodes()
+    except Exception as e:
+        print('Bootstrap failed', str(e))
     uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)
