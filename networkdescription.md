@@ -48,4 +48,4 @@ Task for minting node
 2. Selected node broadcasts the new block to its peers and specifically to both first backup and second backup nodes.
 3. The first backup node pings the selected node for being alive, immediately after running selection program. It also specifically queries the selected node for a block after 300 seconds after the timestamp of the previous block, if it hasn't received the new block till then.
 4. The first backup node waits for additional 60 seconds and then starts minting the new block.
-5. If both the selected node and the first backup node send minted valid blocks to the network, the network 
+5. If both the selected node and the first backup node send minted valid blocks to the network, the network considers the selected node's block.
