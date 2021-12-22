@@ -94,8 +94,12 @@ def init_bootstrap_nodes():
 
     for node in BOOTSTRAP_NODES:
         add_peer(node)
-        response = requests.get('http://' + node + ':8092/get-peers')
-        their_peers = response.json()
+        try:
+            response = requests.get('http://' + node + ':8092/get-peers')
+            their_peers = response.json()
+        except Exception as e:
+            their_peers = []
+            print('Error getting nodes.', e)
         print(f'Peers from node {node} : {their_peers}')
         for their_peer in their_peers:
             add_peer(their_peer['address'])
