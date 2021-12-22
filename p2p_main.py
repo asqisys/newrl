@@ -3,7 +3,7 @@ from starlette.requests import Request
 import uvicorn
 from fastapi import FastAPI
 from codes.chainscanner import download_chain, download_state, get_transaction
-from codes.p2p.peers import add_peer, clear_peers, get_peers
+from codes.p2p.peers import add_peer, clear_peers, get_peers, init_bootstrap_nodes
 from codes.p2p.sync_chain import get_block, get_blocks, get_last_block_index, receive_block, sync_chain_from_node, sync_chain_from_peers
 
 from codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
@@ -99,4 +99,5 @@ async def initiate_peer_api(address: str):
 
 
 if __name__ == "__main__":
+    init_bootstrap_nodes()
     uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)
