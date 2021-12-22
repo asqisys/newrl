@@ -58,7 +58,7 @@ def add_peer(peer_address):
         print(e)
         return False
     con.close()
-    return True
+    return {'address': peer_address}
 
 
 def remove_peer(peer_id):
@@ -92,9 +92,11 @@ def init_bootstrap_nodes():
     clear_db()
     init_db()
 
+    my_address = ''
     for node in BOOTSTRAP_NODES:
         add_peer(node)
         try:
+            my_address = register_me_with_them(node)['address']
             response = requests.get('http://' + node + ':8092/get-peers')
             their_peers = response.json()
         except Exception as e:
@@ -118,7 +120,7 @@ def init_bootstrap_nodes():
 
 
 def register_me_with_them(address):
-    response = requests.post('http://' + address + ':8092/add-peer')
+    return requests.post('http://' + address + ':8092/add-peer').json()
 
 if __name__ == '__main__':
     p2p_db_path = '../' + p2p_db_path
