@@ -22,4 +22,13 @@ Block broadcast
 1. The selected node for minting a block sends it to its peers - including its signature for the block.
 2. The contents of the block that are sent include only transaction ids and not the full transactions.
 3. However, transaction hash included in the header the block is that of entire transactions.
-4. 
+4. Peers receive blocks only if they don't already have it
+
+Local update by peers upon receiving a block
+1. Each peer that receives a block, first checks if the signature is valid and that the sending node was in fact selected to mint the block
+2. If yes, the receiving peer does the following
+    a. Validates all transactions in the received block, locally. If one or more transactions are invalid, ignores the block.
+    b. If all transactions are valid, updates its own chain by including the transactions from the mempool for the transaction ids corresponding to those in the received block
+    c. Deletes included transactions from the mempool
+    d. Modifies its local state using the transactions included in the new block
+3. If the block is valid and processed as per the above logic, each peer sends it onwards to its peers excluding the one that sent it
