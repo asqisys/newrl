@@ -25,10 +25,27 @@ Block broadcast
 4. Peers receive blocks only if they don't already have it
 
 Local update by peers upon receiving a block
-1. Each peer that receives a block, first checks if the signature is valid and that the sending node was in fact selected to mint the block
-2. If yes, the receiving peer does the following
+1. Each peer that receives a block, first checks if the signature is valid and that the sending node was in fact selected to mint the block.
+2. Create the transaction hash for the block locally, based on the tx ids in the block. If the tx hash does not match that of the received block, ignore the block.
+3. If yes, the receiving peer does the following
     a. Validates all transactions in the received block, locally. If one or more transactions are invalid, ignores the block.
-    b. If all transactions are valid, updates its own chain by including the transactions from the mempool for the transaction ids corresponding to those in the received block
-    c. Deletes included transactions from the mempool
-    d. Modifies its local state using the transactions included in the new block
-3. If the block is valid and processed as per the above logic, each peer sends it onwards to its peers excluding the one that sent it
+    b. If all transactions are valid, updates its own chain by including the transactions from the mempool for the transaction ids corresponding to those in the received block.
+    c. Deletes included transactions from the mempool.
+    d. Modifies its local state using the transactions included in the new block.
+4. If the block is valid and processed as per the above logic, each peer sends it onwards to its peers excluding the one that sent it.
+
+Selection of minting block
+1. Each peer executes a minting peer selection program anytime after its successful local update upon receiving a new block.
+2. The peer selection program uses the hash of the recently added block as a seed for running a random number.
+3. The full list of all active nodes is arranged using a pre-determined and fixed sorting algorithm and each node is given a serial number.
+4. The random number generated in 2 is multiplied by number of nodes in the full list and rounded up to nearest integer to arrive at a number between 1 and N.
+5. The node with the serial number matching that calculated in 4 is selected for minting the next block.
+6. Two backup nodes are selected as well by running the above steps with N-1 and N-2 nodes after removing the selected node and the first back-up respectively.
+This selection is run locally by each node. Given the same random number seed and same full list of nodes arranged in the same manner, they will agree on the minting nodes selection.
+
+Task for minting node
+1. Upon selection as above, one of the nodes will find itself as the selected one. This node runs the updater.py and creates a new block.
+2. Selected node broadcasts the new block to its peers and specifically to both first backup and second backup nodes.
+3. The first backup node pings the selected node for being alive, immediately after running selection program. It also specifically queries the selected node for a block after 300 seconds after the timestamp of the previous block, if it hasn't received the new block till then.
+4. The first backup node waits for additional 60 seconds and then starts minting the new block.
+5. If both the selected node and the first backup node send minted valid blocks to the network, the network 
