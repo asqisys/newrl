@@ -1,3 +1,4 @@
+import sys
 from fastapi.exceptions import HTTPException
 from starlette.requests import Request
 import uvicorn
@@ -100,7 +101,8 @@ async def initiate_peer_api(address: str):
 
 if __name__ == "__main__":
     try:
-        init_bootstrap_nodes()
+        if len(sys.argv) < 2 or sys.argv[1] != '--no-bootstrap':
+            init_bootstrap_nodes()
     except Exception as e:
         print('Bootstrap failed', str(e))
     uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)
