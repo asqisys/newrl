@@ -100,11 +100,13 @@ async def initiate_peer_api(address: str):
 
 import subprocess
 @app.post("/update-software", tags=[p2p_tag])
-async def update_software_api():
+async def update_software_api(should_update_peers: bool = False, bootstrap_again: bool = False):
     "Update the client software from repo"
     subprocess.call(["git", "pull"])
-    await init_bootstrap_nodes()
-    await update_peers()
+    if bootstrap_again:
+        await init_bootstrap_nodes()
+    if should_update_peers:
+        await update_peers()
     return {'status': 'SUCCESS'}
 
 if __name__ == "__main__":

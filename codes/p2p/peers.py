@@ -1,6 +1,7 @@
 import sqlite3
 
 import requests
+import socket
 
 from codes.constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT
 
@@ -92,11 +93,12 @@ async def init_bootstrap_nodes():
     clear_db()
     init_db()
 
-    my_address = ''
+    my_address = await get_my_address()
     for node in BOOTSTRAP_NODES:
+        if socket.gethostbyname(node) == my_address:
+            continue
         await add_peer(node)
         try:
-            my_address = (await register_me_with_them(node))['address']
             response = requests.get('http://' + node + ':8092/get-peers', timeout=REQUEST_TIMEOUT)
             their_peers = response.json()
         except Exception as e:
@@ -110,6 +112,8 @@ async def init_bootstrap_nodes():
 
     for peer in my_peers:
         address = peer['address']
+        if socket.gethostbyname(address) == my_address:
+            continue
         try:
             if address != my_address:
                 response = await register_me_with_them(address)
@@ -129,24 +133,22 @@ async def update_peers():
 
     for peer in my_peers:
         address = peer['address']
+        if socket.gethostbyname(address) == my_address:
+            continue
         try:
             if address != my_address:
-                response = requests.post('http://' + address + ':8092/update-software', timeout=REQUEST_TIMEOUT)
+                response = requests.post(
+                    'http://' + address + ':8092/update-software?update_peers=false&bootstrap_again=true',
+                    timeout=REQUEST_TIMEOUT
+                )
                 assert response.status_code == 200
                 assert response.json()['status'] == 'SUCCESS'
         except Exception as e:
-            print('Error updating peer', str(e))
+            print('Error updating software on peer', str(e))
     return True
 
 async def get_my_address():
-    my_address = ''
-    for node in BOOTSTRAP_NODES:
-        try:
-            my_address = (await register_me_with_them(node))['address']
-        except Exception as e:
-            print('Error getting my address', str(e))
-        break
-    return my_address
+    return requests.get('https://api.ipify.org?format=json').json()['ip']
 
 if __name__ == '__main__':
     p2p_db_path = '../' + p2p_db_path
