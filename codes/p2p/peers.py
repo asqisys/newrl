@@ -136,13 +136,12 @@ async def update_peers():
         if socket.gethostbyname(address) == my_address:
             continue
         try:
-            if address != my_address:
-                response = requests.post(
-                    'http://' + address + ':8092/update-software?update_peers=false&bootstrap_again=true',
-                    timeout=REQUEST_TIMEOUT
-                )
-                assert response.status_code == 200
-                assert response.json()['status'] == 'SUCCESS'
+            response = requests.post(
+                'http://' + address + ':8092/update-software?update_peers=false&bootstrap_again=true',
+                timeout=REQUEST_TIMEOUT
+            )
+            assert response.status_code == 200
+            assert response.json()['status'] == 'SUCCESS'
         except Exception as e:
             print('Error updating software on peer', str(e))
     return True

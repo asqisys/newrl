@@ -11,4 +11,4 @@ CHAIN_FILE = 'chain.json'
 ALLOWED_CUSTODIANS_FILE = 'allowed_custodians.json'
 
 BOOTSTRAP_NODES = ['newrl.net']
-REQUEST_TIMEOUT = 3
+REQUEST_TIMEOUT = 5
