@@ -39,8 +39,8 @@ def get_peers(requester_address=None):
         peers = [dict(ix) for ix in peer_cursor]
     except sqlite3.OperationalError as e:
         init_db()
-    if requester_address:
-        add_peer(requester_address)
+    # if requester_address:
+    #     add_peer(requester_address)
     return peers
 
 
@@ -95,9 +95,9 @@ async def init_bootstrap_nodes():
 
     my_address = ''
     for node in BOOTSTRAP_NODES:
-        add_peer(node)
+        await add_peer(node)
         try:
-            my_address = await register_me_with_them(node)['address']
+            my_address = (await register_me_with_them(node))['address']
             response = requests.get('http://' + node + ':8092/get-peers', timeout=REQUEST_TIMEOUT)
             their_peers = response.json()
         except Exception as e:
@@ -105,7 +105,7 @@ async def init_bootstrap_nodes():
             print('Error getting nodes.', e)
         print(f'Peers from node {node} : {their_peers}')
         for their_peer in their_peers:
-            add_peer(their_peer['address'])
+            await add_peer(their_peer['address'])
     
     my_peers = get_peers()
 
@@ -143,7 +143,7 @@ async def get_my_address():
     my_address = ''
     for node in BOOTSTRAP_NODES:
         try:
-            my_address = await register_me_with_them(node)['address']
+            my_address = (await register_me_with_them(node))['address']
         except Exception as e:
             print('Error getting my address', str(e))
         break
