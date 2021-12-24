@@ -121,6 +121,30 @@ def register_me_with_them(address):
     response = requests.post('http://' + address + ':8092/add-peer')
     return response.json()
 
+def update_peers():
+    my_peers = get_peers()
+    my_address = get_my_address()
+
+    for peer in my_peers:
+        address = peer['address']
+        try:
+            if address != my_address:
+                response = requests.post('http://' + address + ':8092/update-software')
+                assert response.status_code == 200
+                assert response.json()['status'] == 'SUCCESS'
+        except Exception as e:
+            print('Error updating peer', str(e))
+
+def get_my_address():
+    my_address = ''
+    for node in BOOTSTRAP_NODES:
+        try:
+            my_address = register_me_with_them(node)['address']
+        except Exception as e:
+            print('Error getting my address', str(e))
+        break
+    return my_address
+
 if __name__ == '__main__':
     p2p_db_path = '../' + p2p_db_path
     clear_db()
