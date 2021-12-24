@@ -137,7 +137,7 @@ async def update_peers():
             continue
         try:
             response = requests.post(
-                'http://' + address + ':8092/update-software?update_peers=false&bootstrap_again=true',
+                'http://' + address + ':8092/update-software?update_peers=false&bootstrap_again=false',
                 timeout=REQUEST_TIMEOUT
             )
             assert response.status_code == 200
