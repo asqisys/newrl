@@ -9,7 +9,7 @@ import requests
 
 from codes.p2p.peers import get_peers
 
-from .constants import STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
+from .constants import REQUEST_TIMEOUT, STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
 from codes.utils import BufferedLog
 from codes.blockchain import Blockchain
 from codes.transactionmanager import Transactionmanager
@@ -383,5 +383,5 @@ def broadcast_block(block):
     for peer in peers:
         url = 'http://' + peer['address'] + ':8092'
         print('Broadcasting to peer', url)
-        requests.post(url + '/receive-block', json={'block': block})
+        requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)
     return True

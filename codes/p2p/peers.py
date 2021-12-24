@@ -2,10 +2,9 @@ import sqlite3
 
 import requests
 
-from codes.constants import BOOTSTRAP_NODES
+from codes.constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT
 
 p2p_db_path = 'newrl_p2p.db'
-REQUEST_TIMEOUT = 3
 
 
 def clear_db():

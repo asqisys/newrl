@@ -11,5 +11,5 @@ if __name__ == '__main__':
     if not os.path.exists(INCOMING_PATH):
         os.mkdir(INCOMING_PATH)
 
-    clear_db()
+    # clear_db()
     init_db()

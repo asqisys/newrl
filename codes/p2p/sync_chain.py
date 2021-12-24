@@ -2,6 +2,7 @@ import json
 import os
 import requests
 from codes import blockchain
+from codes.constants import REQUEST_TIMEOUT
 from codes.p2p.peers import get_peers
 from codes.updater import update_db_states
 
@@ -27,7 +28,7 @@ def get_last_block_index():
 
 
 def sync_chain_from_node(url):
-    their_last_block_index = int(requests.get(url + '/get-last-block-index').text)
+    their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
     my_last_block = get_last_block_index()
 
     while my_last_block < their_last_block_index:
@@ -35,7 +36,7 @@ def sync_chain_from_node(url):
         blocks_request = {'transaction_codes': [my_last_block]}
         print(f'Asking block node {url} for block {my_last_block}')
         try:
-            blocks_data = requests.post(url + '/get-blocks', json=blocks_request).json()
+            blocks_data = requests.post(url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT).json()
             for block in blocks_data:
                 blockchain.add_block(block)
                 break
@@ -59,7 +60,7 @@ def get_best_peer_to_sync(peers):
 
     for peer in peers:
         url = 'http://' + peer['address'] + ':8092'
-        their_last_block_index = int(requests.get(url + '/get-last-block-index').text)
+        their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
         print(f'Peer {url} has last block {their_last_block_index}')
         if their_last_block_index > best_peer_value:
             best_peer = url
