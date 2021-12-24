@@ -87,7 +87,7 @@ async def get_peers_api():
 
 @app.post("/add-peer", tags=[p2p_tag])
 async def add_peer_api(req: Request):
-    return add_peer(req.client.host)
+    return await add_peer(req.client.host)
 
 @app.post("/clear-peers", tags=[p2p_tag])
 async def clear_peer_api(req: Request):
@@ -96,21 +96,22 @@ async def clear_peer_api(req: Request):
 @app.post("/initiate-peer-connection", tags=[p2p_tag])
 async def initiate_peer_api(address: str):
     "Test only, used to first connect a client"
-    return add_peer(address)
+    return await add_peer(address)
 
 import subprocess
 @app.post("/update-software", tags=[p2p_tag])
 async def update_software_api():
     "Update the client software from repo"
     subprocess.call(["git", "pull"])
-    init_bootstrap_nodes()
-    update_peers()
+    await init_bootstrap_nodes()
+    await update_peers()
     return {'status': 'SUCCESS'}
 
 if __name__ == "__main__":
     try:
         if len(sys.argv) < 2 or sys.argv[1] != '--no-bootstrap':
-            init_bootstrap_nodes()
+            # init_bootstrap_nodes()
+            pass
     except Exception as e:
         print('Bootstrap failed', str(e))
     uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)

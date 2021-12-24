@@ -5,6 +5,8 @@ import requests
 from codes.constants import BOOTSTRAP_NODES
 
 p2p_db_path = 'newrl_p2p.db'
+REQUEST_TIMEOUT = 3
+
 
 def clear_db():
     con = sqlite3.connect(p2p_db_path)
@@ -85,7 +87,7 @@ def clear_peers():
     con.close()
     return True
 
-def init_bootstrap_nodes():
+async def init_bootstrap_nodes():
     print(f'Initiating node discovery from bootstrap nodes: {BOOTSTRAP_NODES}')
     # clear_peers()
     clear_db()
@@ -96,7 +98,7 @@ def init_bootstrap_nodes():
         add_peer(node)
         try:
             my_address = register_me_with_them(node)['address']
-            response = requests.get('http://' + node + ':8092/get-peers')
+            response = requests.get('http://' + node + ':8092/get-peers', timeout=REQUEST_TIMEOUT)
             their_peers = response.json()
         except Exception as e:
             their_peers = []
@@ -115,13 +117,14 @@ def init_bootstrap_nodes():
         except Exception as e:
             print(f'Peer unreachable, deleting: {peer}')
             remove_peer(peer['address'])
+    return True
 
 
 def register_me_with_them(address):
-    response = requests.post('http://' + address + ':8092/add-peer')
+    response = requests.post('http://' + address + ':8092/add-peer', timeout=REQUEST_TIMEOUT)
     return response.json()
 
-def update_peers():
+async def update_peers():
     my_peers = get_peers()
     my_address = get_my_address()
 
@@ -129,11 +132,12 @@ def update_peers():
         address = peer['address']
         try:
             if address != my_address:
-                response = requests.post('http://' + address + ':8092/update-software')
+                response = requests.post('http://' + address + ':8092/update-software', timeout=REQUEST_TIMEOUT)
                 assert response.status_code == 200
                 assert response.json()['status'] == 'SUCCESS'
         except Exception as e:
             print('Error updating peer', str(e))
+    return True
 
 def get_my_address():
     my_address = ''
