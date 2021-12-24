@@ -112,7 +112,7 @@ async def update_software_api(should_update_peers: bool = False, bootstrap_again
 if __name__ == "__main__":
     try:
         if len(sys.argv) < 2 or sys.argv[1] != '--no-bootstrap':
-            init_bootstrap_nodes()
+            # init_bootstrap_nodes()
             pass
     except Exception as e:
         print('Bootstrap failed', str(e))
