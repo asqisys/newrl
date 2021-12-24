@@ -44,7 +44,7 @@ def get_peers(requester_address=None):
     return peers
 
 
-def add_peer(peer_address):
+async def add_peer(peer_address):
     peer_address = str(peer_address)
 
     if peer_address == '127.0.0.1':
@@ -97,7 +97,7 @@ async def init_bootstrap_nodes():
     for node in BOOTSTRAP_NODES:
         add_peer(node)
         try:
-            my_address = register_me_with_them(node)['address']
+            my_address = await register_me_with_them(node)['address']
             response = requests.get('http://' + node + ':8092/get-peers', timeout=REQUEST_TIMEOUT)
             their_peers = response.json()
         except Exception as e:
@@ -113,20 +113,20 @@ async def init_bootstrap_nodes():
         address = peer['address']
         try:
             if address != my_address:
-                response = register_me_with_them(address)
+                response = await register_me_with_them(address)
         except Exception as e:
             print(f'Peer unreachable, deleting: {peer}')
             remove_peer(peer['address'])
     return True
 
 
-def register_me_with_them(address):
+async def register_me_with_them(address):
     response = requests.post('http://' + address + ':8092/add-peer', timeout=REQUEST_TIMEOUT)
     return response.json()
 
 async def update_peers():
     my_peers = get_peers()
-    my_address = get_my_address()
+    my_address = await get_my_address()
 
     for peer in my_peers:
         address = peer['address']
@@ -139,11 +139,11 @@ async def update_peers():
             print('Error updating peer', str(e))
     return True
 
-def get_my_address():
+async def get_my_address():
     my_address = ''
     for node in BOOTSTRAP_NODES:
         try:
-            my_address = register_me_with_them(node)['address']
+            my_address = await register_me_with_them(node)['address']
         except Exception as e:
             print('Error getting my address', str(e))
         break
