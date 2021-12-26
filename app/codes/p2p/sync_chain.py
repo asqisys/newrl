@@ -1,10 +1,10 @@
 import json
 import os
 import requests
-from codes import blockchain
-from codes.constants import REQUEST_TIMEOUT
-from codes.p2p.peers import get_peers
-from codes.updater import update_db_states
+from app.codes import blockchain
+from app.constants import REQUEST_TIMEOUT
+from app.codes.p2p.peers import get_peers
+from app.codes.updater import update_db_states
 
 
 def get_blocks(block_indexes):

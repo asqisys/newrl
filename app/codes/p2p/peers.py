@@ -3,7 +3,7 @@ import sqlite3
 import requests
 import socket
 
-from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT
+from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB
 
 
 def clear_db():
@@ -46,7 +46,7 @@ async def add_peer(peer_address):
     peer_address = str(peer_address)
 
     if peer_address == '127.0.0.1':
-        return
+        return {'address': peer_address, 'status': 'FAILURE'}
         
     con = sqlite3.connect(NEWRL_P2P_DB)
     cur = con.cursor()
@@ -56,8 +56,9 @@ async def add_peer(peer_address):
         con.commit()
     except Exception as e:
         print(e)
+        return {'address': peer_address, 'status': 'FAILURE', 'reason': str(e)}
     con.close()
-    return {'address': peer_address}
+    return {'address': peer_address, 'status': 'SUCCESS'}
 
 
 def remove_peer(peer_id):

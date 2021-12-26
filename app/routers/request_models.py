@@ -60,3 +60,15 @@ class AddWalletRequest(BaseModel):
     kyc_docs: List[KYCDoc] = [{'type': 1, 'hash': '686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401'}]
     specific_data: dict
     public_key: str
+
+
+class TransactionsRequest(BaseModel):
+    transaction_codes: List[str] = []
+
+
+class BlockRequest(BaseModel):
+    block_indexes: List[str] = []
+
+
+class BlockAdditionRequest(BaseModel):
+    block: dict

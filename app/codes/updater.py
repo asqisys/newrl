@@ -107,13 +107,6 @@ def run_updater():
                 continue
             transaction = transactiondata['transaction']
             signatures = transactiondata['signatures']
-#			logger.log(transaction)
-            ts = datetime.datetime.strptime(
-                transaction["timestamp"][:-7], "%Y-%m-%d %H:%M:%S")
-#			logger.log(ts)
-#			if ts > latest_ts:
-#				logger.log("Found transaction after latest_ts with ts = ",ts)
-    #			logger.log(transaction['valid'])
 
             # new code for validating again
             trandata = tmtemp.loadtransactionpassive(file)
@@ -330,7 +323,7 @@ def update_db_states(transactions):
                 token['amount_created'],
                 token['value_created'],
                 token['sc_flag'],
-                transaction['transaction_code'],
+                transaction['trans_code'],
                 token_attributes_json
             )
             cur.execute(f'''INSERT OR IGNORE INTO tokens
@@ -381,5 +374,9 @@ def broadcast_block(block):
     for peer in peers:
         url = 'http://' + peer['address'] + ':8092'
         print('Broadcasting to peer', url)
-        requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)
+        try:
+            requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)
+        except Exception as e:
+            print(f'Error broadcasting block to peer: {url}')
+            print(e)
     return True
