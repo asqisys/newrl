@@ -1,1 +1,0 @@
-{"transaction": {"timestamp": "", "trans_code": "000000", "type": 4, "currency": "INR", "fee": 0.0, "descr": "", "valid": 1, "block_index": 0, "specific_data": {"asset1_code": 29, "asset2_code": 31, "wallet1": "0x60a0c36ba347a56dd5179e25f1bbe95d1ce27e5f", "wallet2": "0x76d2a2b295a60c23945354ea0f704a0577b37fca", "asset1_number": 456, "asset2_number": 789}}, "signatures": []}
