@@ -3,6 +3,8 @@ import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 
+from .constants import NEWRL_PORT
+
 from .routers import blockchain
 from .routers import p2p
 
@@ -19,7 +21,7 @@ app.include_router(blockchain.router)
 app.include_router(p2p.router)
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8090, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=NEWRL_PORT, reload=True)
 
 
 def custom_openapi():
