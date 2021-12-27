@@ -14,3 +14,4 @@ ALLOWED_CUSTODIANS_FILE = 'allowed_custodians.json'
 
 BOOTSTRAP_NODES = ['newrl.net']
 REQUEST_TIMEOUT = 5
+NEWRL_PORT = 8092

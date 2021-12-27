@@ -3,7 +3,7 @@ import sqlite3
 import requests
 import socket
 
-from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB
+from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
 
 
 def clear_db():
@@ -98,7 +98,7 @@ async def init_bootstrap_nodes():
             continue
         await add_peer(node)
         try:
-            response = requests.get('http://' + node + ':8092/get-peers', timeout=REQUEST_TIMEOUT)
+            response = requests.get('http://' + node + f':{NEWRL_PORT}/get-peers', timeout=REQUEST_TIMEOUT)
             their_peers = response.json()
         except Exception as e:
             their_peers = []
@@ -123,7 +123,7 @@ async def init_bootstrap_nodes():
 
 
 async def register_me_with_them(address):
-    response = requests.post('http://' + address + ':8092/add-peer', timeout=REQUEST_TIMEOUT)
+    response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', timeout=REQUEST_TIMEOUT)
     return response.json()
 
 async def update_peers():
@@ -136,7 +136,7 @@ async def update_peers():
             continue
         try:
             response = requests.post(
-                'http://' + address + ':8092/update-software?update_peers=false&bootstrap_again=false',
+                'http://' + address + f':{NEWRL_PORT}/update-software?update_peers=false&bootstrap_again=false',
                 timeout=REQUEST_TIMEOUT
             )
             assert response.status_code == 200

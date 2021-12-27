@@ -2,7 +2,7 @@ import json
 import os
 import requests
 from app.codes import blockchain
-from app.constants import REQUEST_TIMEOUT
+from app.constants import NEWRL_PORT, REQUEST_TIMEOUT
 from app.codes.p2p.peers import get_peers
 from app.codes.updater import update_db_states
 
@@ -59,7 +59,7 @@ def get_best_peer_to_sync(peers):
     best_peer_value = 0
 
     for peer in peers:
-        url = 'http://' + peer['address'] + ':8092'
+        url = 'http://' + peer['address'] + ':' + NEWRL_PORT
         their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
         print(f'Peer {url} has last block {their_last_block_index}')
         if their_last_block_index > best_peer_value:

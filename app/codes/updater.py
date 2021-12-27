@@ -8,7 +8,7 @@ import shutil
 import requests
 import sqlite3
 
-from ..constants import NEWRL_DB, REQUEST_TIMEOUT, STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
+from ..constants import NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
 from .p2p.peers import get_peers
 from .utils import BufferedLog
 from .blockchain import Blockchain
@@ -372,7 +372,7 @@ def broadcast_block(block):
     peers = get_peers()
 
     for peer in peers:
-        url = 'http://' + peer['address'] + ':8092'
+        url = 'http://' + peer['address'] + ':' + NEWRL_PORT
         print('Broadcasting to peer', url)
         try:
             requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)

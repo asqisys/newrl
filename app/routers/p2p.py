@@ -8,6 +8,7 @@ from app.codes.chainscanner import download_chain, download_state, get_transacti
 from app.codes.p2p.peers import add_peer, clear_peers, get_peers, init_bootstrap_nodes, update_peers
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
+from app.constants import NEWRL_PORT
 from app.migrations.init_db import clear_db, init_db
 from .request_models import BlockAdditionRequest, BlockRequest, TransactionsRequest
 
@@ -113,4 +114,4 @@ if __name__ == "__main__":
             pass
     except Exception as e:
         print('Bootstrap failed', str(e))
-    uvicorn.run("p2p_main:app", host="0.0.0.0", port=8092, reload=True)
+    uvicorn.run("p2p_main:app", host="0.0.0.0", port=NEWRL_PORT, reload=True)
