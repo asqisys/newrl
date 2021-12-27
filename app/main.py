@@ -1,0 +1,41 @@
+import logging
+import uvicorn
+from fastapi.openapi.utils import get_openapi
+from fastapi import FastAPI
+
+from .routers import blockchain
+from .routers import p2p
+
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="The Newrl APIs",
+    description="This page covers all the public APIs available at present in the Newrl blockchain platform."
+)
+
+app.include_router(blockchain.router)
+app.include_router(p2p.router)
+
+if __name__ == "__main__":
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8090, reload=True)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Newrl APIs",
+        version="1.0",
+        description="APIs for Newrl - the blockchain platform to tokenize assets - to invest, lend and pay on-chain.",
+        routes=app.routes,
+    )
+    openapi_schema["info"]["x-logo"] = {
+        "url": "http://newrl.net/assets/img/icons/newrl_logo.png"
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
