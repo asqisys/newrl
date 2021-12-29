@@ -129,10 +129,10 @@ async def register_me_with_them(address):
 async def update_peers():
     my_peers = get_peers()
     my_address = await get_my_address()
-    logger.info('Updating peers: ' + ' '.join(my_peers))
 
     for peer in my_peers:
         address = peer['address']
+        logger.info('Updating peers: %s', address)
         if socket.gethostbyname(address) == my_address:
             continue
         try:
