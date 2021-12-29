@@ -154,6 +154,6 @@ async def update_software(propogate):
     "Update the client software from repo"
     logger.info('Getting latest code from repo')
     subprocess.call(["git", "pull"])
-    if propogate:
+    if propogate is True:
         logger.info('Propogaring update request to network')
         await update_peers()
