@@ -51,7 +51,7 @@ async def add_peer(peer_address):
     cur = con.cursor()
     try:
         logger.info('Adding peer %s', peer_address)
-        await register_me_with_them(peer_address)
+        # await register_me_with_them(peer_address)
         cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
         con.commit()
     except Exception as e:
@@ -107,17 +107,17 @@ async def init_bootstrap_nodes():
         for their_peer in their_peers:
             await add_peer (their_peer['address'])
     
-    # my_peers = get_peers()
+    my_peers = get_peers()
 
-    # for peer in my_peers:
-    #     address = peer['address']
-    #     if socket.gethostbyname(address) == my_address:
-    #         continue
-    #     try:
-    #         response = await register_me_with_them(address)
-    #     except Exception as e:
-    #         print(f'Peer unreachable, deleting: {peer}')
-    #         remove_peer(peer['address'])
+    for peer in my_peers:
+        address = peer['address']
+        if socket.gethostbyname(address) == my_address:
+            continue
+        try:
+            response = await register_me_with_them(address)
+        except Exception as e:
+            print(f'Peer unreachable, deleting: {peer}')
+            remove_peer(peer['address'])
     return True
 
 
