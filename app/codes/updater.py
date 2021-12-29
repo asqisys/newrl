@@ -372,7 +372,7 @@ def broadcast_block(block):
     peers = get_peers()
 
     for peer in peers:
-        url = 'http://' + peer['address'] + ':' + NEWRL_PORT
+        url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting to peer', url)
         try:
             requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)
