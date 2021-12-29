@@ -98,5 +98,5 @@ async def initiate_peer_api(address: str):
 
 @router.post("/update-software", tags=[p2p_tag])
 async def update_software_api():
-    update_software()
+    await update_software()
     return {'status': 'SUCCESS'}
