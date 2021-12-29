@@ -33,13 +33,12 @@ def sync_chain_from_node(url):
 
     while my_last_block < their_last_block_index:
         my_last_block += 1
-        blocks_request = {'transaction_codes': [my_last_block]}
+        blocks_request = {'block_indexes': [my_last_block]}
         print(f'Asking block node {url} for block {my_last_block}')
         try:
             blocks_data = requests.post(url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT).json()
             for block in blocks_data:
                 blockchain.add_block(block)
-                break
         except Exception as e:
             print('No more blocks')
 
@@ -59,10 +58,13 @@ def get_best_peer_to_sync(peers):
     best_peer_value = 0
 
     for peer in peers:
-        url = 'http://' + peer['address'] + ':' + NEWRL_PORT
-        their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
-        print(f'Peer {url} has last block {their_last_block_index}')
-        if their_last_block_index > best_peer_value:
-            best_peer = url
-            best_peer_value = their_last_block_index
+        url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
+        try:
+            their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
+            print(f'Peer {url} has last block {their_last_block_index}')
+            if their_last_block_index > best_peer_value:
+                best_peer = url
+                best_peer_value = their_last_block_index
+        except Exception as e:
+            print('Error getting block index from peer at', url)
     return best_peer
