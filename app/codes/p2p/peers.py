@@ -1,11 +1,14 @@
+import logging
 import sqlite3
-
 import requests
 import socket
 import subprocess
 
 from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
 
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def clear_peer_db():
     con = sqlite3.connect(NEWRL_P2P_DB)
@@ -47,11 +50,12 @@ async def add_peer(peer_address):
     con = sqlite3.connect(NEWRL_P2P_DB)
     cur = con.cursor()
     try:
+        logger.info('Adding peer %s', peer_address)
         await register_me_with_them(peer_address)
         cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
         con.commit()
     except Exception as e:
-        print(e)
+        logger.info('Did not add peer %s', peer_address)
         return {'address': peer_address, 'status': 'FAILURE', 'reason': str(e)}
     con.close()
     return {'address': peer_address, 'status': 'SUCCESS'}
@@ -91,6 +95,7 @@ async def init_bootstrap_nodes():
     for node in BOOTSTRAP_NODES:
         if socket.gethostbyname(node) == my_address:
             continue
+        logger.info(f'Boostrapping from node {node}')
         await add_peer(node)
         try:
             response = requests.get('http://' + node + f':{NEWRL_PORT}/get-peers', timeout=REQUEST_TIMEOUT)
@@ -117,12 +122,14 @@ async def init_bootstrap_nodes():
 
 
 async def register_me_with_them(address):
+    logger.info(f'Registering me with node {address}')
     response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', timeout=REQUEST_TIMEOUT)
     return response.json()
 
 async def update_peers():
     my_peers = get_peers()
     my_address = await get_my_address()
+    logger.info('Updating peers: ' + ' '.join(my_peers))
 
     for peer in my_peers:
         address = peer['address']
@@ -145,6 +152,6 @@ async def get_my_address():
 
 async def update_software():
     "Update the client software from repo"
+    logger.info('Getting latest code from repo')
     subprocess.call(["git", "pull"])
-    await init_bootstrap_nodes()
     await update_peers()

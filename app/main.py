@@ -4,13 +4,13 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 
 from .constants import NEWRL_PORT
-from .codes.p2p.peers import update_software
+from .codes.p2p.peers import init_bootstrap_nodes, update_software
 
 from .routers import blockchain
 from .routers import p2p
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
@@ -24,6 +24,7 @@ app.include_router(p2p.router)
 @app.on_event('startup')
 async def app_startup():
     try:
+        await init_bootstrap_nodes()
         await update_software()
     except Exception as e:
         print('Bootstrap failed', str(e))
