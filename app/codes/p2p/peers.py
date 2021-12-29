@@ -150,8 +150,10 @@ async def get_my_address():
     return requests.get('https://api.ipify.org?format=json').json()['ip']
 
 
-async def update_software():
+async def update_software(propogate):
     "Update the client software from repo"
     logger.info('Getting latest code from repo')
     subprocess.call(["git", "pull"])
-    await update_peers()
+    if propogate:
+        logger.info('Propogaring update request to network')
+        await update_peers()
