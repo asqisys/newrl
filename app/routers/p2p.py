@@ -5,7 +5,7 @@ from fastapi.exceptions import HTTPException
 from starlette.requests import Request
 
 from app.codes.chainscanner import download_chain, download_state, get_transaction
-from app.codes.p2p.peers import add_peer, clear_peers, get_peers, init_bootstrap_nodes, update_peers
+from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
 from app.constants import NEWRL_PORT
@@ -96,22 +96,7 @@ async def initiate_peer_api(address: str):
     "Test only, used to first connect a client"
     return await add_peer(address)
 
-import subprocess
 @router.post("/update-software", tags=[p2p_tag])
-async def update_software_api(should_update_peers: bool = False, bootstrap_again: bool = False):
-    "Update the client software from repo"
-    subprocess.call(["git", "pull"])
-    if bootstrap_again:
-        await init_bootstrap_nodes()
-    if should_update_peers:
-        await update_peers()
+async def update_software_api():
+    update_software()
     return {'status': 'SUCCESS'}
-
-if __name__ == "__main__":
-    try:
-        if len(sys.argv) < 2 or sys.argv[1] != '--no-bootstrap':
-            # init_bootstrap_nodes()
-            pass
-    except Exception as e:
-        print('Bootstrap failed', str(e))
-    uvicorn.run("p2p_main:app", host="0.0.0.0", port=NEWRL_PORT, reload=True)

@@ -2,18 +2,19 @@ import sqlite3
 
 import requests
 import socket
+import subprocess
 
 from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
 
 
-def clear_db():
+def clear_peer_db():
     con = sqlite3.connect(NEWRL_P2P_DB)
     cur = con.cursor()
     cur.execute('DROP TABLE IF EXISTS peers')
     con.commit()
     con.close()
 
-def init_db():
+def init_peer_db():
     con = sqlite3.connect(NEWRL_P2P_DB)
     cur = con.cursor()
     cur.execute('''
@@ -32,13 +33,8 @@ def get_peers(requester_address=None):
     con = sqlite3.connect(NEWRL_P2P_DB)
     con.row_factory = sqlite3.Row
     cur = con.cursor()
-    try:
-        peer_cursor = cur.execute('SELECT * FROM peers').fetchall()
-        peers = [dict(ix) for ix in peer_cursor]
-    except sqlite3.OperationalError as e:
-        init_db()
-    # if requester_address:
-    #     add_peer(requester_address)
+    peer_cursor = cur.execute('SELECT * FROM peers').fetchall()
+    peers = [dict(ix) for ix in peer_cursor]
     return peers
 
 
@@ -47,12 +43,11 @@ async def add_peer(peer_address):
 
     if peer_address == '127.0.0.1':
         return {'address': peer_address, 'status': 'FAILURE'}
-        
+
     con = sqlite3.connect(NEWRL_P2P_DB)
     cur = con.cursor()
     try:
-        # register_me_with_them(peer_address)
-        peer_cursor = cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
+        cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
         con.commit()
     except Exception as e:
         print(e)
@@ -88,9 +83,8 @@ def clear_peers():
 
 async def init_bootstrap_nodes():
     print(f'Initiating node discovery from bootstrap nodes: {BOOTSTRAP_NODES}')
-    # clear_peers()
-    clear_db()
-    init_db()
+    clear_peer_db()
+    init_peer_db()
 
     my_address = await get_my_address()
     for node in BOOTSTRAP_NODES:
@@ -105,7 +99,7 @@ async def init_bootstrap_nodes():
             print('Error getting nodes.', e)
         print(f'Peers from node {node} : {their_peers}')
         for their_peer in their_peers:
-            await add_peer(their_peer['address'])
+            await add_peer (their_peer['address'])
     
     my_peers = get_peers()
 
@@ -114,8 +108,7 @@ async def init_bootstrap_nodes():
         if socket.gethostbyname(address) == my_address:
             continue
         try:
-            if address != my_address:
-                response = await register_me_with_them(address)
+            response = await register_me_with_them(address)
         except Exception as e:
             print(f'Peer unreachable, deleting: {peer}')
             remove_peer(peer['address'])
@@ -136,7 +129,7 @@ async def update_peers():
             continue
         try:
             response = requests.post(
-                'http://' + address + f':{NEWRL_PORT}/update-software?update_peers=false&bootstrap_again=false',
+                'http://' + address + f':{NEWRL_PORT}/update-software',
                 timeout=REQUEST_TIMEOUT
             )
             assert response.status_code == 200
@@ -148,7 +141,9 @@ async def update_peers():
 async def get_my_address():
     return requests.get('https://api.ipify.org?format=json').json()['ip']
 
-if __name__ == '__main__':
-    NEWRL_P2P_DB = '../' + NEWRL_P2P_DB
-    clear_db()
-    init_db()
+
+async def update_software():
+    "Update the client software from repo"
+    subprocess.call(["git", "pull"])
+    await init_bootstrap_nodes()
+    await update_peers()

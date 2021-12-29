@@ -4,6 +4,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 
 from .constants import NEWRL_PORT
+from .codes.p2p.peers import update_software
 
 from .routers import blockchain
 from .routers import p2p
@@ -19,6 +20,13 @@ app = FastAPI(
 
 app.include_router(blockchain.router)
 app.include_router(p2p.router)
+
+@app.on_event('startup')
+async def app_startup():
+    try:
+        await update_software()
+    except Exception as e:
+        print('Bootstrap failed', str(e))
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=NEWRL_PORT, reload=True)

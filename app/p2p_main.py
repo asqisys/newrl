@@ -10,7 +10,7 @@ from codes.p2p.sync_chain import get_block, get_blocks, get_last_block_index, re
 
 from codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
 from migrations.init_db import clear_db, init_db
-from p2p_request_models import BlockAdditionRequest, BlockRequest, TransactionsRequest
+from .routers.request_models import BlockAdditionRequest, BlockRequest, TransactionsRequest
 
 
 app = FastAPI(
