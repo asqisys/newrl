@@ -1,5 +1,6 @@
 # Global constants in this file
 
+DATA_PATH = 'data/'
 MEMPOOL_PATH = 'data/mempool/'
 TMP_PATH = 'data/tmp/'
 INCOMING_PATH = 'data/tmp/incoming/'
