@@ -13,11 +13,7 @@ def get_blocks(block_indexes):
         blocks.append(get_block(block_index))
     return blocks
 
-def receive_block(block):
-    print('Recieved block', block)
-    blockchain.add_block(block)
-    return True
-    
+
 def get_block(block_index):
     chain = blockchain.Blockchain()
     return chain.get_block(block_index)
@@ -25,6 +21,16 @@ def get_block(block_index):
 def get_last_block_index():
     last_block = blockchain.get_last_block_index()
     return last_block
+
+
+def receive_block(block):
+    print('Recieved block', block)
+
+    block_index = block['block_index'] if 'block_index' in block else block['index']
+    if block_index > get_last_block_index() + 1:
+        sync_chain_from_peers()
+    blockchain.add_block(block)
+    return True
 
 
 def sync_chain_from_node(url):
