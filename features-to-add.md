@@ -20,3 +20,4 @@ KYC
 
 DAO and DO smart contracts
 13. Create SC templates for replicating organizations on chain - autonomous as well as actively managed
+14. Multi-sig wallets
