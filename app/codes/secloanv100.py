@@ -11,9 +11,9 @@ import binascii
 import base64
 import sqlite3
 
-from codes.transactionmanager import Transactionmanager
-from codes.chainscanner import Chainscanner, get_wallet_token_balance
-from codes.tokenmanager import create_token_transaction
+from .transactionmanager import Transactionmanager
+from .chainscanner import Chainscanner, get_wallet_token_balance
+from .tokenmanager import create_token_transaction
 
 class SecLoan1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
