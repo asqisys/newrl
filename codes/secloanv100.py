@@ -11,9 +11,9 @@ import binascii
 import base64
 import sqlite3
 
-from codes.transactionmanager import Transactionmanager
-from codes.chainscanner import Chainscanner, get_wallet_token_balance
-from codes.tokenmanager import create_token_transaction
+from .transactionmanager import Transactionmanager
+from .chainscanner import Chainscanner, get_wallet_token_balance
+from .tokenmanager import create_token_transaction
 
 class SecLoan1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
@@ -78,6 +78,7 @@ class SecLoan1():
         cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
         cspecs=json.dumps(contractparams['contractspecs'])
         legpars=json.dumps(contractparams['legalparams'])
+        signstr=json.dumps(contractparams['signatories'])
         qparams=(self.address,
                 contractparams['creator'],
                 contractparams['ts_init'],
@@ -86,7 +87,7 @@ class SecLoan1():
                 contractparams['actmode'],
                 cstatus,
                 contractparams['next_act_ts'],
-                contractparams['signatories'],
+                signstr,
                 contractparams['parent'],
                 contractparams['oracleids'],
                 sdestr,
@@ -115,21 +116,29 @@ class SecLoan1():
         contract = contract_row if contract_row is not None else 0
         con.close()
         #print(contract)
+        tsinitint=int(contract[2]) if contract[2] else 0
+        statusint=int(contract[6]) if  contract[6] else 0
+        nextacttsint=int(contract[7]) if contract[7] else 0
+        sdint=int(contract[11]) if contract[11] else 0
+        signjson=json.loads(contract[8]) if contract[8] else {}
+        oraclejson=json.loads(contract[10]) if contract[10] else {}
+        contractspecjson=json.loads(contract[12]) if contract[12] else {}
+        legalparamjson=json.loads(contract[13]) if contract[13] else {}
         self.contractparams={}
         self.contractparams['address']=contractaddress
         self.contractparams['creator']=contract[1]
-        self.contractparams['ts_init']=contract[2]
+        self.contractparams['ts_init']=tsinitint
         self.contractparams['name']=contract[3]
         self.contractparams['version']=contract[4]
         self.contractparams['actmode']=contract[5]
-        self.contractparams['status']=contract[6]
-        self.contractparams['next_act_ts']=contract[7]
-        self.contractparams['signatories']=contract[8]
+        self.contractparams['status']=statusint
+        self.contractparams['next_act_ts']=nextacttsint
+        self.contractparams['signatories']=signjson
         self.contractparams['parent']=contract[9]
-        self.contractparams['oracleids']=contract[10]
-        self.contractparams['selfdestruct']=contract[11]
-        self.contractparams['contractspecs']=contract[12]
-        self.contractparams['legalparams']=contract[13]
+        self.contractparams['oracleids']=oraclejson
+        self.contractparams['selfdestruct']=sdint
+        self.contractparams['contractspecs']=contractspecjson
+        self.contractparams['legalparams']=legalparamjson
         print("Loaded the contract with following data: \n",self.contractparams)
         return self.contractparams
 
@@ -144,7 +153,7 @@ class SecLoan1():
                     'block_index':0,
                     'specific_data':tspdata}
         # the below section is to be re-written upon the database version conclusion
-        trans=Transactionmanager(mempool, statefile);
+        trans=Transactionmanager();
         signatures=[]
         transactiondata={'transaction':transaction,'signatures':signatures}
         txdata=trans.transactioncreator(transactiondata);
@@ -203,8 +212,8 @@ class SecLoan1():
 
     def create_loan_token(self):
         name="Secloantoken"+self.address[:5]
-        contractspecs=json.loads(self.contractparams['contractspecs'])
-    #    contractspecs=self.contractparams['contractspecs']
+    #    contractspecs=json.loads(self.contractparams['contractspecs'])
+        contractspecs=self.contractparams['contractspecs']
         tokendata={"tokencode": 0,
                    "tokenname": name,
                    "tokentype": 62,
@@ -227,7 +236,7 @@ class SecLoan1():
         transferdata={"asset1_code": self.contractparams['contractspecs']['tokencode'],
                         "asset2_code": 0,
                         "wallet1": self.contractparams['contractspecs']['lenderwallet'],
-                        "wallet2": self.contractaddress,
+                        "wallet2": self.address,
                         "asset1_number": self.contractparams['contractspecs']['loanamount'],
                         "asset2_number": 0}
         tx=self.create_tx(5,transferdata,"INR",0.0) #going with default values for mempool="./mempool",statefile="./state.json",descr=None
@@ -237,7 +246,7 @@ class SecLoan1():
         transferdata={"asset1_code": self.contractparams['contractspecs']['sec_token_code'],
                         "asset2_code": 0,
                         "wallet1": self.contractparams['contractspecs']['secprovider'],
-                        "wallet2": self.contractaddress,
+                        "wallet2": self.address,
                         "asset1_number": self.contractparams['contractspecs']['sec_token_amount'],
                         "asset2_number": 0}
         tx=self.create_tx(5,transferdata,"INR",0.0) #going with default values for mempool="./mempool",statefile="./state.json",descr=None
