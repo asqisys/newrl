@@ -7,7 +7,7 @@ con = sqlite3.connect('../newrl.db')
 
 cur = con.cursor()
 
-with open('../chain.json', 'r') as read_file:
+with open('./chain.json', 'r') as read_file:
     chain_data = json.load(read_file)
     print(chain_data)
 

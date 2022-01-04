@@ -33,7 +33,7 @@ def test_secloan1():
 #    loan1=secloanv100.SecLoan1()
 #    loan1.setup(callparamjson)
 #    loan1.create_loan_token()
-    loan1=secloanv100.SecLoan1("0xa87cfed9b43a84d621b6ab4e2b928ac9c7e6c5df")
+    loan1=secloanv100.SecLoan1("0xa382eb6da4207343f1007511631402359d93bdf2")
     loan1.create_loan_token()
 if __name__ == '__main__':
     test_secloan1()

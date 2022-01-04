@@ -6,7 +6,7 @@ con = sqlite3.connect('../newrl.db')
 
 cur = con.cursor()
 
-with open('../state.json', 'r') as read_file:
+with open('./state.json', 'r') as read_file:
   state_data = json.load(read_file)
   print(state_data)
 

@@ -204,6 +204,7 @@ class SecLoan1():
     def create_loan_token(self):
         name="Secloantoken"+self.address[:5]
         contractspecs=json.loads(self.contractparams['contractspecs'])
+    #    contractspecs=self.contractparams['contractspecs']
         tokendata={"tokencode": 0,
                    "tokenname": name,
                    "tokentype": 62,
