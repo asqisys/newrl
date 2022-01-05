@@ -1,0 +1,10 @@
+from fastapi import APIRouter
+from app.codes.p2p.transport import receive
+
+router = APIRouter()
+
+transport_tag = 'transport'
+
+@router.post("/receive", tags=[transport_tag])
+async def recieve_api(payload: dict):
+    return receive(payload)
