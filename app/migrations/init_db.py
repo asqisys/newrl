@@ -13,6 +13,7 @@ def clear_db():
     cur.execute('DROP TABLE IF EXISTS blocks')
     cur.execute('DROP TABLE IF EXISTS transactions')
     cur.execute('DROP TABLE IF EXISTS transfers')
+    cur.execute('DROP TABLE IF EXISTS contracts')
     con.commit()
     con.close()
 
@@ -88,10 +89,64 @@ def init_db():
                     asset1_number real
                     asset2_number real)
                     ''')
+    
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS contracts
+                    (address TEXT,
+                    creator TEXT,
+                    ts_init INTEGER,
+                    name TEXT,
+                    version TEXT,
+                    actmode TEXT,
+                    status INTEGER,
+                    next_act_ts INTEGER,
+                    signatories TEXT,
+                    parent TEXT,
+                    oracleids TEXT,
+                    selfdestruct INTEGER,
+                    contractspecs TEXT,
+                    legalparams TEXT)
+                    ''')
 
     con.commit()
     con.close()
 
+
+def init_trust_db():
+    con = sqlite3.connect(db_path)
+    cur = con.cursor()
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS kyc
+                    (id text NOT NULL PRIMARY KEY, 
+                    doc_type text,
+                    doc_number_hash text,
+                    doc_hash text,
+                    person_id text,
+                    created_time text)
+                    ''')
+    
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS person
+                    (person_id text NOT NULL PRIMARY KEY, 
+                    created_time text)
+                    ''')
+    
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS person_wallet
+                    (person_id text NOT NULL PRIMARY KEY, 
+                    wallet_id text)
+                    ''')
+    
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS trust_scores
+                    (src_person_id text, 
+                    dest_person_id text,
+                    score real,
+                    last_time text)
+                    ''')
+
+    con.commit()
+    con.close()
 
 if __name__ == '__main__':
     db_path = '../' + db_path
