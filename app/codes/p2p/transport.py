@@ -8,9 +8,9 @@ def receive(payload):
         operation = payload['operation']
         data = payload['data']
 
-        if operation == 'receive_transaction':
+        if operation == 'send_transaction':
             receive_transaction(data)
-        elif operation == 'receive_block':
+        elif operation == 'send_block':
             print('Received block', data)
         else:
             print('Unknown operation', operation)
