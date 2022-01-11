@@ -43,12 +43,7 @@ def generate_wallet_address():
 
 def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_specific_data={}):
         address = get_address_from_public_key(public_key)
-        hs = hashlib.blake2b(digest_size=40)
-        hs.update(address)
-        personid = 'pi' + hs.hexdigest()
-
         wallet = {
-            'personid':personid,
             'custodian_wallet': kyccustodian,
             'kyc_docs': kycdocs,
             'ownertype': ownertype,
@@ -64,38 +59,10 @@ def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_spec
         transactionfile = trans.dumptransaction(file)
         return transactionfile
 
-def add_linked_wallet(currentaddress, public_key, wallet_specific_data={}):
-        address = get_address_from_public_key(public_key)
-        #code to get personid and other details from currentaddress 
-        personid = None
-        kycdocs = None
-        ownertype = None
-        jurisd = None
-        #signed by currentaddress owner, not kyccustodian, do not get that data
-        wallet = {
-            'personid':personid,
-            'custodian_wallet': currentaddress,
-            'kyc_docs': kycdocs,
-            'ownertype': ownertype,
-            'jurisd': jurisd,
-            'specific_data': wallet_specific_data,
-            'wallet_address': address,
-            'wallet_public': public_key,
-        }
-        
-        trans = transactioncreator(wallet)
-        ts = str(datetime.datetime.now())
-        file = TMP_PATH + "transaction-1-" + ts[0:10] + "-" + ts[-6:] + ".json"
-        transactionfile = trans.dumptransaction(file)
-        return transactionfile
 
 def generate_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_data={}):
         newkeydata = generate_wallet_address()
-        hs = hashlib.blake2b(digest_size=40)
-        hs.update(address)
-        personid = 'pi' + hs.hexdigest()        
         wallet = {
-            'personid': personid,
             'custodian_wallet': kyccustodian,
             'kyc_docs': kycdocs,
             'ownertype': ownertype,
