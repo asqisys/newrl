@@ -31,7 +31,7 @@ def init_peer_db():
     con.close()
 
 
-def get_peers(requester_address=None):
+def get_peers():
     peers = []
     con = sqlite3.connect(NEWRL_P2P_DB)
     con.row_factory = sqlite3.Row
@@ -88,7 +88,7 @@ def clear_peers():
 
 async def init_bootstrap_nodes():
     print(f'Initiating node discovery from bootstrap nodes: {BOOTSTRAP_NODES}')
-    clear_peer_db()
+    # clear_peer_db()
     init_peer_db()
 
     my_address = await get_my_address()

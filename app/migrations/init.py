@@ -1,6 +1,6 @@
 import os
 from ..constants import INCOMING_PATH, MEMPOOL_PATH, TMP_PATH, DATA_PATH
-from ..migrations.init_db import clear_db, init_db
+from ..migrations.init_db import init_db
 
 
 if __name__ == '__main__':

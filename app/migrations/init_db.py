@@ -95,5 +95,5 @@ def init_db():
 
 if __name__ == '__main__':
     db_path = '../' + db_path
-    clear_db()
+    # clear_db()
     init_db()
