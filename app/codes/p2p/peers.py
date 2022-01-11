@@ -3,7 +3,7 @@ import sqlite3
 import requests
 import socket
 import subprocess
-
+from app.migrations.init import init_newrl
 from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
 
 
@@ -26,7 +26,7 @@ def init_peer_db():
                     address text NOT NULL 
                     )
                     ''')
-
+    # Todo - link node to a person and add record in the node db
     con.commit()
     con.close()
 
@@ -154,6 +154,7 @@ async def update_software(propogate):
     "Update the client software from repo"
     logger.info('Getting latest code from repo')
     subprocess.call(["git", "pull"])
+    init_newrl()
     if propogate is True:
         logger.info('Propogaring update request to network')
         await update_peers()
