@@ -8,8 +8,9 @@ import json
 import datetime
 import base64
 
-from ..constants import TMP_PATH
+from ..constants import TMP_PATH, NEWRL_DB
 from .transactionmanager import Transactionmanager
+from .transactionmanager import get_pid_from_wallet
 
 
 def get_address_from_public_key(public_key):
@@ -43,12 +44,7 @@ def generate_wallet_address():
 
 def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_specific_data={}):
         address = get_address_from_public_key(public_key)
-        hs = hashlib.blake2b(digest_size=40)
-        hs.update(address)
-        personid = 'pi' + hs.hexdigest()
-
         wallet = {
-            'personid':personid,
             'custodian_wallet': kyccustodian,
             'kyc_docs': kycdocs,
             'ownertype': ownertype,
@@ -66,14 +62,20 @@ def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_spec
 
 def add_linked_wallet(currentaddress, public_key, wallet_specific_data={}):
         address = get_address_from_public_key(public_key)
-        #code to get personid and other details from currentaddress 
-        personid = None
-        kycdocs = None
-        ownertype = None
-        jurisd = None
+        parentwalletdata = get_walletdata_from_address(address)
+        if not parentwalletdata:
+            print("Current address provided is not valid")
+            return False
+        kycdocs = parentwalletdata['kycdocs']
+        ownertype = parentwalletdata['ownertype']
+        jurisd = parentwalletdata['jurisd']
         #signed by currentaddress owner, not kyccustodian, do not get that data
+        wallet_specific_data['linked_wallet'] = True
+        wallet_specific_data['parentaddress']=currentaddress
+    #    personid = get_pid_from_wallet(currentaddress)
+    #    wallet_specific_data['personid']= personid
+
         wallet = {
-            'personid':personid,
             'custodian_wallet': currentaddress,
             'kyc_docs': kycdocs,
             'ownertype': ownertype,
@@ -91,11 +93,7 @@ def add_linked_wallet(currentaddress, public_key, wallet_specific_data={}):
 
 def generate_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_data={}):
         newkeydata = generate_wallet_address()
-        hs = hashlib.blake2b(digest_size=40)
-        hs.update(address)
-        personid = 'pi' + hs.hexdigest()        
         wallet = {
-            'personid': personid,
             'custodian_wallet': kyccustodian,
             'kyc_docs': kycdocs,
             'ownertype': ownertype,
@@ -138,3 +136,12 @@ def get_digest(file_path):
                     break
                 h.update(chunk)
         return h.hexdigest()
+
+def get_walletdata_from_address(addressinput):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    wallet_cursor = cur.execute('SELECT * FROM person_wallet WHERE wallet_id=?', (addressinput, )).fetchone()
+    if wallet_cursor is None:
+        return False
+    walletdata = dict(wallet_cursor)
+    return walletdata
