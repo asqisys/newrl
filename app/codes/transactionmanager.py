@@ -227,37 +227,45 @@ class Transactionmanager:
         self.validity = 0
         if self.transaction['type'] == 1:
             custodian = self.transaction['specific_data']['custodian_wallet']
-            personid = self.transaction['specific_data']['personid']    # add check for if this field exists, else None
+            walletaddress=self.transaction['specific_data']['wallet_address']
             if not is_wallet_valid(custodian):
                 print("No custodian address found")
             #	self.transaction['valid']=0
                 self.validity = 0
             else:
                 print("Valid custodian address")
-                oldwalletaddress = get_wallet_from_pid(personid)
-                if oldwalletaddress:    #the personid already exists with one wallet linked to it
-                    if custodian == oldwalletaddress:
+#                if self.transaction['specific_data']['specific_data']['linked_wallet']:  #linked wallet
+                if 'linked_wallet' in self.transaction['specific_data']['specific_data']:
+                    linkedwalletstatus=self.transaction['specific_data']['specific_data']['linked_wallet']
+                else:
+                    linkedwalletstatus= False
+                if linkedwalletstatus:
+                    parentwalletaddress = self.transaction['specific_data']['wallet_specific_data']['parentaddress']
+                    if custodian == parentwalletaddress:
                         self.validity = 1   #linking a new wallet is signed by existing wallet itself
                     else:
-                        print("The personid already exists.")   #this is the case of someone trying to create another new wallet with same personid
                         self.validity = 0   #other custodian cannot sign someone's linked wallet address
-                else:   # there is no existing wallet linked to the personid, this is a new wallet and person    
-                    self.validity = 1
+                else:   # this is a new wallet and person
+                    if is_wallet_valid(walletaddress):
+                        print("Wallet with address", walletaddress, " already exists.")
+                        self.validity = 0
+                    else:
+                        self.validity = 1
                     # additional check for allowed custodian addresses; valid only for new wallet, not linked ones
-                    if os.path.exists(ALLOWED_CUSTODIANS_FILE):
-                        print("Found allowed_custodians file; checking against it.")
-                        custallowflag = False
-                        with open(ALLOWED_CUSTODIANS_FILE, "r") as custfile:
-                            allowedcust = json.load(custfile)
-                        for cust in allowedcust:
-                            if custodian == cust['address']:
-                                print("Address ", custodian,
-                                      " is allowed as a custodian.")
-                                custallowflag = True
-                        if not custallowflag:
-                            print("Could not find address ", custodian,
-                                  " amongst allowed custodians.")
-                            self.validity = 0
+                        if os.path.exists(ALLOWED_CUSTODIANS_FILE):
+                            print("Found allowed_custodians file; checking against it.")
+                            custallowflag = False
+                            with open(ALLOWED_CUSTODIANS_FILE, "r") as custfile:
+                                allowedcust = json.load(custfile)
+                            for cust in allowedcust:
+                                if custodian == cust['address']:
+                                    print("Address ", custodian,
+                                          " is allowed as a custodian.")
+                                    custallowflag = True
+                            if not custallowflag:
+                                print("Could not find address ", custodian,
+                                      " amongst allowed custodians.")
+                                self.validity = 0
 
     #	self.validity=0
         if self.transaction['type'] == 2:  # token addition transaction
@@ -409,11 +417,20 @@ def is_wallet_valid(address):
         return False
     return True
 
-def get_wallet_from_pid(personidinput):
+def get_wallets_from_pid(personidinput):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
-    wallet_cursor = cur.execute('SELECT wallet_id FROM person_wallet WHERE person_id=?', (personidinput, ))
-    walletid = wallet_cursor.fetchone()
-    if walletid is None:
+    wallet_cursor = cur.execute('SELECT wallet_id FROM person_wallet WHERE person_id=?', (personidinput, )).fetchall()
+    if wallet_cursor is None:
         return False
-    return walletid
+    wallets = [dict(wlt) for wlt in wallet_cursor]
+    return wallets
+
+def get_pid_from_wallet(walletaddinput):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (walletaddinput, ))
+    pid = pid_cursor.fetchone()
+    if pid is None:
+        return False
+    return pid[0]
