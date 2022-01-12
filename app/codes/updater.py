@@ -4,6 +4,7 @@ import datetime
 import json
 import os
 import shutil
+import hashlib
 
 import requests
 import sqlite3
@@ -307,14 +308,38 @@ def update_db_states(transactions):
 					(wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction, specific_data)
 					VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
 
+            # now checking if this is a linked wallet or new one; for linked, no new personid is created
+            linkedstatus =  wallet['specific_data']['linked_wallet'] if 'linked_wallet' in wallet['specific_data'] else False
+            if linkedstatus:
+                pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (wallet['specific_data']['parentaddress'], )).fetchone()
+                pid = pid_cursor[0]
+            else:     #not a linked wallet, so create a new pid
+                hs = hashlib.blake2b(digest_size=20)
+                hs.update((wallet['wallet_address']).encode())
+                pid = 'pi' + hs.hexdigest()
+            #for both new and linked wallet, update the person_wallet table
+            query_params=(pid, transaction['timestamp'])
+            cur.execute(f'''INSERT OR IGNORE INTO person
+				    	(person_id, created_time)
+					    VALUES (?, ?)''', query_params)
+            query_params=(pid, wallet['wallet_address'])
+            cur.execute(f'''INSERT OR IGNORE INTO person_wallet
+		    			(person_id, wallet_id)
+			    		VALUES (?, ?)''', query_params)
+
         if transaction['type'] == 2:  # this is a token creation transaction
             token = transaction_data
             token_cursor = cur.execute("SELECT max(tokencode) FROM tokens").fetchone()
-            max_token_code = token_cursor[0] if token_cursor is not None else 0
-            max_token_code = max_token_code + 1
+        #    max_token_code = token_cursor[0] if token_cursor is not None else 0
+        #    max_token_code = max_token_code + 1
+            hs = hashlib.blake2b(digest_size=20)
+            hs.update((transaction['trans_code']).encode())
+            tid = 'tk' + hs.hexdigest()
+            tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
+
             token_attributes_json = json.dumps(token['tokenattributes'])
             query_params = (
-                max_token_code,
+                tid,
                 token['tokenname'],
                 token['tokentype'],
                 token['first_owner'],
@@ -324,16 +349,17 @@ def update_db_states(transactions):
                 token['value_created'],
                 token['sc_flag'],
                 transaction['trans_code'],
+                tokendecimal,
                 token_attributes_json
             )
             cur.execute(f'''INSERT OR IGNORE INTO tokens
 				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-                amount_created, value_created, sc_flag, parent_transaction_code, token_attributes)
+                amount_created, value_created, sc_flag, parent_transaction_code, tokendecimal, token_attributes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
             
             balance = token['amount_created']
             update_wallet_token_balance(
-                cur, token['first_owner'], max_token_code, balance)
+                cur, token['first_owner'], tid, balance)
 
         if transaction['type'] == 4 or transaction['type'] == 5:  # this is a transfer tx
             sender1 = transaction_data['wallet1']
