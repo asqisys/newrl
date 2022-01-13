@@ -9,6 +9,7 @@ NEWRL_P2P_DB = 'data/newrl_p2p.db'
 STATE_FILE = 'state.json'
 CHAIN_FILE = 'chain.json'
 ALLOWED_CUSTODIANS_FILE = 'allowed_custodians.json'
+DB_MIGRATIONS_PATH = 'app/migrations/migrations'
 
 BOOTSTRAP_NODES = ['newrl.net']
 REQUEST_TIMEOUT = 5
