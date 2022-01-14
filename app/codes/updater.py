@@ -375,6 +375,13 @@ def update_db_states(transactions):
             transfer_tokens_and_update_balances(
                 cur, sender2, sender1, tokencode2, amount2)
 
+        if transaction['type'] == 6:    #score update transaction
+            personid1 = transaction['specific_data']['personid1']
+            personid2 = transaction['specific_data']['personid2']
+            new_score = transaction['specific_data']['new_score']
+            tstamp = transaction['timstamp']
+            update_trust_score(cur, personid1, personid2, new_score, tstamp)
+
     con.commit()
     con.close()
 
@@ -393,6 +400,10 @@ def update_wallet_token_balance(cur, wallet_address, token_code, balance):
 				(wallet_address, tokencode, balance)
 				 VALUES (?, ?, ?)''', (wallet_address, token_code, balance))
 
+def update_trust_score(cur, personid1, personid2, new_score, tstamp):
+    cur.execute(f'''INSERT OR REPLACE INTO trust_scores
+				(src_person_id, , dest_person_id, score, last_time)
+				 VALUES (?, ?, ?, ?)''', (personid1, personid2, new_score, tstamp))
 
 def broadcast_block(block):
     peers = get_peers()

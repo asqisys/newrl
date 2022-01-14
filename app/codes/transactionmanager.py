@@ -1,5 +1,6 @@
 # program to create and manage objects for wallets
 import codecs
+from re import T
 import ecdsa
 from Crypto.Hash import keccak
 import os
@@ -46,6 +47,8 @@ class Transactionmanager:
             validadds.append(trans['specific_data']['wallet2'])
         if ttype == 5:    # one way transfer; only sender1 is needed to sign
             validadds.append(trans['specific_data']['wallet1'])
+        if ttype == 6:      #score change transaction, only address1 is added, not address2
+            validadds.append(trans['specific_data']['address1'])
         return validadds
 
     def transactioncreator(self, tran_data_all):
@@ -381,6 +384,31 @@ class Transactionmanager:
                         "Valid economics of transaction. Changing economic validity value to 1")
                 #	self.transaction['valid']=1;
                     self.validity = 1
+
+        if self.transaction['type'] == 6:   #score change transaction
+            ttype = self.transaction['type']
+            personid1 = self.transaction['specific_data']['personid1']
+            personid2 = self.transaction['specific_data']['personid2']
+            wallet1 = self.transaction['specific_data']['address1']
+            wallet2 = self.transaction['specific_data']['address2']
+            wallet1valid = False
+            wallet2valid = False
+
+            wallet1valid = is_wallet_valid(wallet1)
+            wallet2valid = is_wallet_valid(wallet2)
+            if not wallet1valid or not wallet2valid:
+                print("One of the wallets is invalid")
+                self.validity = 0
+            else:
+                if get_pid_from_wallet(wallet1) != personid1 or get_pid_from_wallet(wallet2) != personid2:
+                    print("One of the wallet addresses does not match personids given.")
+                    self.validity = 0
+                else:
+                    if self.transaction['specific_data']['new_score'] < 0.0 or self.transaction['specific_data']['new_score'] > 3.0:
+                        print("New_score is out of valid range.")
+                        self.validity = 0
+                    else:
+                        self.validity = 1
 
         if self.validity == 1:
             return True
