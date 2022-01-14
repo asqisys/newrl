@@ -355,7 +355,7 @@ def update_db_states(transactions):
             cur.execute(f'''INSERT OR IGNORE INTO tokens
 				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
                 amount_created, value_created, sc_flag, parent_transaction_code, tokendecimal, token_attributes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
             
             balance = token['amount_created']
             update_wallet_token_balance(
