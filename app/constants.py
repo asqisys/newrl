@@ -14,3 +14,6 @@ DB_MIGRATIONS_PATH = 'app/migrations/migrations'
 BOOTSTRAP_NODES = ['newrl.net']
 REQUEST_TIMEOUT = 5
 NEWRL_PORT = 8090
+NEWRL_TOKEN = "newrl_token"
+TREASURY = "treasury_address"
+COINBASE_SC = "coinbase_sc_address"
