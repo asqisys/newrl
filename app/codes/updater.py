@@ -2,6 +2,7 @@
 
 import datetime
 import json
+from multiprocessing.dummy import current_process
 import os
 import shutil
 import hashlib
@@ -327,16 +328,16 @@ def update_db_states(transactions):
 		    			(person_id, wallet_id)
 			    		VALUES (?, ?)''', query_params)
 
-        if transaction['type'] == 2:  # this is a token creation transaction
+        if transaction['type'] == 2:  # this is a token creation or addition transaction
             token = transaction_data
-            token_cursor = cur.execute("SELECT max(tokencode) FROM tokens").fetchone()
-        #    max_token_code = token_cursor[0] if token_cursor is not None else 0
-        #    max_token_code = max_token_code + 1
-            hs = hashlib.blake2b(digest_size=20)
-            hs.update((transaction['trans_code']).encode())
-            tid = 'tk' + hs.hexdigest()
+            if 'tokencode' in token:    #creating more of an existing token or tokencode provided by user
+                tid = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token['tokencode'], )).fetchone()
+                tid = tid[0] if tid else str(token['tokencode'])    #if provided code does not exist, it is considered new
+            else:   # new tokencode created
+                hs = hashlib.blake2b(digest_size=20)
+                hs.update((transaction['trans_code']).encode())
+                tid = 'tk' + hs.hexdigest()
             tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
-
             token_attributes_json = json.dumps(token['tokenattributes'])
             query_params = (
                 tid,
@@ -357,9 +358,12 @@ def update_db_states(transactions):
                 amount_created, value_created, sc_flag, parent_transaction_code, tokendecimal, token_attributes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
             
-            balance = token['amount_created']
-            update_wallet_token_balance(
-                cur, token['first_owner'], tid, balance)
+            if token['amount_created']: # this will be None or 0 for cases where tokens are created with no first owner and 0 amt
+                added_balance = int(token['amount_created'])
+                current_balance = get_wallet_token_balance(token['first_owner'], tid)
+                balance = current_balance + added_balance
+                update_wallet_token_balance(
+                    cur, token['first_owner'], tid, balance)
 
         if transaction['type'] == 4 or transaction['type'] == 5:  # this is a transfer tx
             sender1 = transaction_data['wallet1']

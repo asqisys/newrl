@@ -276,9 +276,18 @@ class Transactionmanager:
             custodian = self.transaction['specific_data']['custodian']
             fovalidity = False
             custvalidity = False
-            if is_wallet_valid(firstowner):
-                print("Valid first owner")
-                fovalidity = True
+            if firstowner:
+                if is_wallet_valid(firstowner):
+                    print("Valid first owner")
+                    fovalidity = True
+                else:
+                    fovalidity = False
+            else:   # there is no first owner, transaction to create token only
+                if self.transaction['specific_data']['amount_created']:
+                    print("Amount created cannot be non-zero if there is no first owner.")
+                    fovalidity = False  # amount cannot be non-zero if no first owner
+                else:
+                    fovalidity = True
             if is_wallet_valid(custodian):
                 print("Valid custodian")
                 custvalidity = True
@@ -292,7 +301,19 @@ class Transactionmanager:
             if fovalidity and custvalidity:
                 print("Valid first owner and custodian")
             #	self.transaction['valid']=1
+            #   now checking for instances where more tokens are added for an existing tokencode
                 self.validity = 1
+                if 'tokencode' in self.transaction['specific_data']:
+                    if is_token_valid(self.transaction['specific_data']['tokencode']):
+                        existing_custodian = get_custodian_from_token(self.transaction['specific_data']['tokencode'])
+                        if custodian == existing_custodian:
+                            self.validity = 1   #tokencode exists and is run by the given custodian
+                        else:
+                            print("The custodian for that token is someone else.")
+                            self.validity = 0
+                    else:
+                        print("Tokencode provided does not exist. Will append as new one.")
+                        self.validity = 1   #tokencode is provided by user
 
     #	self.validity=0
         if self.transaction['type'] == 4 or self.transaction['type'] == 5:
@@ -462,3 +483,12 @@ def get_pid_from_wallet(walletaddinput):
     if pid is None:
         return False
     return pid[0]
+
+def get_custodian_from_token(token_code):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    token_cursor = cur.execute('SELECT custodian FROM tokens WHERE tokencode=?', (token_code, ))
+    custodian = token_cursor.fetchone()
+    if custodian is None:
+        return False
+    return custodian[0]
