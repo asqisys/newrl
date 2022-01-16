@@ -1,6 +1,6 @@
 # program to create and manage objects for wallets
 import codecs
-from re import T
+from re import T, X
 import ecdsa
 from Crypto.Hash import keccak
 import os
@@ -42,6 +42,9 @@ class Transactionmanager:
             validadds.append(trans['specific_data']['custodian_wallet'])
         if ttype == 2:    # token creation, custodian needs to sign
             validadds.append(trans['specific_data']['custodian'])
+        if ttype == 3:      #smart contract tx
+            for signer in trans['specific_data']['signers']:
+                validadds.append(signer)
         if ttype == 4:    # two way transfer; both senders need to sign
             validadds.append(trans['specific_data']['wallet1'])
             validadds.append(trans['specific_data']['wallet2'])
@@ -314,6 +317,16 @@ class Transactionmanager:
                     else:
                         print("Tokencode provided does not exist. Will append as new one.")
                         self.validity = 1   #tokencode is provided by user
+
+        if self.transaction['type'] == 3:
+            self.validity = 1
+            for wallet in self.transaction['specific_data']['signers']:
+                if not is_wallet_valid(wallet):
+                    self.validity = 0
+            if 'participants' in self.transaction['specific_data']['params']:
+                for wallet in self.transaction['specific_data']['params']['participants']:
+                    if not is_wallet_valid(wallet):
+                        self.validity = 0
 
     #	self.validity=0
         if self.transaction['type'] == 4 or self.transaction['type'] == 5:

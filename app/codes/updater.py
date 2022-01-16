@@ -1,6 +1,7 @@
-# Python programm to create object that enables addition of a block
+#updater that adds a new block and updates state db
 
 import datetime
+import time
 import json
 from multiprocessing.dummy import current_process
 import os
@@ -16,7 +17,6 @@ from .utils import BufferedLog
 from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager
 from .chainscanner import Chainscanner, get_wallet_token_balance
-
 
 def chainmatch(chain1, chain2):
     len1 = len(chain1)
@@ -147,24 +147,17 @@ def run_updater():
                            float(validchecks/totalchecks))
                 if float(validchecks/totalchecks) > 0.5:  # majority
                     tranvalidity = 1
-        #	if transaction['valid']==1:
+
             traninclusionflag = False
             if tranvalidity == 1:
                 #	logger.log("Found valid transaction, adding to block. Moving file to ",incltrans)
                 logger.log(
                     "Found valid transaction, checking if it is already included")
-                # alltranids = cs_prev.getalltransids()
                 transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'")
                 row = transactions_cursor.fetchone()
                 if row is not None:
                     traninclusionflag = True
                     continue
-                # for tranid in alltranids:
-                #     if tranid['trans_code'] == transaction['trans_code']:
-                #         logger.log(
-                #             "Transaction with id ", transaction['trans_code'], " is already included in block number ", tranid['blockindex'])
-                #         traninclusionflag = True
-                #         break
                 if traninclusionflag:  # the current transaction is already included in some earlier block
                     continue  # this takes the process to the next transaction
 
@@ -216,75 +209,7 @@ def run_updater():
     update_db_states(transactionsdata['transactions'])
     broadcast_block(block)
 
-#     if blockchain.chain_valid(blockchain.chain):
-#         #		chainjsonstr=json.dumps(blockchain.chain);
-#         with open(CHAIN_FILE, "w") as chainwrite:
-#             json.dump(blockchain.chain, chainwrite)
-#         logger.log("Wrote to ", CHAIN_FILE)
-#         # updating state now
-#         cs = Chainscanner(CHAIN_FILE)
-#         all_wallets = cs.getallwallets()
-#         all_tokens = cs.getalltokens()
-#         all_balances = cs.getallbalances()
-#         newstate = {'all_wallets': all_wallets,
-#                     'all_tokens': all_tokens, 'all_balances': all_balances}
-# #		update_db_states(newstate)
-#         # if os.path.exists(STATE_FILE):
-#         # 	ts=str(datetime.datetime.now());
-#         # 	statearchivefile='./statearchive/statefile_'+ts[0:10]+"-"+ts[-6:]+".json"
-#         # 	shutil.move(STATE_FILE,statearchivefile)
-#         # 	logger.log("Moved existing state file - ",STATE_FILE," - to ",statearchivefile)
-#         with open(STATE_FILE, 'w') as writefile:
-#             json.dump(newstate, writefile)
-#             logger.log("Wrote new state to ", STATE_FILE)
-
-#         logger.log("Local chain updated. Now attempting to update global chain.")
-#         destchain = globaldir+CHAIN_FILE
-#         deststate = globaldir+STATE_FILE
-#         if os.path.exists(destchain):
-#             logger.log("Found global chain to update")
-#             try:
-#                 with open(destchain, "r") as gcfile:
-#                     globalchain = json.load(gcfile)
-#                 logger.log("Loaded globalchain")
-#             except:
-#                 logger.log(
-#                     "Could not load globalchain. Exiting without updating global. Investigate.")
-#                 globalchain = []
-#                 return logger.get_logs()
-#                 # return True
-
-#             # globalchain exists but does not match, exit
-#             if not chainmatch(globalchain, blockchain.chain):
-#                 logger.log(
-#                     "Common portion of global and local chains do not match. Not updating global chain.")
-#                 return logger.get_logs()
-#                 # return True	#important to exit to avoid copying local to global
-#         try:
-#             # if globalchain does not exist, this will create it
-#             shutil.copy(CHAIN_FILE, destchain)
-#             logger.log("Updated global chain with local copy.")
-#             os.chmod(destchain, 0o666)
-#             logger.log("Changed mode to 666")
-#         except:
-#             logger.log(
-#                 "Couldn't upload global chain or change its mode to 666, investigate.")
-#         try:
-#             shutil.copy(STATE_FILE, deststate)
-#             logger.log("Updated global state with local copy.")
-#             os.chmod(deststate, 0o666)
-#             logger.log("Changed mode to 666")
-#         except:
-#             logger.log(
-#                 "Couldn't update global state or change its mode to 666, investigate.")
-
-#     else:
-#         logger.log("Invalid blockchain, not changing anything.")
-
     return logger.get_logs()
-#	logger.log(blockchain.chain)
-#	logger.log(blockchain.get_latest_ts())
-
 
 def update_db_states(transactions):
     con = sqlite3.connect(NEWRL_DB)
@@ -294,76 +219,10 @@ def update_db_states(transactions):
         transaction_data = transaction['specific_data']
 
         if transaction['type'] == 1:  # this is a wallet creation transaction
-            wallet = transaction_data
-            kyc_doc_json = json.dumps(wallet['kyc_docs'])
-            data_json = json.dumps(wallet['specific_data'])
-            query_params = (wallet['wallet_address'],
-                            wallet['wallet_public'],
-                            wallet['custodian_wallet'],
-                            kyc_doc_json,
-                            wallet['ownertype'],
-                            wallet['jurisd'],
-                            data_json
-                            )
-            cur.execute(f'''INSERT OR IGNORE INTO wallets
-					(wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction, specific_data)
-					VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
-
-            # now checking if this is a linked wallet or new one; for linked, no new personid is created
-            linkedstatus =  wallet['specific_data']['linked_wallet'] if 'linked_wallet' in wallet['specific_data'] else False
-            if linkedstatus:
-                pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (wallet['specific_data']['parentaddress'], )).fetchone()
-                pid = pid_cursor[0]
-            else:     #not a linked wallet, so create a new pid
-                hs = hashlib.blake2b(digest_size=20)
-                hs.update((wallet['wallet_address']).encode())
-                pid = 'pi' + hs.hexdigest()
-            #for both new and linked wallet, update the person_wallet table
-            query_params=(pid, transaction['timestamp'])
-            cur.execute(f'''INSERT OR IGNORE INTO person
-				    	(person_id, created_time)
-					    VALUES (?, ?)''', query_params)
-            query_params=(pid, wallet['wallet_address'])
-            cur.execute(f'''INSERT OR IGNORE INTO person_wallet
-		    			(person_id, wallet_id)
-			    		VALUES (?, ?)''', query_params)
+            add_wallet_pid(cur, transaction_data)
 
         if transaction['type'] == 2:  # this is a token creation or addition transaction
-            token = transaction_data
-            if 'tokencode' in token:    #creating more of an existing token or tokencode provided by user
-                tid = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token['tokencode'], )).fetchone()
-                tid = tid[0] if tid else str(token['tokencode'])    #if provided code does not exist, it is considered new
-            else:   # new tokencode created
-                hs = hashlib.blake2b(digest_size=20)
-                hs.update((transaction['trans_code']).encode())
-                tid = 'tk' + hs.hexdigest()
-            tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
-            token_attributes_json = json.dumps(token['tokenattributes'])
-            query_params = (
-                tid,
-                token['tokenname'],
-                token['tokentype'],
-                token['first_owner'],
-                token['custodian'],
-                token['legaldochash'],
-                token['amount_created'],
-                token['value_created'],
-                token['sc_flag'],
-                transaction['trans_code'],
-                tokendecimal,
-                token_attributes_json
-            )
-            cur.execute(f'''INSERT OR IGNORE INTO tokens
-				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-                amount_created, value_created, sc_flag, parent_transaction_code, tokendecimal, token_attributes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
-            
-            if token['amount_created']: # this will be None or 0 for cases where tokens are created with no first owner and 0 amt
-                added_balance = int(token['amount_created'])
-                current_balance = get_wallet_token_balance(token['first_owner'], tid)
-                balance = current_balance + added_balance
-                update_wallet_token_balance(
-                    cur, token['first_owner'], tid, balance)
+            add_token(cur, transaction_data, transaction['trans_code'])
 
         if transaction['type'] == 4 or transaction['type'] == 5:  # this is a transfer tx
             sender1 = transaction_data['wallet1']
@@ -420,4 +279,95 @@ def broadcast_block(block):
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
             print(e)
+    return True
+
+def add_wallet_pid(cur, wallet):
+    kyc_doc_json = json.dumps(wallet['kyc_docs'])
+    data_json = json.dumps(wallet['specific_data'])
+    query_params = (wallet['wallet_address'],
+                    wallet['wallet_public'],
+                    wallet['custodian_wallet'],
+                    kyc_doc_json,
+                    wallet['ownertype'],
+                    wallet['jurisd'],
+                    data_json
+                    )
+
+    # now checking if this is a linked wallet or new one; for linked, no new personid is created
+    linkedstatus =  wallet['specific_data']['linked_wallet'] if 'linked_wallet' in wallet['specific_data'] else False
+    if linkedstatus:
+        pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (wallet['specific_data']['parentaddress'], )).fetchone()
+        pid = pid_cursor[0]
+        if not pid:
+            print("No personid linked to the parentwallet.")
+            return False
+    else:     #not a linked wallet, so create a new pid and update person table
+        hs = hashlib.blake2b(digest_size=20)
+        hs.update((wallet['wallet_address']).encode())
+        pid = 'pi' + hs.hexdigest()
+        query_params=(pid, time.mktime(datetime.datetime.now().timetuple()))
+        cur.execute(f'''INSERT OR IGNORE INTO person
+                    (person_id, created_time)
+                    VALUES (?, ?)''', query_params)
+
+    #for both new and linked wallet, update the wallet table and person_wallet table
+    cur.execute(f'''INSERT OR IGNORE INTO wallets
+            (wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction, specific_data)
+            VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
+
+    query_params=(pid, wallet['wallet_address'])
+    cur.execute(f'''INSERT OR IGNORE INTO person_wallet
+                (person_id, wallet_id)
+                VALUES (?, ?)''', query_params)
+
+def add_token(cur, token, txcode = None):
+    if 'tokencode' in token:    #creating more of an existing token or tokencode provided by user
+        if token['tokencode'] and token['tokencode'] != "0":
+            tid = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token['tokencode'], )).fetchone()
+            if tid: #tokencode exists, more of an existing token is being added to the first_owner
+                tid = tid[0]
+                existingflag = True
+            else:
+                tid = str(token['tokencode'])    #if provided code does not exist, it is considered new token addition
+                existingflag = False
+        else:   # mistakenly entered tokencode value as "" or "0" or 0
+            tcodenewflag = True
+    if 'tokencode' not in token or tcodenewflag:   # new tokencode needs to be created
+        hs = hashlib.blake2b(digest_size=20)
+        hs.update(txcode.encode())
+        tid = 'tk' + hs.hexdigest()
+        existingflag = False
+
+    if not existingflag:    # new token to be created
+        tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
+        tokendecimal = int(tokendecimal)
+        token_attributes_json = json.dumps(token['tokenattributes'])
+        disallowedjason=json.dumps(token['disallowed'])
+        query_params = (
+            tid,
+            token['tokenname'],
+            token['tokentype'],
+            token['first_owner'],
+            token['custodian'],
+            token['legaldochash'],
+            token['amount_created'],
+            token['value_created'],
+            token['sc_flag'],
+            disallowedjason,
+            txcode,
+            tokendecimal,
+            token_attributes_json
+            )
+        cur.execute(f'''INSERT OR IGNORE INTO tokens
+            (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
+            amount_created, value_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+
+    # now update balance for either case - new token or more of existing created
+    if token['amount_created']: # this will be None or 0 for cases where tokens are created with no first owner and 0 amt
+        added_balance = int(token['amount_created'])
+        current_balance = get_wallet_token_balance(token['first_owner'], tid)
+        balance = int(current_balance or 0) + added_balance
+        update_wallet_token_balance(
+            cur, token['first_owner'], tid, balance)
     return True
