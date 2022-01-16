@@ -1,6 +1,7 @@
 # Python programm to create object that enables addition of a block
 
 import datetime
+from distutils.util import copydir_run_2to3
 import hashlib
 import json
 
@@ -8,7 +9,6 @@ import sqlite3
 from ..constants import NEWRL_DB
 
 from .state_updater import update_db_states
-
 
 class Blockchain:
 
@@ -42,9 +42,9 @@ class Blockchain:
 #		print("The hash of genesis block is ",self.hash(block),"\n")
 #		self.create_block(block['timestamp'],block['proof'], 0, block['text'])
 
-    def create_block(self, timestamp, proof, previous_hash, text):
-        con = sqlite3.connect(NEWRL_DB)
-        cur = con.cursor()
+    def create_block(self, cur, timestamp, proof, previous_hash, text):
+    #    con = sqlite3.connect(NEWRL_DB)
+    #    cur = con.cursor()
         print("adding a block")
         block_index = get_last_block_index() + 1
         block = {'index': block_index,
@@ -58,8 +58,8 @@ class Blockchain:
         db_block_data = (block_index, timestamp, proof,
                          previous_hash, block_hash, transactions_hash)
         cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
-        con.commit()
-        con.close()
+    #    con.commit()
+    #    con.close()
         return block
 
     def get_block(self, block_index):
@@ -126,14 +126,14 @@ class Blockchain:
         return True
 
 # Mining a new block
-    def mine_block(self, text):
-        con = sqlite3.connect(NEWRL_DB)
-        cur = con.cursor()
+    def mine_block(self, cur, text):
+    #    con = sqlite3.connect(NEWRL_DB)
+    #    cur = con.cursor()
         print("starting the mining step 1")
         last_block_cursor = cur.execute(
             'SELECT hash FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
-        con.close()
+    #    con.close()
         previous_hash = last_block[0] if last_block is not None else 0
         # print(last_block)
         # previous_block = self.chain[-1]
@@ -149,7 +149,7 @@ class Blockchain:
         print("Current block proof: ", proof)
 #		print("previous_hash = ",previous_hash)
         block = self.create_block(
-            block['timestamp'], proof, previous_hash, text)
+            cur, block['timestamp'], proof, previous_hash, text)
 
         response = {'message': 'A block is MINED',
                     'index': block['index'],
@@ -157,16 +157,21 @@ class Blockchain:
                     'proof': block['proof'],
                     'previous_hash': block['previous_hash']}
         block_index = block['index']
-        self.add_transactions_to_block(block_index, text['transactions'])
+    #    self.add_transactions_to_block(block_index, text['transactions'])
         return block
 
-    def get_latest_ts(self):
-        con = sqlite3.connect(NEWRL_DB)
-        cur = con.cursor()
+    def get_latest_ts(self, cur=None):
+        flag = False
+        if not cur:
+            con2 = sqlite3.connect(NEWRL_DB)
+            cur = con2.cursor()
+            flag = True
         last_block_cursor = cur.execute(
             f'''SELECT timestamp FROM blocks ORDER BY timestamp DESC LIMIT 1''')
         last_block = last_block_cursor.fetchone()
         ts = datetime.datetime.strptime(last_block[0], "%Y-%m-%d %H:%M:%S.%f")
+        if flag:
+            con2.close()
         return ts
 #         chain = self.chain
 #         if len(chain) < 1:
@@ -265,9 +270,9 @@ class Blockchain:
 #        	return newchain;
 
 
-def add_block(block):
-    con = sqlite3.connect(NEWRL_DB)
-    cur = con.cursor()
+def add_block(cur, block):
+#    con = sqlite3.connect(NEWRL_DB)
+#    cur = con.cursor()
     block_index = block['block_index'] if 'block_index' in block else block['index']
     block_hash = block['hash'] if 'hash' in block else ''
     transactions_hash = block['transactions_hash'] if 'transactions_hash' in block else ''
@@ -275,11 +280,12 @@ def add_block(block):
     db_block_data = (block_index, block['timestamp'], block['proof'],
                          block['previous_hash'], block_hash, transactions_hash)
     cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
-    con.commit()
-    con.close()
+#    con.commit()
+#    con.close()
 
     block_transactions = block['text']['transactions']
-    add_transactions_to_block(block_index, block_transactions)
+#    add_transactions_to_block(block_index, block_transactions)
+    #tx adding included in update_db_states
     update_db_states(block_transactions)
 
 def add_transactions_to_block(block_index, transactions):
@@ -306,9 +312,11 @@ def add_transactions_to_block(block_index, transactions):
         con.close()
 
 def get_last_block_index():
-        con = sqlite3.connect(NEWRL_DB)
-        cur = con.cursor()
-        last_block_cursor = cur.execute(
+        con1 = sqlite3.connect(NEWRL_DB)
+        cur1 = con1.cursor()
+        last_block_cursor = cur1.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
         last_block = last_block_cursor.fetchone()
+        con1.close()
         return last_block[0] if last_block is not None else 0
+        
