@@ -31,6 +31,7 @@ class TransferRequest(BaseModel):
 
 class CreateTokenRequest(BaseModel):
     token_name: str = "NEWTOKEN"
+    tokencode: str
     token_type: str
     first_owner: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
     custodian: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'

@@ -142,6 +142,7 @@ async def create_token(
 ):
     token_data = {
         "tokenname": request.token_name,
+        "tokencode" : request.tokencode,
         "tokentype": request.token_type,
         "tokenattributes": request.token_attributes,
         "first_owner": request.first_owner,
@@ -238,6 +239,7 @@ async def add_token(
 ):
     token_data = {
         "tokenname": request.token_name,
+        "tokencode" : request.tokencode,
         "tokentype": request.token_type,
         "tokenattributes": request.token_attributes,
         "first_owner": request.first_owner,
