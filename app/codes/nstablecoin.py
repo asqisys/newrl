@@ -1,5 +1,6 @@
 # class to create smart contract for creating stablecoins on Newrl
 import codecs
+from subprocess import call
 import ecdsa
 from Crypto.Hash import keccak
 import os
@@ -11,22 +12,30 @@ import binascii
 import base64
 import sqlite3
 
-from .transactionmanager import Transactionmanager
+#from app.codes.updater import add_token
+
+from .transactionmanager import Transactionmanager, is_wallet_valid
 from .chainscanner import Chainscanner, get_wallet_token_balance
 from .tokenmanager import create_token_transaction
+from ..constants import NEWRL_DB
+from .state_updater import *
 
-class SecLoan1():
+
+class nusd1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
     def __init__(self,contractaddress=None):
         self.template="nusd"
         self.version="1.0.0"
         self.address=contractaddress    #this is for instances of this class created for tx creation and other non-chain work
         if contractaddress:     #as in this is an existing contract
-            self.loadcontract(contractaddress)  #this will populate the params for a given instance of the contract
+            con = sqlite3.connect(NEWRL_DB)
+            cur = con.cursor()
+            self.loadcontract(cur, contractaddress)  #this will populate the params for a given instance of the contract
+            con.close()
         #instantiation convetion: for the first time instantiation of a contract, the contractaddress is None, this is to be immediately followed by setup call
         #in a later call outside chain work or inside it, the contractaddress is present and is used to lookup the specific contract from the db
 
-    def setup(self,callparamsjson):
+    def setup(self, cur, callparamsjson):
         #this is called by a tx type 3 signed by the creator, it calls the function setp with parameters as params
         #setup implies a transaction for contract address creation
         callparams=json.loads(callparamsjson)
@@ -93,117 +102,113 @@ class SecLoan1():
                 cspecs,
                 legpars
                 )
-        con = sqlite3.connect('newrl.db')
-        cur = con.cursor()
         cur.execute(f'''INSERT INTO contracts
                 (address, creator, ts_init, name, version, actmode, status, next_act_ts, signatories, parent, oracleids, selfdestruct, contractspecs, legalparams)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
-        con.commit()
-        con.close()
-        #########
         return self.address
 
-    def loadcontract(self,contractaddress):
+    def loadcontract(self, cur, contractaddress):
         #this loads the contract from the state db
         #it should take as input contractaddress and output the contractparams as they are in the db as of the time of calling it
         #the output will populate self.contractparams to be used by other functions
-        con = sqlite3.connect('newrl.db')
-        cur = con.cursor()
         contract_cursor = cur.execute('SELECT * FROM contracts WHERE address = :address', {
                     'address': contractaddress})
         contract_row = contract_cursor.fetchone()
-        contract = contract_row if contract_row is not None else 0
-        con.close()
         #print(contract)
-        self.contractparams={}
-        self.contractparams['address']=contractaddress
-        self.contractparams['creator']=contract[1]
-        self.contractparams['ts_init']=contract[2]
-        self.contractparams['name']=contract[3]
-        self.contractparams['version']=contract[4]
-        self.contractparams['actmode']=contract[5]
-        self.contractparams['status']=contract[6]
-        self.contractparams['next_act_ts']=contract[7]
-        self.contractparams['signatories']=contract[8]
-        self.contractparams['parent']=contract[9]
-        self.contractparams['oracleids']=contract[10]
-        self.contractparams['selfdestruct']=contract[11]
-        self.contractparams['contractspecs']=contract[12]
-        self.contractparams['legalparams']=contract[13]
+        self.contractparams=dict(contract_row)
         print("Loaded the contract with following data: \n",self.contractparams)
         return self.contractparams
 
     #the below function creates the transaction of a give type
-    def create_tx(self,ttype,tspdata,currency="INR",fee=0.0,descr=None): 
-        transaction={'timestamp':str(datetime.datetime.now()),
-                    'type':ttype,
+#    def create_tx(self,ttype,tspdata,currency="INR",fee=0.0,descr=None): 
+
+    def create_sc_tx(self, function, signers, params, currency, feeamount, descr):
+        #function used by users/applications to create tx to call this contract
+        specificdata={'template':self.template,
+                      'version':self.version,
+                      'function':function,
+                      'signers':signers,
+                      'params': params}
+        transaction={'timestamp':time.mktime(datetime.datetime.now().timetuple()),
+                    'type':3,
                     'currency':currency,
-		            'fee':fee,
+		            'fee':feeamount,
                     'descr':descr,
                     'valid':1,
                     'block_index':0,
-                    'specific_data':tspdata}
-        # the below section is to be re-written upon the database version conclusion
+                    'specific_data':specificdata}
         trans=Transactionmanager();
         signatures=[]
         transactiondata={'transaction':transaction,'signatures':signatures}
         txdata=trans.transactioncreator(transactiondata);
-        #trans.dumptransaction(txfilename);  #the tx is created at the location txfilename, to uncomment this, add txfilename to the arguments above
         return txdata   #this is expected to be used in API form, hence the caller gets back the tx data as a json object
-
-    def create_sc_tx(self,function,params):
-        specificdata={'template':self.template,
-                      'version':self.version,
-                      'function':function,
-                      'params': params}
-        tx=self.create_tx(3,specificdata,"INR",0.0)
-        return tx        
         # user will take this transaction and submit its signed version for inclusion in a block,
-        # validators will simply check if it is signed properly and for fees; maybe also for technical accuracy of params being suitable for template
+        # validators will simply check if it is signed properly and for fees
         
-    def deploy(self,callparams):
+    def deploy(self, cur, sender, callparams):
         # carries out the SC execution steps upon instruction from a transaction - during updater run, post block inclusion
         if self.contractparams['status'] != 1:    #the contract is not setup, i.e. is either yet to be setup, already deployed or terminated
             print("The contract is not in the post-setup stage. Exiting without deploying.")
             return False
         else:
-            self.contractparams['status']=2     # changed from 1 (setup done) to 2 (deployed and live)
-            #update the status in the db as well
-            #########
-            print("Deployed smart contract - ",self.template,"with address ",self.contractaddress)
-            return True
+            if self.sendervalid(sender, self.deploy.__name__):
+                self.contractparams['status'] = 2     # changed from 1 (setup done) to 2 (deployed and live)
+                cur.execute(f'''INSERT OR REPLACE INTO contracts
+    		    		(address, status)
+	    		    	VALUES (?, ?)''', (self.address, self.contractparams['status']))
+                print("Deployed smart contract - ",self.template,"with address ",self.contractaddress)
+                self.updateondeploy(cur, callparams)
+                return True
+            else:
+                print("Sender not valid or not allowed this function call.")
+                return False
 
-    def create_nusd_token(self,recipient_address, sender, value):
-        name="nusd"+self.address[:5]
+    def updateondeploy(self, cur, callparams):
+        tokendata={"tokencode": "4242",
+                   "tokenname": "NUSD1",
+                   "tokentype": 1,
+                   "tokenattributes": {"fiat_currency":"USD", "sc_address": self.address},
+                   "first_owner": None,
+                   "custodian": self.address,
+                   "legaldochash": self.contractparams['legalparams'],
+                   "amount_created": None,
+                   "value_created": 0,
+                   "disallowed": [],
+                   "tokendecimal":2,
+                   "sc_flag": True
+                   }
+        add_token(cur, tokendata, callparams['trans_code'])
+
+    def sendervalid(self, senderaddress, function):
+        sendervalidity = False
+        for appr_sender in self.contractparams['approved_senders']:
+            if senderaddress == appr_sender['address']:
+                if appr_sender['allowed'] == 'all' or function in appr_sender['allowed']:
+                    sendervalidity = True
+        return sendervalidity
+
+    def send_nusd_token(self, cur, recipient_address, sender, value):
         try:
             value = float(value)
         except:
-            value = 0.0
-        sendervalidity = False
-        for appr_sender in self.contractparams['approved_senders']
-            if sender == appr_sender:
-                sendervalidity = True
-        if not sendervalidity:
+            print("Can't read value as a valid number.")
+            return False
+        if not is_wallet_valid(recipient_address):
+            print("Recipient address not valid.")
+            return False
+        if not self.sendervalid(sender):
             print("Sender is not in the approved senders list.")
             return False
 
         tokendata={"tokencode": "4242",
-                   "tokenname": name,
-                   "tokentype": 62,
-                   "tokenattributes": None,
-                   "first_owner": recipient_address,   #first owner is contract address till the contract is executed
+                   "first_owner": recipient_address,
                    "custodian": self.address,
-                   "legaldochash": self.contractparams['legalparams'],
                    "amount_created": int(value*100),
                    "value_created": value,
-                   "disallowed": [],
-                   "tokendecimal":2,
-                   "sc_flag": True,
-                   "sc_address": self.address}
-        tx=create_token_transaction(token_data=tokendata);
-        print(tx)
-        return tx
-
+                   "tokendecimal":2
+                   }
+        add_token(cur, tokendata)
+        
     def destroy_nusd_token(self,sender_address, value):
         pass        
 
