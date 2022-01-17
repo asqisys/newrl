@@ -7,6 +7,7 @@ import hashlib
 import json
 import datetime
 import base64
+import sqlite3
 
 from ..constants import TMP_PATH, NEWRL_DB
 from .transactionmanager import Transactionmanager

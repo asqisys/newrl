@@ -67,12 +67,13 @@ def create_wallet():
 def create_token(wallet, custodian_wallet):
     response = client.post('/add-token', json={
         "token_name": "NEWTOKEN",
+        "tokencode" : "",
         "token_type": "string",
         "first_owner": wallet['address'],
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
-        "amount_created": 1000000,
-        "value_created": 10000,
+        "amount_created": 1234,
+        "value_created": 1000,
         "disallowed_regions": [],
         "is_smart_contract_token": False,
         "token_attributes": {}
@@ -113,7 +114,7 @@ def create_token(wallet, custodian_wallet):
     balance = next(x for x in balances if x['wallet_address'] ==
                    wallet['address'] and x['tokencode'] == token_in_state['tokencode'])
     assert balance
-    assert balance['balance'] == 1000000
+    assert balance['balance'] == 1234
 
     return token_in_state['tokencode']
 
