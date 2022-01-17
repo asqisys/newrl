@@ -30,7 +30,9 @@ v2_tag = 'V2 For Machines'
 @router.post("/create-transfer", tags=[v1_tag])
 async def create_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
+    transfer_type = transfer_request.transfer_type
     trandata = {
+        "transfer_type": transfer_type,
         "asset1_code": str(transfer_request.asset1_code),
         "asset2_code": str(transfer_request.asset2_code),
         "wallet1": transfer_request.wallet1_address,
@@ -38,35 +40,12 @@ async def create_transfer(transfer_request: TransferRequest):
         "asset1_number": int(transfer_request.asset1_qty),
         "asset2_number": int(transfer_request.asset2_qty)
     }
-#    if transfer_type.lower()=="type4":
-#        type=4
-#    if transfer_type.lower()=="type5":
-#        type=5
-    type = transfer_request.transfer_type
-    fulltrandata = {
-        "transaction": {
-            "timestamp": "",
-            "trans_code": "000000",
-            "type": type,
-            "currency": "INR",
-            "fee": 0.0,
-            "descr": "",
-            "valid": 1,
-            "block_index": 0,
-            "specific_data": trandata
-        },
-        "signatures": []
-    }
-    with open("transfernew.json", 'w') as file:
-        json.dump(fulltrandata, file)
-
-    newtransfer = Transfermanager(fulltrandata)
-    newtransfer.loadandcreate(fulltrandata)
+    newtransfer = Transfermanager(trandata)
+    transaction = newtransfer.loadandcreate()
 #    with open("./transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse(
-        "transfernew.json", filename="transferfile.json")
-    return transferfile
+    # transferfile = FileResponse(file, filename="transferfile.json")
+    return transaction
 
 
 @router.post("/generate-wallet-transaction", tags=[v1_tag])
@@ -261,7 +240,9 @@ async def add_token(
 @router.post("/add-transfer", tags=[v2_tag])
 async def add_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
+    transfer_type = transfer_request.transfer_type
     trandata = {
+        "transfer_type": transfer_type,
         "asset1_code": str(transfer_request.asset1_code),
         "asset2_code": str(transfer_request.asset2_code),
         "wallet1": transfer_request.wallet1_address,
@@ -269,32 +250,15 @@ async def add_transfer(transfer_request: TransferRequest):
         "asset1_number": int(transfer_request.asset1_qty),
         "asset2_number": int(transfer_request.asset2_qty)
     }
-    type = transfer_request.transfer_type
-    fulltrandata = {
-        "transaction": {
-            "timestamp": "",
-            "trans_code": "000000",
-            "type": type,
-            "currency": "INR",
-            "fee": 0.0,
-            "descr": "",
-            "valid": 1,
-            "block_index": 0,
-            "specific_data": trandata
-        },
-        "signatures": []
-    }
-    with open("transfernew.json", 'w') as file:
-        json.dump(fulltrandata, file)
-
-    newtransfer = Transfermanager(transfer_data=fulltrandata)
-    newtransfer.loadandcreate()
+    newtransfer = Transfermanager(transfer_data=dict(trandata))
+    transaction = newtransfer.loadandcreate()
+    return transaction
 #    with open("./transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse(
-        "transfernew.json", filename="transferfile.json")
-    with open("transfernew.json") as f:
-        return json.load(f)
+    # transferfile = FileResponse(
+    #     "transfernew.json", filename="transferfile.json")
+    # with open("transfernew.json") as f:
+    #     return json.load(f)
 
 @router.post("/sign-transaction", tags=[v2_tag])
 async def sign_transaction(wallet_data: dict, transaction_data: dict):
