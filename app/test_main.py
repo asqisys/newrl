@@ -72,7 +72,7 @@ def create_token(wallet, custodian_wallet):
         "first_owner": wallet['address'],
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
-        "amount_created": 1234,
+        "amount_created": 8888,
         "value_created": 1000,
         "disallowed_regions": [],
         "is_smart_contract_token": False,
@@ -114,7 +114,7 @@ def create_token(wallet, custodian_wallet):
     balance = next(x for x in balances if x['wallet_address'] ==
                    wallet['address'] and x['tokencode'] == token_in_state['tokencode'])
     assert balance
-    assert balance['balance'] == 1234
+    assert balance['balance'] == 8888
 
     return token_in_state['tokencode']
 
@@ -126,8 +126,8 @@ def create_transfer(wallet1, wallet2, token1, token2):
         "asset2_code": token2,
         "wallet1_address": wallet1['address'],
         "wallet2_address": wallet2['address'],
-        "asset1_qty": 456,
-        "asset2_qty": 789
+        "asset1_qty": 1000,
+        "asset2_qty": 2000
     })
 
     assert response.status_code == 200
@@ -169,7 +169,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 999544.0
+    assert balance == 7888
 
     response = client.post('/get-balance', json={
         "balance_type": "TOKEN_IN_WALLET",
@@ -178,7 +178,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 789
+    assert balance == 2000
 
     response = client.post('/get-balance', json={
         "balance_type": "TOKEN_IN_WALLET",
@@ -187,7 +187,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 456
+    assert balance == 1000
 
     response = client.post('/get-balance', json={
         "balance_type": "TOKEN_IN_WALLET",
@@ -196,7 +196,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 999211
+    assert balance == 6888
 
 def test_read_main():
     custodian_wallet = {
@@ -210,5 +210,9 @@ def test_read_main():
 
     token1 = create_token(wallet1, custodian_wallet)
     token2 = create_token(wallet2, custodian_wallet)
+#    wallet1={"public": "ak2lRQvaKl+D3wIs24/TJUWLl2haaIkTuHrHQ0nFEvUa5Sa8AHWudK79TeDbQ92OkaxFSk0M+x9ZOQx8xDcZ3w==", "private": "4LsPCjLuJR1/r+IPlyE22sOWl9THeBo2T3RMqNvAVls=", "address": "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848"}
+#    wallet2={"address": "0x97246f464c273c8d223fd4c49d7a383713dbf798", "public": "FjtV4dxyTWy2KBOIfmO8tkDurGyE+ixYpWWiRP/CeRVYWMcB/0IXyEHgO0sGgkTW4ppw4fMDLj9Nz8pfubGG5w==", "private": "J1KtnXGGs7r+ESAuxxJDnW49+hCSUDHON1p5vjdD/kU="}
+#    token1="tkc3cd02d887677f455d2ecdea542cc781b477172c"
+#    token2="0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848"
 
     create_transfer(wallet1, wallet2, token1, token2)
