@@ -31,8 +31,8 @@ v2_tag = 'V2 For Machines'
 async def create_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
     trandata = {
-        "asset1_code": int(transfer_request.asset1_code),
-        "asset2_code": int(transfer_request.asset2_code),
+        "asset1_code": str(transfer_request.asset1_code),
+        "asset2_code": str(transfer_request.asset2_code),
         "wallet1": transfer_request.wallet1_address,
         "wallet2": transfer_request.wallet2_address,
         "asset1_number": int(transfer_request.asset1_qty),
@@ -262,8 +262,8 @@ async def add_token(
 async def add_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
     trandata = {
-        "asset1_code": int(transfer_request.asset1_code),
-        "asset2_code": int(transfer_request.asset2_code),
+        "asset1_code": str(transfer_request.asset1_code),
+        "asset2_code": str(transfer_request.asset2_code),
         "wallet1": transfer_request.wallet1_address,
         "wallet2": transfer_request.wallet2_address,
         "asset1_number": int(transfer_request.asset1_qty),
