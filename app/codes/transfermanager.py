@@ -24,6 +24,9 @@ class Transfermanager(Transactionmanager):
         # add more constraints here later
 
     def loadandcreate(self, transfer_data=None):
-        self.transferdata = transfer_data
+    #    self.transferdata = transfer_data
+    #    tdataall = {"transaction":self.transferdata, "signatures":[]} 
+        tdatawithcode = self.transactioncreator(self.transferdata)
         if self.techvalid():
             self.dumptransaction()
+        return tdatawithcode

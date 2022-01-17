@@ -53,12 +53,20 @@ def update_db_states(cur, newblockindex, transactions):
 
 def transfer_tokens_and_update_balances(cur, sender, reciever, tokencode, amount):
     sender_balance = get_wallet_token_balance(cur, sender, tokencode)
+    print("Sender is ",sender  ," and their balance is ", sender_balance)
     reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
+    print("Receiver is ",reciever  ," and their balance is ", reciever_balance)
     sender_balance = sender_balance - amount
     reciever_balance = reciever_balance + amount
+    print("Amount is ", amount)
+    print("Updating sender's balance with ", sender_balance)
+    print("Updating reciever's balance with ", reciever_balance)
     update_wallet_token_balance(cur, sender, tokencode, sender_balance)
     update_wallet_token_balance(cur, reciever, tokencode, reciever_balance)
-
+    sender_balance = get_wallet_token_balance(cur, sender, tokencode)
+    print("Sender is ",sender  ," and their balance is ", sender_balance)
+    reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
+    print("Receiver is ",reciever  ," and their balance is ", reciever_balance)
 
 def update_wallet_token_balance(cur, wallet_address, token_code, balance):
     cur.execute(f'''INSERT OR REPLACE INTO balances
@@ -121,6 +129,7 @@ def add_token(cur, token, txcode = None):
                 existingflag = False
         else:   # mistakenly entered tokencode value as "" or "0" or 0
             tcodenewflag = True
+            existingflag = False
     if 'tokencode' not in token or tcodenewflag:   # new tokencode needs to be created
         hs = hashlib.blake2b(digest_size=20)
         hs.update(txcode.encode())
@@ -151,10 +160,13 @@ def add_token(cur, token, txcode = None):
             (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
             amount_created, value_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+        if token['amount_created']:
+            update_wallet_token_balance(
+                cur, token['first_owner'], tid, token['amount_created'])
 
-    # now update balance for either case - new token or more of existing created
-    if token['amount_created']: # this will be None or 0 for cases where tokens are created with no first owner and 0 amt
-        added_balance = int(token['amount_created'])
+    # now update balance for case of more of existing created
+    else:
+        added_balance = int(token['amount_created'] or 0)
         current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
         balance = int(current_balance or 0) + added_balance
         update_wallet_token_balance(

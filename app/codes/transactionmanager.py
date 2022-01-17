@@ -212,7 +212,7 @@ class Transactionmanager:
             with open(fl, "r") as readfile:
                 trandata = json.load(readfile)['transaction']
             ttype = trandata['type']
-            if ttype < 4:  # 0 is genesis, 1 is wallet creation, 2 is token creation, 3 is token custody
+            if ttype < 3:  # 0 is genesis, 1 is wallet creation, 2 is token creation
                 continue
             if ttype == 5:  # unilateral transaction so will have only asset_1 number
                 if sender == trandata['specific_data']['wallet1'] and trandata['specific_data']['asset1_code'] == tokencode:
@@ -385,7 +385,7 @@ class Transactionmanager:
                     print("Valid tokens")
                     self.validity = 1
 
-            if self.validity == 0:
+            if self.validity == 0 or not sender1valid or not sender2valid:
                 print("Transaction not valid due to invalid tokens or addresses")
                 return False
 

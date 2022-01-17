@@ -88,6 +88,7 @@ def run_updater():
     signarray = []
     transfiles = []
     validationfiles = []
+    txcodes = []
     tmtemp = Transactionmanager()
     for filename in filenames:
         if "validation" in filename:  # the validation files
@@ -160,14 +161,16 @@ def run_updater():
                     continue
                 if traninclusionflag:  # the current transaction is already included in some earlier block
                     continue  # this takes the process to the next transaction
-
-                textarray.append(transaction)
-                signarray.append(signatures)
-                try:
-                    os.remove(file)
-                	# shutil.move(file, incltrans);
-                except:
-                	logger.log("Couldn't delete:",file)
+                
+                if trandata['transaction']['trans_code'] not in txcodes:
+                    textarray.append(transaction)
+                    signarray.append(signatures)
+                    txcodes.append(trandata['transaction']['trans_code'])
+                    try:
+                        os.remove(file)
+                    	# shutil.move(file, incltrans);
+                    except:
+                    	logger.log("Couldn't delete:",file)
                 # for vfile in specificvalfiles:
                 # 	try:
                 # 		shutil.move(vfile, options.itpool)
@@ -206,13 +209,14 @@ def run_updater():
 
 #    con = sqlite3.connect(NEWRL_DB)
 #    cur = con.cursor()
+    print(transactionsdata)
     block = blockchain.mine_block(cur, transactionsdata)
     # the chain is updated. Now we update the state db using transaction data
     update_db_states(cur, block['index'], transactionsdata['transactions'])
     con.commit()
     con.close()
 
-    broadcast_block(block)
+#    broadcast_block(block)
     return logger.get_logs()
 
 def broadcast_block(block):

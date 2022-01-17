@@ -288,13 +288,14 @@ async def add_transfer(transfer_request: TransferRequest):
         json.dump(fulltrandata, file)
 
     newtransfer = Transfermanager(transfer_data=fulltrandata)
-    newtransfer.loadandcreate()
+    tdatanew = newtransfer.loadandcreate()
+    return tdatanew
 #    with open("./transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse(
-        "transfernew.json", filename="transferfile.json")
-    with open("transfernew.json") as f:
-        return json.load(f)
+#    transferfile = FileResponse(
+#        "transfernew.json", filename="transferfile.json")
+#    with open("transfernew.json") as f:
+#        return json.load(f)
 
 @router.post("/sign-transaction", tags=[v2_tag])
 async def sign_transaction(wallet_data: dict, transaction_data: dict):
