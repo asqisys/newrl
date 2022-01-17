@@ -210,9 +210,5 @@ def test_read_main():
 
     token1 = create_token(wallet1, custodian_wallet)
     token2 = create_token(wallet2, custodian_wallet)
-#    wallet1={"public": "ak2lRQvaKl+D3wIs24/TJUWLl2haaIkTuHrHQ0nFEvUa5Sa8AHWudK79TeDbQ92OkaxFSk0M+x9ZOQx8xDcZ3w==", "private": "4LsPCjLuJR1/r+IPlyE22sOWl9THeBo2T3RMqNvAVls=", "address": "0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848"}
-#    wallet2={"address": "0x97246f464c273c8d223fd4c49d7a383713dbf798", "public": "FjtV4dxyTWy2KBOIfmO8tkDurGyE+ixYpWWiRP/CeRVYWMcB/0IXyEHgO0sGgkTW4ppw4fMDLj9Nz8pfubGG5w==", "private": "J1KtnXGGs7r+ESAuxxJDnW49+hCSUDHON1p5vjdD/kU="}
-#    token1="tkc3cd02d887677f455d2ecdea542cc781b477172c"
-#    token2="0xef1ab9086fcfcadfb52c203b44c355e4bcb0b848"
 
     create_transfer(wallet1, wallet2, token1, token2)
