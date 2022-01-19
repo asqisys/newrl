@@ -1,14 +1,33 @@
+import json
 import logging
 import sqlite3
 import requests
 import socket
 import subprocess
+from app.codes.signmanager import sign_object
+from app.codes.validator import validate_signature
 from app.migrations.init import init_newrl
-from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
+from ...constants import AUTH_FILE_PATH, BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def get_auth():
+    with open(AUTH_FILE_PATH, 'r') as f:
+        auth_data = json.load(f)
+        wallet = auth_data['wallet']
+        private_key = wallet['private']
+        auth_data = {
+            'person_id': auth_data['person_id'],
+            'wallet_id': wallet['address'],
+            'public_key': wallet['public'],
+        }
+        auth_data['signature'] = sign_object(private_key, auth_data)
+        print('auth', auth_data)
+        return auth_data
+
+auth_data = get_auth()
 
 def clear_peer_db():
     con = sqlite3.connect(NEWRL_P2P_DB)
@@ -123,7 +142,7 @@ async def init_bootstrap_nodes():
 
 async def register_me_with_them(address):
     logger.info(f'Registering me with node {address}')
-    response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', timeout=REQUEST_TIMEOUT)
+    response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', json=auth_data, timeout=REQUEST_TIMEOUT)
     return response.json()
 
 async def update_peers():
@@ -158,3 +177,17 @@ async def update_software(propogate):
     if propogate is True:
         logger.info('Propogaring update request to network')
         await update_peers()
+
+
+def validate_auth(auth):
+    data = {
+        'person_id': auth['person_id'],
+        'wallet_id': auth['wallet_id'],
+        'public_key': auth['public_key'],
+    }
+    signature = auth['signature']
+    return validate_signature(
+        data=data,
+        public_key=auth['public_key'],
+        signature=signature
+    )

@@ -2,9 +2,12 @@
 
 # in current version, it edits the transaction file or at least creates a new version of it post validation.. this works for permissioned variatn.. later, for decentralize dversion, we will need to alter the file altering with new validation receipt creation..
 
+import base64
 import datetime
 import json
 import os
+
+import ecdsa
 from .transactionmanager import Transactionmanager
 from ..constants import MEMPOOL_PATH
 
@@ -45,3 +48,14 @@ def validate(transaction):
     status = f"Wrote check status as {check} to {checkfile}"
     print(status)
     return status
+
+
+def validate_signature(data, public_key, signature):
+    public_key_bytes = base64.b64decode(public_key)
+    sign_trans_bytes = base64.decodebytes(signature.encode('utf-8'))
+    vk = ecdsa.VerifyingKey.from_string(public_key_bytes, curve=ecdsa.SECP256k1)
+    message = json.dumps(data).encode()
+    try:
+        return vk.verify(sign_trans_bytes, message)
+    except:
+        return False
