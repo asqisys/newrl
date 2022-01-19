@@ -2,6 +2,7 @@
 
 import json
 import base64
+import ecdsa
 
 from starlette.responses import FileResponse
 from .transactionmanager import Transactionmanager
@@ -143,3 +144,12 @@ def sign_transaction(wallet_data, transaction_data):
     else:
         print("Signing failed. No change made to transaction's signature data")
         return None
+
+
+def sign_object(private_key, data):
+    pvtkeybytes = base64.b64decode(private_key)
+    msg = json.dumps(data).encode()
+    sk = ecdsa.SigningKey.from_string(pvtkeybytes, curve=ecdsa.SECP256k1)
+    msgsignbytes = sk.sign(msg)
+    msgsign = base64.b64encode(msgsignbytes).decode('utf-8')
+    return msgsign
