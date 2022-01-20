@@ -1,15 +1,17 @@
-# Python programm to validate trnasctions starting with state.json and mempool
-
-# in current version, it edits the transaction file or at least creates a new version of it post validation.. this works for permissioned variatn.. later, for decentralize dversion, we will need to alter the file altering with new validation receipt creation..
+"""Python programm to validate transactions, blocks and receipts"""
 
 import base64
 import datetime
 import json
-import os
+import logging
 
 import ecdsa
 from .transactionmanager import Transactionmanager
 from ..constants import MEMPOOL_PATH
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def validate(transaction):
@@ -53,9 +55,65 @@ def validate(transaction):
 def validate_signature(data, public_key, signature):
     public_key_bytes = base64.b64decode(public_key)
     sign_trans_bytes = base64.decodebytes(signature.encode('utf-8'))
-    vk = ecdsa.VerifyingKey.from_string(public_key_bytes, curve=ecdsa.SECP256k1)
+    vk = ecdsa.VerifyingKey.from_string(
+        public_key_bytes, curve=ecdsa.SECP256k1)
     message = json.dumps(data).encode()
     try:
         return vk.verify(sign_trans_bytes, message)
     except:
         return False
+
+
+def validate_receipt_signature(receipt):
+    try:
+        return validate_signature(receipt['data'], receipt['public_key'], receipt['signature'])
+    except:
+        logger.error('Error validating receipt signature')
+        return False
+
+
+def get_node_trust_score(public_key):
+    # TODO - Return the actual trust score of the node by lookup on public_key
+    return 1
+
+def validate_block_using_receipts(block):
+    total_receipt_count = 0
+    score_weighted_validity_count = 0
+
+    for receipt in block['receipts']:
+        total_receipt_count += 1
+
+        if not validate_receipt_signature(receipt):
+            continue
+
+        if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash'] or receipt['data']['vote'] < 1:
+            continue
+
+        trust_score = get_node_trust_score(receipt['public_key'])
+        valid_probability = 0 if trust_score < 0 else (trust_score + 2) / 5
+
+        score_weighted_validity_count += valid_probability
+
+    if score_weighted_validity_count < 0.75:
+        return False
+    
+    return True
+
+
+def validate_block(block):
+    sign_valid = validate_signature(
+        data=block['data'],
+        public_key=block['signature']['public_key'],
+        signature=block['signature']['msgsign']
+    )
+
+    if not sign_valid:
+        logger.info('Invalid block signature')
+        return False
+
+    receipts_valid = validate_block_using_receipts(block)
+    if not receipts_valid:
+        logger.info('Invalid receipts')
+        return False
+    
+    return True
