@@ -222,16 +222,6 @@ class nusd1():
         tx=self.create_tx(5,transferdata,"INR",0.0) #going with default values for mempool="./mempool",statefile="./state.json",descr=None
         return tx
 
-    def transfersec(self):
-        transferdata={"asset1_code": self.contractparams['contractspecs']['sec_token_code'],
-                        "asset2_code": 0,
-                        "wallet1": self.contractparams['contractspecs']['secprovider'],
-                        "wallet2": self.contractaddress,
-                        "asset1_number": self.contractparams['contractspecs']['sec_token_amount'],
-                        "asset2_number": 0}
-        tx=self.create_tx(5,transferdata,"INR",0.0) #going with default values for mempool="./mempool",statefile="./state.json",descr=None
-        return tx
-
     def checkstatus(self):
         #returns status without adding a chain transaction; status is one of : awaiting tx confirmations, awaiting deployment, live, terminated, etc
         status=self.contractparams['status']
@@ -297,58 +287,3 @@ class nusd1():
                 return False
         print("Not an expired contract. Not closing.")
         return False
-    
-    def check_default(self):
-    #    due_date_ts=datetime.strptime(self.contractparams['contractspecs']['start_date'], "%Y-%m-%d %H:%M:%S")+datetime.timedelta(days=int(self.contractparams['contractspecs']['tenor']))
-        if datetime.datetime.now() < datetime.strptime(self.contractparams['contractspecs']['due_date'], "%Y-%m-%d %H:%M:%S"):
-            return False;	# not in default since due date is still away
-        contbalances=self.getcontaddbal();
-        if contbalances['conttokbal']>=self.contractparams['contractspecs']['repayment']:
-            return False;   #i.e. not a default
-        else:
-            return True;    # default
-
-    def run(self,callparams):
-        #this is triggered by EOA or time and checks where things stand as of that date and executes different paths based on that.
-        if self.contractparams['status']!=2:
-            print("Not a live contract. Exiting.")
-            return False
-        contbalances=self.getcontaddbal()
-        if self.check_default:  #default case
-            print("Default has happened, executing collateral transfer to lender and loantoken transfer to secprovider")
-            #### code for sell_collateral etc
-            #### in phase-1 we will simply transfer the collateral to the lender and close the loan
-            #### transfer sectokens of amount contbalances['contsecbal'] to self.contractparams['contractspecs']['lenderwallet']
-            #### loantokens of amount contbalances['contloanbal'] to self.contractparams['contractspecs']['secprovider']
-            # the logic is that the loan is now transferred to the security provider who can choose to do with it as she pleases
-            self.scorechange(True); #update the score in trust network
-        else:   #not in default, so either due date is past and tokens are in the account or due date is still away
-            if datetime.datetime.now() >= datetime.strptime(self.contractparams['contractspecs']['due_date'], "%Y-%m-%d %H:%M:%S"):
-                print("Due date is past. Paying all tokens onwards to lender, borrower and secprovider and closing the loan.")
-                nettokens= contbalances['conttokbal'] - self.contractparams['contractspecs']['repayment']    #non-default case, so has to be +ve or 0
-                #### open state db and make the following transfers from the self.contractaddress
-                #### lenttokens of amount self.contractparams['contractspecs']['repayment'] to self.contractparams['contractspecs']['lenderwallet']
-                #### loantokens of amount contbalances['contloanbal'] to self.contractparams['contractspecs']['borrowerwallet']
-                #### lenttokens of amount nettokens to self.contractparams['contractspecs']['borrowerwallet']
-                #### sectokens of amount contbalances['contsecbal'] to self.contractparams['contractspecs']['secprovider']
-                self.contractparams['status']=3     #change this in the state db as well, in case the closure fails.
-                self.close()
-                self.scorechange(False); #update the score in trust network
-                return True
-            else:
-                print("Due date still away. Returning without any execution.")
-                return True     #valid run but nothing to do
-            
-    def sell_collateral(self, tokcode=None):
-        # this requires connection into a decentralized marketplace - TBD
-        if self.check_default['status']==True:	# there is default
-            #### code for selling collateral
-            pass
-
-    def scorechange(self, defstatus):
-        #update the trust score based on regular or defaulted execution
-        pass
-
-    def trigger_detokenization(self):
-        pass
-    
