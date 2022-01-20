@@ -73,3 +73,7 @@ class BlockRequest(BaseModel):
 
 class BlockAdditionRequest(BaseModel):
     block: dict
+
+
+class ReceiptAdditionRequest(BaseModel):
+    receipt: dict

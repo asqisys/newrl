@@ -1,3 +1,4 @@
+import logging
 import json
 import os
 import requests
@@ -5,6 +6,10 @@ from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT
 from app.codes.p2p.peers import get_peers
 from app.codes.updater import update_db_states
+from app.codes.validator import validate_block, validate_receipt_signature
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def get_blocks(block_indexes):
@@ -29,7 +34,21 @@ def receive_block(block):
     block_index = block['block_index'] if 'block_index' in block else block['index']
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
+    validate_block(block)
     blockchain.add_block(block)
+    return True
+
+
+def receive_receipt(receipt):
+    logger.info('Recieved receipt: %s', receipt)
+    if not validate_receipt_signature(receipt):
+        logger.info('Invalid receipt signature')
+        return False
+
+    # TODO - Add the receipt to an existing block in Temp folder
+    #   if no corresponding block exists, store the receipt in temp folder and request  
+    #   sender node for the block in receipt
+
     return True
 
 

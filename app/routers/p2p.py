@@ -6,11 +6,11 @@ from starlette.requests import Request
 
 from app.codes.chainscanner import download_chain, download_state, get_transaction
 from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
-from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, sync_chain_from_node, sync_chain_from_peers
+from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, receive_receipt, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
 from app.constants import NEWRL_PORT
 from app.migrations.init_db import clear_db, init_db
-from .request_models import BlockAdditionRequest, BlockRequest, TransactionsRequest
+from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionsRequest
 
 
 router = APIRouter()
@@ -32,6 +32,13 @@ async def get_mempool_transactions_api(req: BlockRequest):
 @router.post("/receive-block", tags=[p2p_tag])
 async def receive_block_api(req: BlockAdditionRequest):
     return receive_block(req.block)
+
+@router.post("/receive-receipt", tags=[p2p_tag])
+async def receive_receipt_api(req: ReceiptAdditionRequest):
+    if receive_receipt(req.receipt):
+        return {'status': 'SUCCESS'}
+    else:
+        return {'status': 'FAILURE'}
 
 @router.get("/get-last-block-index", tags=[p2p_tag])
 async def get_last_block_index_api():
