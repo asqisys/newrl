@@ -10,6 +10,7 @@ from .codes.p2p.peers import init_bootstrap_nodes, update_software
 
 from .routers import blockchain
 from .routers import p2p
+from .routers import transport
 
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,7 @@ app = FastAPI(
 
 app.include_router(blockchain.router)
 app.include_router(p2p.router)
+app.include_router(transport.router)
 
 @app.on_event('startup')
 async def app_startup():

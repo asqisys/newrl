@@ -14,3 +14,4 @@ DB_MIGRATIONS_PATH = 'app/migrations/migrations'
 BOOTSTRAP_NODES = ['newrl.net']
 REQUEST_TIMEOUT = 5
 NEWRL_PORT = 8090
+TRANSPORT_SERVER = 'http://localhost:8095'
