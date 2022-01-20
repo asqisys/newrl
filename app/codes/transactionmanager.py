@@ -43,8 +43,11 @@ class Transactionmanager:
         if ttype == 2:    # token creation, custodian needs to sign
             validadds.append(trans['specific_data']['custodian'])
         if ttype == 3:      #smart contract tx
-            for signer in trans['specific_data']['signers']:
-                validadds.append(signer)
+            func = trans['specific_data']['function']
+            if func in trans['specific_data']['params']['signatories']:
+                for signer in (trans['specific_data']['signers']):
+                    if not trans['specific_data']['params']['signatories'][func] or signer in trans['specific_data']['params']['signatories'][func]:
+                        validadds.append(signer)
         if ttype == 4:    # two way transfer; both senders need to sign
             validadds.append(trans['specific_data']['wallet1'])
             validadds.append(trans['specific_data']['wallet2'])

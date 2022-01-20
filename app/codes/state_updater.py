@@ -213,7 +213,7 @@ def add_tx_to_block(cur, block_index, transactions):
             (block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
 
-def update_token_amount(cur, tid, token['amount_created']):
+def update_token_amount(cur, tid, amt):
     tok_val = cur.execute('SELECT tokencode FROM tokens WHERE tokencode = :tokencode', {
                     'tokencode': tid}).fetechone()
     if not tok_val:
@@ -223,7 +223,7 @@ def update_token_amount(cur, tid, token['amount_created']):
                     'tokencode': tid})
     balance_row = balance_cursor.fetchone()
     cumul_amt = balance_row[0] if balance_row is not None else 0
-    cumul_amt = cumul_amt + token['amount_created']
+    cumul_amt = cumul_amt + amt
     cur.execute(f'''INSERT OR REPLACE INTO tokens
 				(tokencode, amount_created)
 				 VALUES (?, ?)''', (tid, cumul_amt))
