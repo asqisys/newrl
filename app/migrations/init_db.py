@@ -34,7 +34,7 @@ def init_db():
 
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS tokens
-                    (tokencode integer  NOT NULL PRIMARY KEY, 
+                    (tokencode text NOT NULL PRIMARY KEY, 
                     tokenname text,
                     tokentype integer,
                     first_owner text,
@@ -51,7 +51,7 @@ def init_db():
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS balances
                     (wallet_address text, 
-                    tokencode integer,
+                    tokencode text,
                     balance real, UNIQUE (wallet_address, tokencode))
                     ''')
 

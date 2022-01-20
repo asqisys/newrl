@@ -171,6 +171,10 @@ def add_token(cur, token, txcode = None):
         balance = int(current_balance or 0) + added_balance
         update_wallet_token_balance(
             cur, token['first_owner'], tid, balance)
+
+    if token['amount_created']:
+        update_token_amount(cur, tid, token['amount_created'])
+
     return True
 
 def get_kyc_doc_hash_json(kyc_docs, kyc_doc_hashes):
@@ -208,3 +212,19 @@ def add_tx_to_block(cur, block_index, transactions):
         cur.execute(f'''INSERT OR IGNORE INTO transactions
             (block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+
+def update_token_amount(cur, tid, token['amount_created']):
+    tok_val = cur.execute('SELECT tokencode FROM tokens WHERE tokencode = :tokencode', {
+                    'tokencode': tid}).fetechone()
+    if not tok_val:
+        print("Tokencode ", tid, " does not exist.")
+        return False
+    balance_cursor = cur.execute('SELECT amount_created FROM tokens WHERE tokencode = :tokencode', {
+                    'tokencode': tid})
+    balance_row = balance_cursor.fetchone()
+    cumul_amt = balance_row[0] if balance_row is not None else 0
+    cumul_amt = cumul_amt + token['amount_created']
+    cur.execute(f'''INSERT OR REPLACE INTO tokens
+				(tokencode, amount_created)
+				 VALUES (?, ?)''', (tid, cumul_amt))
+    return True
