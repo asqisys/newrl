@@ -11,7 +11,7 @@ from starlette.responses import FileResponse
 
 from app.codes.transactionmanager import Transactionmanager
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -300,6 +300,13 @@ async def add_sc(sc_request: CreateSCRequest):
         "legalparams":sc_request.legalparams
         }
 
+    txspecdata = {
+        "address": None,
+        "funct" : "setup",
+        "signers" : [sc_request.creator],
+        "params" : scdata
+    }
+
     fulltrandata = {
         "transaction": {
             "timestamp": "",
@@ -310,7 +317,7 @@ async def add_sc(sc_request: CreateSCRequest):
             "descr": "",
             "valid": 1,
             "block_index": 0,
-            "specific_data": scdata
+            "specific_data": txspecdata
         },
         "signatures": []
     }
@@ -318,6 +325,37 @@ async def add_sc(sc_request: CreateSCRequest):
 #        json.dump(fulltrandata, file)
     newsc = Transactionmanager()
     tdatanew = newsc.transactioncreator(fulltrandata)
+    return tdatanew
+
+@router.post("/call-sc", tags=[v2_tag])
+async def call_sc(sc_request: CallSC):
+    """Used to create a sc object which can be used to set up and deploy a smart contract"""
+
+    txspecdata = {
+        "address": sc_request.sc_address,
+        "funct" : sc_request.function_called,
+        "signers" : sc_request.signers,
+        "params" : sc_request.params
+    }
+
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": 3,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": txspecdata
+        },
+        "signatures": []
+    }
+#    with open("transfernew.json", 'w') as file:
+#        json.dump(fulltrandata, file)
+    newtx = Transactionmanager()
+    tdatanew = newtx.transactioncreator(fulltrandata)
     return tdatanew
 
 @router.post("/sign-transaction", tags=[v2_tag])

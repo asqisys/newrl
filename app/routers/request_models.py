@@ -48,9 +48,15 @@ class CreateSCRequest(BaseModel):
     version: str = "1.0.0"
     creator: str = "addressofcreator"
     actmode: str = "hybrid"
-    signatories: List[str] = []
+    signatories: dict
     contractspecs: dict
     legalparams: dict
+
+class CallSC(BaseModel):
+    sc_address: str
+    function_called: str
+    signers: List[str]
+    params: dict
 
 class KYCDoc(BaseModel):
     type: int
