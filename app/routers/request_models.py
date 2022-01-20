@@ -1,3 +1,4 @@
+from ensurepip import version
 from pydantic import BaseModel
 from enum import Enum
 from typing import List, Optional
@@ -41,6 +42,15 @@ class CreateTokenRequest(BaseModel):
     disallowed_regions: Optional[List[str]] = []
     is_smart_contract_token: bool = False
     token_attributes: dict
+
+class CreateSCRequest(BaseModel):
+    sc_name: str = "nusd1"
+    version: str = "1.0.0"
+    creator: str = "addressofcreator"
+    actmode: str = "hybrid"
+    signatories: List[str] = []
+    contractspecs: dict
+    legalparams: dict
 
 class KYCDoc(BaseModel):
     type: int

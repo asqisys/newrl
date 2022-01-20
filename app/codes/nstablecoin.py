@@ -124,9 +124,7 @@ class nusd1():
 
     def create_sc_tx(self, function, signers, params, currency, feeamount, descr):
         #function used by users/applications to create tx to call this contract
-        specificdata={'template':self.template,
-                      'version':self.version,
-                      'function':function,
+        specificdata={'address' : self.address,
                       'signers':signers,
                       'params': params}
         transaction={'timestamp':time.mktime(datetime.datetime.now().timetuple()),

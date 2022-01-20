@@ -1,5 +1,6 @@
 import json
 import logging
+from types import new_class
 
 from fastapi import APIRouter
 from fastapi.datastructures import UploadFile
@@ -8,7 +9,9 @@ from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 from starlette.responses import FileResponse
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest
+from app.codes.transactionmanager import Transactionmanager
+
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -17,7 +20,7 @@ from app.codes.utils import save_file_and_get_path
 from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
-
+from app.codes import nstablecoin
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -277,6 +280,45 @@ async def add_transfer(transfer_request: TransferRequest):
 #        "transfernew.json", filename="transferfile.json")
 #    with open("transfernew.json") as f:
 #        return json.load(f)
+
+@router.post("/add-sc", tags=[v2_tag])
+async def add_sc(sc_request: CreateSCRequest):
+    """Used to create a sc object which can be used to set up and deploy a smart contract"""
+    scdata = {
+        "creator":sc_request.creator,
+        "ts_init":None,
+        "name":sc_request.sc_name,
+        "version":sc_request.version,
+        "actmode":sc_request.actmode,
+        "status":0,
+        "next_act_ts":None,
+        "signatories":sc_request.signatories,
+        "parent":None,
+        "oracleids":None,
+        "selfdestruct":1,
+        "contractspecs":sc_request.contractspecs,
+        "legalparams":sc_request.legalparams
+        }
+
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": 3,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": scdata
+        },
+        "signatures": []
+    }
+#    with open("transfernew.json", 'w') as file:
+#        json.dump(fulltrandata, file)
+    newsc = Transactionmanager()
+    tdatanew = newsc.transactioncreator(fulltrandata)
+    return tdatanew
 
 @router.post("/sign-transaction", tags=[v2_tag])
 async def sign_transaction(wallet_data: dict, transaction_data: dict):
