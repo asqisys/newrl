@@ -13,3 +13,4 @@ all_wallets.json
 firsttoken.json
 newwallet.json
 *.pyc
+.auth.json
