@@ -218,11 +218,49 @@ def create_transfer(wallet1, wallet2, token1, token2):
     balance = response.json()['balance']
     assert balance == 6888
 
+def add_trust_score(wallet1, wallet2, tscore):
+    response = client.post('/update-trustscore', json={
+        "source_address": wallet1['address'],
+        "destination_address": wallet2['address'],
+        "tscore": tscore
+    })
+    assert response.status_code == 200
+    unsigned_transaction = response.json()
+    assert unsigned_transaction['transaction']
+    assert len(unsigned_transaction['signatures']) == 0
+
+    response = client.post('/sign-transaction', json={
+        "wallet_data": wallet1,
+        "transaction_data": unsigned_transaction
+    })
+    assert response.status_code == 200
+    signed_transaction = response.json()
+    assert signed_transaction['transaction']
+    assert signed_transaction['signatures']
+    assert len(signed_transaction['signatures']) == 1
+
+    response = client.post('/validate-transaction', json=signed_transaction)
+    assert response.status_code == 200
+
+    response = client.post('/run-updater')
+    assert response.status_code == 200
+
 def test_read_main():
     custodian_wallet = {
         "address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
         "public": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
         "private": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
+    }
+
+    test_wallet1 = {  
+        "public": "dB1I7PZwhlJiglxlt5JEBObO+xK4E0heTjbX/dXZiNhb0sFgdtB6zgJboWIgU2MsW5TW67fY63bqxYqNav4ztQ==",
+        "private": "2UpR/ir9+q5iF+R4HeHjuHnHw1r1RLOAbswvY0GfdaU=",
+        "address": "0xdf7d01e6dd3a3bb8cd6da76ccf90e6b35169bac9"
+    }
+    test_wallet2 = {
+        "public": "guq7IUw2mGMMNFb88RDOeuw94EEaFRC5XpYJSP6Py2wtsmfGAFVc6itcaOHbyP5sEku7VtEp+IbrydHGUaP5tg==",
+        "private": "ee0Tv8n4VUXQyVYRQXi+d31RLxuih3kcoOto+dnNdFQ=",
+        "address": "0x0a500e0df9439ea31628071d6d3fc78e8d8dbc22"
     }
 
     wallet1 = create_wallet()
@@ -235,3 +273,7 @@ def test_read_main():
 
     create_transfer(wallet1, wallet2, token1, token2)
     print("transfer done")
+
+#    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
+    add_trust_score(wallet1, wallet2, tscore = 2.1)
+    

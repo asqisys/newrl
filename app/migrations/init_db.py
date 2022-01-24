@@ -139,8 +139,8 @@ def init_trust_db():
     
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS trust_scores
-                    (src_person_id text, 
-                    dest_person_id text,
+                    (src_person_id text NOT NULL, 
+                    dest_person_id text NOT NULL,
                     score real,
                     last_time text)
                     ''')

@@ -11,7 +11,7 @@ from starlette.responses import FileResponse
 
 from app.codes.transactionmanager import Transactionmanager
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest, TscoreRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -342,6 +342,36 @@ async def call_sc(sc_request: CallSC):
             "timestamp": "",
             "trans_code": "000000",
             "type": 3,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": txspecdata
+        },
+        "signatures": []
+    }
+#    with open("transfernew.json", 'w') as file:
+#        json.dump(fulltrandata, file)
+    newtx = Transactionmanager()
+    tdatanew = newtx.transactioncreator(fulltrandata)
+    return tdatanew
+
+@router.post("/update-trustscore", tags=[v2_tag])
+async def update_ts(ts_request: TscoreRequest):
+    """Used to update trust score of person1 for person 2 """
+
+    txspecdata = {
+        "address1": ts_request.source_address,
+        "address2": ts_request.destination_address,
+        "new_score" : ts_request.tscore,
+    }
+
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": 6,
             "currency": "INR",
             "fee": 0.0,
             "descr": "",

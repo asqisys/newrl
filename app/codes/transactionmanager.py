@@ -425,8 +425,8 @@ class Transactionmanager:
 
         if self.transaction['type'] == 6:   #score change transaction
             ttype = self.transaction['type']
-            personid1 = self.transaction['specific_data']['personid1']
-            personid2 = self.transaction['specific_data']['personid2']
+        #    personid1 = self.transaction['specific_data']['personid1']
+        #    personid2 = self.transaction['specific_data']['personid2']
             wallet1 = self.transaction['specific_data']['address1']
             wallet2 = self.transaction['specific_data']['address2']
             wallet1valid = False
@@ -438,8 +438,9 @@ class Transactionmanager:
                 print("One of the wallets is invalid")
                 self.validity = 0
             else:
-                if get_pid_from_wallet(wallet1) != personid1 or get_pid_from_wallet(wallet2) != personid2:
-                    print("One of the wallet addresses does not match personids given.")
+            #    if get_pid_from_wallet(wallet1) != personid1 or get_pid_from_wallet(wallet2) != personid2:
+                if not get_pid_from_wallet(wallet1) or not get_pid_from_wallet(wallet2):
+                    print("One of the wallet addresses does not have a valid associated personids.")
                     self.validity = 0
                 else:
                     if self.transaction['specific_data']['new_score'] < 0.0 or self.transaction['specific_data']['new_score'] > 3.0:

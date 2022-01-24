@@ -41,10 +41,10 @@ def update_db_states(cur, newblockindex, transactions):
                 cur, sender2, sender1, tokencode2, amount2)
 
         if transaction['type'] == 6:    #score update transaction
-            personid1 = transaction['specific_data']['personid1']
-            personid2 = transaction['specific_data']['personid2']
+            personid1 = get_pid_from_wallet (cur, transaction['specific_data']['address1'])
+            personid2 = get_pid_from_wallet (cur, transaction['specific_data']['address2'])
             new_score = transaction['specific_data']['new_score']
-            tstamp = transaction['timstamp']
+            tstamp = transaction['timestamp']
             update_trust_score(cur, personid1, personid2, new_score, tstamp)
 
         if transaction['type'] == 3:    #smart contract transaction
@@ -89,7 +89,7 @@ def update_wallet_token_balance(cur, wallet_address, token_code, balance):
 
 def update_trust_score(cur, personid1, personid2, new_score, tstamp):
     cur.execute(f'''INSERT OR REPLACE INTO trust_scores
-				(src_person_id, , dest_person_id, score, last_time)
+				(src_person_id, dest_person_id, score, last_time)
 				 VALUES (?, ?, ?, ?)''', (personid1, personid2, new_score, tstamp))
 
 def add_wallet_pid(cur, wallet):
@@ -251,3 +251,10 @@ def get_contract_from_address(cur, address):
         return {}
     contract = dict(contractdata)
     return contract
+
+def get_pid_from_wallet(cur, walletaddinput):
+    pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (walletaddinput, ))
+    pid = pid_cursor.fetchone()
+    if pid is None:
+        return False
+    return pid[0]

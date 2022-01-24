@@ -45,6 +45,8 @@ def getvalidadds(transaction):
         validadds.append(trans['specific_data']['wallet2'])
     if ttype == 5:  # one way transfer; only sender1 is needed to sign
         validadds.append(trans['specific_data']['wallet1'])
+    if ttype == 6:  # trust score change
+        validadds.append(trans['specific_data']['address1'])
     return validadds
 
 # use the below for validator
