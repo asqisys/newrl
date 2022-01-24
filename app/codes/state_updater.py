@@ -47,6 +47,20 @@ def update_db_states(cur, newblockindex, transactions):
             tstamp = transaction['timstamp']
             update_trust_score(cur, personid1, personid2, new_score, tstamp)
 
+        if transaction['type'] == 3:    #smart contract transaction
+            if not transaction['specific_data']['address']: # sc is being set up
+                contract = dict(transaction['specific_data']['params'])
+                funct = "setup"
+            else:
+                contract = get_contract_from_address(cur, transaction['specific_data']['address'])
+                funct = transaction['specific_data']['function']
+            modulename = contract['name']
+            module = __import__(modulename)
+            sc_class = getattr(module,modulename)
+            sc_instance = sc_class(transaction['specific_data']['address'])
+            funct = getattr(sc_instance, funct)
+            funct(cur, transaction['specific_data']['params'])
+
     return True
 #    con.commit()
 #    con.close()
@@ -118,8 +132,9 @@ def add_wallet_pid(cur, wallet):
 
 def add_token(cur, token, txcode = None):
     tcodenewflag = False
+    existingflag = False
     if 'tokencode' in token:    #creating more of an existing token or tokencode provided by user
-        if token['tokencode'] and token['tokencode'] != "0":
+        if token['tokencode'] and token['tokencode'] != "0" and token['tokencode'] != "":
             tid = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token['tokencode'], )).fetchone()
             if tid: #tokencode exists, more of an existing token is being added to the first_owner
                 tid = tid[0]
@@ -171,9 +186,8 @@ def add_token(cur, token, txcode = None):
         balance = int(current_balance or 0) + added_balance
         update_wallet_token_balance(
             cur, token['first_owner'], tid, balance)
-
-    if token['amount_created']:
-        update_token_amount(cur, tid, token['amount_created'])
+        if token['amount_created']:
+            update_token_amount(cur, tid, token['amount_created'])
 
     return True
 
@@ -215,7 +229,7 @@ def add_tx_to_block(cur, block_index, transactions):
 
 def update_token_amount(cur, tid, amt):
     tok_val = cur.execute('SELECT tokencode FROM tokens WHERE tokencode = :tokencode', {
-                    'tokencode': tid}).fetechone()
+                    'tokencode': tid}).fetchone()
     if not tok_val:
         print("Tokencode ", tid, " does not exist.")
         return False
@@ -228,3 +242,12 @@ def update_token_amount(cur, tid, amt):
 				(tokencode, amount_created)
 				 VALUES (?, ?)''', (tid, cumul_amt))
     return True
+
+def get_contract_from_address(cur, address):
+    contractdata = cur.execute('SELECT * FROM contracts WHERE address = :address', {
+                    'address': address}).fetchone()
+    if not contractdata:
+        print("Contract with address ", address, " does not exist.")
+        return {}
+    contract = dict(contractdata)
+    return contract

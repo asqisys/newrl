@@ -66,8 +66,8 @@ def create_wallet():
 
 def create_token(wallet, custodian_wallet):
     response = client.post('/add-token', json={
-        "token_name": "NEWTOKEN",
-        "tokencode" : "",
+        "token_name": "TestTOKEN",
+        "token_code" : "",
         "token_type": "string",
         "first_owner": wallet['address'],
         "custodian": custodian_wallet['address'],
@@ -79,6 +79,19 @@ def create_token(wallet, custodian_wallet):
         "token_attributes": {}
     })
 
+    postedval = {"token_name": "TestTOKEN",
+        "tokencode" : "",
+        "token_type": "string",
+        "first_owner": wallet['address'],
+        "custodian": custodian_wallet['address'],
+        "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
+        "amount_created": 8888,
+        "value_created": 1000,
+        "disallowed_regions": [],
+        "is_smart_contract_token": False,
+        "token_attributes": {}}
+    print(postedval)
+
     assert response.status_code == 200
     unsigned_transaction = response.json()
     assert unsigned_transaction['transaction']
@@ -89,15 +102,19 @@ def create_token(wallet, custodian_wallet):
         "transaction_data": unsigned_transaction
     })
 
+    print("adding token")
     assert response.status_code == 200
     signed_transaction = response.json()
+    print("signing tx")
     assert signed_transaction['transaction']
     assert signed_transaction['signatures']
     assert len(signed_transaction['signatures']) == 1
 
+    print("validating tx")
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
+    print("running updater")
     response = client.post('/run-updater', json=signed_transaction)
     assert response.status_code == 200
 
@@ -109,12 +126,15 @@ def create_token(wallet, custodian_wallet):
     token_in_state = next(
         x for x in tokens if x['parent_transaction_code'] == signed_transaction['transaction']['trans_code'])
     assert token_in_state
+    print("token exists in state")
 
     balances = state['balances']
     balance = next(x for x in balances if x['wallet_address'] ==
                    wallet['address'] and x['tokencode'] == token_in_state['tokencode'])
     assert balance
+    print("token exists in balances")
     assert balance['balance'] == 8888
+    print("token balance correct, returning tokencode")
 
     return token_in_state['tokencode']
 
@@ -207,8 +227,11 @@ def test_read_main():
 
     wallet1 = create_wallet()
     wallet2 = create_wallet()
+    print("created wallets with addresses, ",wallet1['address']," and ",wallet2['address'])
 
     token1 = create_token(wallet1, custodian_wallet)
     token2 = create_token(wallet2, custodian_wallet)
+    print("tokens created")
 
     create_transfer(wallet1, wallet2, token1, token2)
+    print("transfer done")

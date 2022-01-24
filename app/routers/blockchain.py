@@ -20,7 +20,6 @@ from app.codes.utils import save_file_and_get_path
 from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
-from app.codes import nstablecoin
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -302,7 +301,7 @@ async def add_sc(sc_request: CreateSCRequest):
 
     txspecdata = {
         "address": None,
-        "funct" : "setup",
+        "function" : "setup",
         "signers" : [sc_request.creator],
         "params" : scdata
     }
@@ -333,7 +332,7 @@ async def call_sc(sc_request: CallSC):
 
     txspecdata = {
         "address": sc_request.sc_address,
-        "funct" : sc_request.function_called,
+        "function" : sc_request.function_called,
         "signers" : sc_request.signers,
         "params" : sc_request.params
     }

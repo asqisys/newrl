@@ -306,13 +306,18 @@ class Transactionmanager:
             #   now checking for instances where more tokens are added for an existing tokencode
                 self.validity = 1
                 if 'tokencode' in self.transaction['specific_data']:
-                    if is_token_valid(self.transaction['specific_data']['tokencode']):
-                        existing_custodian = get_custodian_from_token(self.transaction['specific_data']['tokencode'])
-                        if custodian == existing_custodian:
-                            self.validity = 1   #tokencode exists and is run by the given custodian
+                    tcode = self.transaction['specific_data']['tokencode']
+                    if tcode and tcode != "0" and tcode !="" and tcode!="string":
+                        if is_token_valid(self.transaction['specific_data']['tokencode']):
+                            existing_custodian = get_custodian_from_token(self.transaction['specific_data']['tokencode'])
+                            if custodian == existing_custodian:
+                                self.validity = 1   #tokencode exists and is run by the given custodian
+                            else:
+                                print("The custodian for that token is someone else.")
+                                self.validity = 0
                         else:
-                            print("The custodian for that token is someone else.")
-                            self.validity = 0
+                            print("Tokencode provided does not exist. Will append as new one.")
+                            self.validity = 1   #tokencode is provided by user
                     else:
                         print("Tokencode provided does not exist. Will append as new one.")
                         self.validity = 1   #tokencode is provided by user
@@ -507,7 +512,7 @@ def get_custodian_from_token(token_code):
 
 def get_sc_validadds(transaction):
     validadds=[]
-    funct = transaction['specific_data']['funct']
+    funct = transaction['specific_data']['function']
     address = transaction['specific_data']['address']
     if not address: #the sc is not yet set up
         if funct == "setup":     # only setup function allowed in this case
@@ -519,6 +524,7 @@ def get_sc_validadds(transaction):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     signatories = cur.execute('SELECT signatories FROM contracts WHERE address=?', (address, )).fetchone()
+    con.close()
     if signatories is None:
         print("Contract does not exist.")
         return False
