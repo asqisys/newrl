@@ -1,6 +1,8 @@
 import json
+from pickletools import string1
 from sqlite3 import Cursor
-from app.codes import nstablecoin
+from webbrowser import get
+#from app.codes import nstablecoin
 
 def test_usd1():
     callparams = {
@@ -27,5 +29,14 @@ def test_usd1():
     scoin1.deploy(cur, "sender", callparams={"trans_code":"123sdwe2"})
 #    loan1=secloanv100.SecLoan1("0xa87cfed9b43a84d621b6ab4e2b928ac9c7e6c5df")
 
+
 if __name__ == '__main__':
-    test_secloan1()
+    string4 = "randomtest"
+    string2 = "TestClass"
+    string3 = "change_funct"
+    module = __import__(string4)
+    clas = getattr(module,string2)
+    testclass = clas()
+    funct = getattr(testclass, string3)
+    funct()
+    

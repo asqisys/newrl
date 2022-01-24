@@ -150,7 +150,7 @@ def sign_transaction(wallet_data, transaction_data):
 
 def get_sc_validadds(transaction):
     validadds=[]
-    funct = transaction['specific_data']['funct']
+    funct = transaction['specific_data']['function']
     address = transaction['specific_data']['address']
     if not address: #the sc is not yet set up
         if funct == "setup":     # only setup function allowed in this case
@@ -162,6 +162,7 @@ def get_sc_validadds(transaction):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     signatories = cur.execute('SELECT signatories FROM contracts WHERE address=?', (address, )).fetchone()
+    con.close()
     if signatories is None:
         print("Contract does not exist.")
         return False
