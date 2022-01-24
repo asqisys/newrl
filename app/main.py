@@ -2,6 +2,7 @@ import logging
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.codes.p2p.sync_chain import sync_chain_from_peers
 
@@ -19,6 +20,16 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="The Newrl APIs",
     description="This page covers all the public APIs available at present in the Newrl blockchain platform."
+)
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(blockchain.router)
