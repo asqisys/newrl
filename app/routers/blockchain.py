@@ -11,7 +11,7 @@ from starlette.responses import FileResponse
 
 from app.codes.transactionmanager import Transactionmanager
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -21,6 +21,7 @@ from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
 from app.codes import nstablecoin
+from app.codes import contract_executor
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -328,7 +329,7 @@ async def add_sc(sc_request: CreateSCRequest):
     return tdatanew
 
 @router.post("/call-sc", tags=[v2_tag])
-async def call_sc(sc_request: CallSC):
+async def call_sc(sc_request: RunSmartContractRequest):
     """Used to create a sc object which can be used to set up and deploy a smart contract"""
 
     txspecdata = {
@@ -375,3 +376,13 @@ async def validate_transaction(transaction_data: dict):
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
     return {"status": "SUCCESS", "response": response}
+
+
+@router.post("/run-contract", tags=[v2_tag])
+async def run_contract(req: RunSmartContractRequest):
+    """Run a smart contract"""
+    try:
+        return contract_executor.run(req.contract_name, req.params)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))

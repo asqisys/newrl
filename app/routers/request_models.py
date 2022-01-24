@@ -58,6 +58,12 @@ class CallSC(BaseModel):
     signers: List[str]
     params: dict
 
+
+class RunSmartContractRequest(BaseModel):
+    contract_name: str = 'simple_loan_v1'
+    params: dict = {'tenor': '1y', 'amount': 250000, 'rate': 0.0675}
+
+
 class KYCDoc(BaseModel):
     type: int
     hash: str

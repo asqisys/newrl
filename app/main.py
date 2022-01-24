@@ -26,9 +26,10 @@ app.include_router(p2p.router)
 @app.on_event('startup')
 async def app_startup():
     try:
-        await init_bootstrap_nodes()
-        sync_chain_from_peers()
-        await update_software(propogate=False)
+        pass
+        # await init_bootstrap_nodes()
+        # sync_chain_from_peers()
+        # await update_software(propogate=False)
     except Exception as e:
         print('Bootstrap failed', str(e))
 
