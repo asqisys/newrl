@@ -1,9 +1,11 @@
 from fastapi.testclient import TestClient
+from .migrations.init import init_newrl
 
 from .main import app
 
 client = TestClient(app)
 
+init_newrl()
 
 def create_wallet():
     response = client.get("/generate-wallet-address")
@@ -67,8 +69,8 @@ def create_wallet():
 def create_token(wallet, custodian_wallet):
     response = client.post('/add-token', json={
         "token_name": "NEWTOKEN",
-        "tokencode" : "",
-        "token_type": "string",
+        "token_code" : "inr012",
+        "token_type": "1",
         "first_owner": wallet['address'],
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",

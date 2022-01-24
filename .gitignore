@@ -3,7 +3,7 @@ __pycache__/
 mempool/
 statearchive/
 tmp/
-newrl.db
+data/
 state.json
 chain.json
 tokennew.json
@@ -12,5 +12,4 @@ all_tokens.json
 all_wallets.json
 firsttoken.json
 newwallet.json
-newrl_p2p.db
 *.pyc
