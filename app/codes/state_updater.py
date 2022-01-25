@@ -19,12 +19,16 @@ def update_db_states(cur, newblockindex, transactions):
     add_tx_to_block(cur, newblockindex, transactions)
     for transaction in transactions:
         transaction_data = transaction['specific_data']
+        while isinstance(transaction_data, str):
+            transaction_data = json.loads(transaction_data)
+
+        transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
 
         if transaction['type'] == 1:  # this is a wallet creation transaction
             add_wallet_pid(cur, transaction_data)
 
         if transaction['type'] == 2:  # this is a token creation or addition transaction
-            add_token(cur, transaction_data, transaction['trans_code'])
+            add_token(cur, transaction_data, transaction_code)
 
         if transaction['type'] == 4 or transaction['type'] == 5:  # this is a transfer tx
             sender1 = transaction_data['wallet1']
@@ -94,6 +98,8 @@ def update_trust_score(cur, personid1, personid2, new_score, tstamp):
 
 def add_wallet_pid(cur, wallet):
     # checking if this is a linked wallet or new one; for linked, no new personid is created
+    if isinstance(wallet, str):
+        wallet = json.loads(wallet)
     linkedstatus =  wallet['specific_data']['linked_wallet'] if 'linked_wallet' in wallet['specific_data'] else False
     if linkedstatus:
         pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (wallet['specific_data']['parentaddress'], )).fetchone()
@@ -210,16 +216,18 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
 def add_tx_to_block(cur, block_index, transactions):
     print(block_index, transactions)
     for transaction in transactions:
+        transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
+        description = transaction['descr'] if 'descr' in transaction else transaction['description']
         specific_data = json.dumps(
             transaction['specific_data']) if 'specific_data' in transaction else ''
         db_transaction_data = (
             block_index,
-            transaction['trans_code'],
+            transaction_code,
             transaction['timestamp'],
             transaction['type'],
             transaction['currency'],
             transaction['fee'],
-            transaction['descr'],
+            description,
             transaction['valid'],
             specific_data
             )

@@ -68,9 +68,9 @@ def create_wallet():
 
 def create_token(wallet, custodian_wallet):
     response = client.post('/add-token', json={
-        "token_name": "NEWTOKEN",
-        "token_code" : "inr012",
-        "token_type": "1",
+        "token_name": "TestTOKEN",
+        "token_code" : "",
+        "token_type": "string",
         "first_owner": wallet['address'],
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
