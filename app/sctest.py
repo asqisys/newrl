@@ -3,6 +3,7 @@ from pickletools import string1
 from sqlite3 import Cursor
 from webbrowser import get
 #from app.codes import nstablecoin
+import importlib
 
 def test_usd1():
     callparams = {
@@ -31,10 +32,11 @@ def test_usd1():
 
 
 if __name__ == '__main__':
+    string5 = '.'
     string4 = "randomtest"
     string2 = "TestClass"
     string3 = "change_funct"
-    module = __import__(string4)
+    module = importlib.import_module(string5, package=string4)
     clas = getattr(module,string2)
     testclass = clas()
     funct = getattr(testclass, string3)

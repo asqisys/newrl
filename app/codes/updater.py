@@ -112,6 +112,11 @@ def run_updater():
             signatures = transactiondata['signatures']
 
             # new code for validating again
+
+            ### remove below 2 lines in smart contract variant
+            if transaction['type'] == 3:    #temporary ignorance of smart contract tx
+                continue
+
             trandata = tmtemp.loadtransactionpassive(file)
             if not tmtemp.verifytransigns():
                 logger.log(

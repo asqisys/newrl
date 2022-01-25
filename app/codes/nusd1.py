@@ -15,11 +15,10 @@ import sqlite3
 #from app.codes.updater import add_token
 
 from .transactionmanager import Transactionmanager, is_wallet_valid
-from .chainscanner import Chainscanner, get_wallet_token_balance
-from .tokenmanager import create_token_transaction
+#from .chainscanner import Chainscanner, get_wallet_token_balance
+#from .tokenmanager import create_token_transaction
 from ..constants import NEWRL_DB
 from .state_updater import *
-
 
 class nusd1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class

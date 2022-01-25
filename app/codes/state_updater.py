@@ -3,12 +3,11 @@ import sqlite3
 import datetime
 import time
 import hashlib
+import importlib
 
 from ..constants import NEWRL_DB
 
 def update_db_states(cur, newblockindex, transactions):
-#    con = sqlite3.connect(NEWRL_DB)
-#    cur = con.cursor()
     last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
     last_block = last_block_cursor.fetchone()
@@ -48,22 +47,20 @@ def update_db_states(cur, newblockindex, transactions):
             update_trust_score(cur, personid1, personid2, new_score, tstamp)
 
         if transaction['type'] == 3:    #smart contract transaction
+            continue
             if not transaction['specific_data']['address']: # sc is being set up
                 contract = dict(transaction['specific_data']['params'])
                 funct = "setup"
             else:
                 contract = get_contract_from_address(cur, transaction['specific_data']['address'])
                 funct = transaction['specific_data']['function']
-            modulename = contract['name']
-            module = __import__(modulename)
-            sc_class = getattr(module,modulename)
+            module = importlib.import_module("contracts."+contract['name'])
+            sc_class = getattr(module,contract['name'])
             sc_instance = sc_class(transaction['specific_data']['address'])
             funct = getattr(sc_instance, funct)
             funct(cur, transaction['specific_data']['params'])
 
     return True
-#    con.commit()
-#    con.close()
 
 def transfer_tokens_and_update_balances(cur, sender, reciever, tokencode, amount):
     sender_balance = get_wallet_token_balance(cur, sender, tokencode)
