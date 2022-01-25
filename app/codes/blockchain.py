@@ -286,7 +286,7 @@ def add_block(cur, block):
     block_transactions = block['text']['transactions']
 #    add_transactions_to_block(block_index, block_transactions)
     #tx adding included in update_db_states
-    update_db_states(block_transactions)
+    update_db_states(cur, block_index, block['text']['transactions'])
 
 def add_transactions_to_block(block_index, transactions):
         con = sqlite3.connect(NEWRL_DB)
