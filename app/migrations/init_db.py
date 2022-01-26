@@ -44,6 +44,7 @@ def init_db():
                     value_created real,
                     sc_flag integer,
                     disallowed text,
+                    tokendecimal integer,
                     parent_transaction_code text,
                     token_attributes text)
                     ''')
