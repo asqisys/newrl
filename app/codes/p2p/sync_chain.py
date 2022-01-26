@@ -59,6 +59,19 @@ def receive_receipt(receipt):
     return True
 
 
+def receive_receipt(receipt):
+    logger.info('Recieved receipt: %s', receipt)
+    if not validate_receipt_signature(receipt):
+        logger.info('Invalid receipt signature')
+        return False
+
+    # TODO - Add the receipt to an existing block in Temp folder
+    #   if no corresponding block exists, store the receipt in temp folder and request  
+    #   sender node for the block in receipt
+
+    return True
+
+
 def sync_chain_from_node(url):
     their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
     my_last_block = get_last_block_index() + 1

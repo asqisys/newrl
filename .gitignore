@@ -14,3 +14,4 @@ firsttoken.json
 newwallet.json
 *.pyc
 .auth.json
+newrl_p2p.db
