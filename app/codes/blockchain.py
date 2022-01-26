@@ -42,24 +42,11 @@ class Blockchain:
 #		print("The hash of genesis block is ",self.hash(block),"\n")
 #		self.create_block(block['timestamp'],block['proof'], 0, block['text'])
 
-    def create_block(self, cur, timestamp, proof, previous_hash, text):
-    #    con = sqlite3.connect(NEWRL_DB)
-    #    cur = con.cursor()
-        print("adding a block")
-        block_index = get_last_block_index() + 1
-        block = {'index': block_index,
-                 'timestamp': timestamp,
-                 'proof': proof,
-                 'text': text,
-                 'previous_hash': previous_hash}
-        self.chain.append(block)
-        block_hash = self.hash(block)
-        transactions_hash = self.hash(text['transactions'])
-        db_block_data = (block_index, timestamp, proof,
-                         previous_hash, block_hash, transactions_hash)
+    def create_block(self, cur, block, block_hash):
+        transactions_hash = self.hash(block['text']['transactions'])
+        db_block_data = (block['index'], block['timestamp'], block['proof'],
+                         block['previous_hash'], block_hash, transactions_hash)
         cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
-    #    con.commit()
-    #    con.close()
         return block
 
     def get_block(self, block_index):
@@ -80,22 +67,15 @@ class Blockchain:
 
     # proof of work which takes a block with proof set as 0 as input and returns the proof that makes its hash start with 0000
     def proof_of_work(self, block):
-        new_proof = 1
-        check_proof = False
-        n = 0
-#		print("Starting proof of work");
-        while check_proof is False:
-            n = n + 1
-#			print("Going for the ",n,"th time");
-            block['proof'] = new_proof
-            encoded_block = json.dumps(block, sort_keys=True).encode()
-            hash_operation = hashlib.sha256(encoded_block).hexdigest()
-            if hash_operation[:4] == '0000':
-                check_proof = True
-            else:
-                new_proof += 1
+        proof = 1
+        hash = ''
 
-        return new_proof
+        while hash[:4] != '0000':
+            block['proof'] = proof
+            hash = self.hash(block)
+            proof += 1
+        
+        return hash
 
     def hash(self, block):
         encoded_block = json.dumps(block, sort_keys=True).encode()
@@ -135,29 +115,18 @@ class Blockchain:
         last_block = last_block_cursor.fetchone()
     #    con.close()
         previous_hash = last_block[0] if last_block is not None else 0
-        # print(last_block)
-        # previous_block = self.chain[-1]
-#		print(previous_block);
-        # previous_hash = self.hash(previous_block)
-        block = {'index': len(self.chain) + 1,
-                 'timestamp': str(datetime.datetime.now()),
-                 'proof': 0,
-                 'text': text,
-                 'previous_hash': previous_hash}
+        block = {
+            'index': get_last_block_index() + 1,
+            'timestamp': str(datetime.datetime.now()),
+            'proof': 0,
+            'text': text,
+            'previous_hash': previous_hash
+        }
 
-        proof = self.proof_of_work(block)
-        print("Current block proof: ", proof)
-#		print("previous_hash = ",previous_hash)
-        block = self.create_block(
-            cur, block['timestamp'], proof, previous_hash, text)
+        block_hash = self.proof_of_work(block)
+        print("New block hash is ", block_hash)
+        block = self.create_block(cur, block, block_hash)
 
-        response = {'message': 'A block is MINED',
-                    'index': block['index'],
-                    'timestamp': block['timestamp'],
-                    'proof': block['proof'],
-                    'previous_hash': block['previous_hash']}
-        block_index = block['index']
-    #    self.add_transactions_to_block(block_index, text['transactions'])
         return block
 
     def get_latest_ts(self, cur=None):
