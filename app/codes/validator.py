@@ -47,7 +47,11 @@ def validate(transaction):
             'operation': 'send_transaction',
             'data': tm.get_transaction()
         }
-        send(payload)
+        # Send to transport server
+        try:
+            send(payload)
+        except:
+            print('Error sending transaction to transport server')
 
     status = f"Wrote check status as {check} to {checkfile}"
     print(status)

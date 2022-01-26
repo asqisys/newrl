@@ -1,9 +1,11 @@
 from fastapi.testclient import TestClient
+from .migrations.init import init_newrl
 
 from .main import app
 
 client = TestClient(app)
 
+init_newrl()
 
 def create_wallet():
     response = client.get("/generate-wallet-address")
@@ -66,17 +68,31 @@ def create_wallet():
 
 def create_token(wallet, custodian_wallet):
     response = client.post('/add-token', json={
-        "token_name": "NEWTOKEN",
+        "token_name": "TestTOKEN",
+        "token_code" : "",
         "token_type": "string",
         "first_owner": wallet['address'],
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
-        "amount_created": 1000000,
-        "value_created": 10000,
+        "amount_created": 8888,
+        "value_created": 1000,
         "disallowed_regions": [],
         "is_smart_contract_token": False,
         "token_attributes": {}
     })
+
+    postedval = {"token_name": "TestTOKEN",
+        "tokencode" : "",
+        "token_type": "string",
+        "first_owner": wallet['address'],
+        "custodian": custodian_wallet['address'],
+        "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
+        "amount_created": 8888,
+        "value_created": 1000,
+        "disallowed_regions": [],
+        "is_smart_contract_token": False,
+        "token_attributes": {}}
+    print(postedval)
 
     assert response.status_code == 200
     unsigned_transaction = response.json()
@@ -88,15 +104,19 @@ def create_token(wallet, custodian_wallet):
         "transaction_data": unsigned_transaction
     })
 
+    print("adding token")
     assert response.status_code == 200
     signed_transaction = response.json()
+    print("signing tx")
     assert signed_transaction['transaction']
     assert signed_transaction['signatures']
     assert len(signed_transaction['signatures']) == 1
 
+    print("validating tx")
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
+    print("running updater")
     response = client.post('/run-updater', json=signed_transaction)
     assert response.status_code == 200
 
@@ -108,12 +128,15 @@ def create_token(wallet, custodian_wallet):
     token_in_state = next(
         x for x in tokens if x['parent_transaction_code'] == signed_transaction['transaction']['trans_code'])
     assert token_in_state
+    print("token exists in state")
 
     balances = state['balances']
     balance = next(x for x in balances if x['wallet_address'] ==
                    wallet['address'] and x['tokencode'] == token_in_state['tokencode'])
     assert balance
-    assert balance['balance'] == 1000000
+    print("token exists in balances")
+    assert balance['balance'] == 8888
+    print("token balance correct, returning tokencode")
 
     return token_in_state['tokencode']
 
@@ -125,8 +148,8 @@ def create_transfer(wallet1, wallet2, token1, token2):
         "asset2_code": token2,
         "wallet1_address": wallet1['address'],
         "wallet2_address": wallet2['address'],
-        "asset1_qty": 456,
-        "asset2_qty": 789
+        "asset1_qty": 1000,
+        "asset2_qty": 2000
     })
 
     assert response.status_code == 200
@@ -168,7 +191,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 999544.0
+    assert balance == 7888
 
     response = client.post('/get-balance', json={
         "balance_type": "TOKEN_IN_WALLET",
@@ -177,7 +200,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 789
+    assert balance == 2000
 
     response = client.post('/get-balance', json={
         "balance_type": "TOKEN_IN_WALLET",
@@ -186,7 +209,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 456
+    assert balance == 1000
 
     response = client.post('/get-balance', json={
         "balance_type": "TOKEN_IN_WALLET",
@@ -195,7 +218,34 @@ def create_transfer(wallet1, wallet2, token1, token2):
     })
     assert response.status_code == 200
     balance = response.json()['balance']
-    assert balance == 999211
+    assert balance == 6888
+
+def add_trust_score(wallet1, wallet2, tscore):
+    response = client.post('/update-trustscore', json={
+        "source_address": wallet1['address'],
+        "destination_address": wallet2['address'],
+        "tscore": tscore
+    })
+    assert response.status_code == 200
+    unsigned_transaction = response.json()
+    assert unsigned_transaction['transaction']
+    assert len(unsigned_transaction['signatures']) == 0
+
+    response = client.post('/sign-transaction', json={
+        "wallet_data": wallet1,
+        "transaction_data": unsigned_transaction
+    })
+    assert response.status_code == 200
+    signed_transaction = response.json()
+    assert signed_transaction['transaction']
+    assert signed_transaction['signatures']
+    assert len(signed_transaction['signatures']) == 1
+
+    response = client.post('/validate-transaction', json=signed_transaction)
+    assert response.status_code == 200
+
+    response = client.post('/run-updater')
+    assert response.status_code == 200
 
 def test_read_main():
     custodian_wallet = {
@@ -204,10 +254,28 @@ def test_read_main():
         "private": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
     }
 
+    test_wallet1 = {  
+        "public": "dB1I7PZwhlJiglxlt5JEBObO+xK4E0heTjbX/dXZiNhb0sFgdtB6zgJboWIgU2MsW5TW67fY63bqxYqNav4ztQ==",
+        "private": "2UpR/ir9+q5iF+R4HeHjuHnHw1r1RLOAbswvY0GfdaU=",
+        "address": "0xdf7d01e6dd3a3bb8cd6da76ccf90e6b35169bac9"
+    }
+    test_wallet2 = {
+        "public": "guq7IUw2mGMMNFb88RDOeuw94EEaFRC5XpYJSP6Py2wtsmfGAFVc6itcaOHbyP5sEku7VtEp+IbrydHGUaP5tg==",
+        "private": "ee0Tv8n4VUXQyVYRQXi+d31RLxuih3kcoOto+dnNdFQ=",
+        "address": "0x0a500e0df9439ea31628071d6d3fc78e8d8dbc22"
+    }
+
     wallet1 = create_wallet()
     wallet2 = create_wallet()
+    print("created wallets with addresses, ",wallet1['address']," and ",wallet2['address'])
 
     token1 = create_token(wallet1, custodian_wallet)
     token2 = create_token(wallet2, custodian_wallet)
+    print("tokens created")
 
     create_transfer(wallet1, wallet2, token1, token2)
+    print("transfer done")
+
+#    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
+    add_trust_score(wallet1, wallet2, tscore = 2.1)
+    

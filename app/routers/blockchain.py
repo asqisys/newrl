@@ -1,5 +1,6 @@
 import json
 import logging
+from types import new_class
 
 from fastapi import APIRouter
 from fastapi.datastructures import UploadFile
@@ -8,7 +9,9 @@ from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 from starlette.responses import FileResponse
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CreateTokenRequest, CreateWalletRequest, TransferRequest
+from app.codes.transactionmanager import Transactionmanager
+
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest, TscoreRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -17,7 +20,6 @@ from app.codes.utils import save_file_and_get_path
 from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
-
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -30,43 +32,22 @@ v2_tag = 'V2 For Machines'
 @router.post("/create-transfer", tags=[v1_tag])
 async def create_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
+    transfer_type = transfer_request.transfer_type
     trandata = {
-        "asset1_code": int(transfer_request.asset1_code),
-        "asset2_code": int(transfer_request.asset2_code),
+        "transfer_type": transfer_type,
+        "asset1_code": str(transfer_request.asset1_code),
+        "asset2_code": str(transfer_request.asset2_code),
         "wallet1": transfer_request.wallet1_address,
         "wallet2": transfer_request.wallet2_address,
         "asset1_number": int(transfer_request.asset1_qty),
         "asset2_number": int(transfer_request.asset2_qty)
     }
-#    if transfer_type.lower()=="type4":
-#        type=4
-#    if transfer_type.lower()=="type5":
-#        type=5
-    type = transfer_request.transfer_type
-    fulltrandata = {
-        "transaction": {
-            "timestamp": "",
-            "trans_code": "000000",
-            "type": type,
-            "currency": "INR",
-            "fee": 0.0,
-            "descr": "",
-            "valid": 1,
-            "block_index": 0,
-            "specific_data": trandata
-        },
-        "signatures": []
-    }
-    with open("transfernew.json", 'w') as file:
-        json.dump(fulltrandata, file)
-
-    newtransfer = Transfermanager(fulltrandata)
-    newtransfer.loadandcreate(fulltrandata)
+    newtransfer = Transfermanager(trandata)
+    transaction = newtransfer.loadandcreate()
 #    with open("./transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse(
-        "transfernew.json", filename="transferfile.json")
-    return transferfile
+    # transferfile = FileResponse(file, filename="transferfile.json")
+    return transaction
 
 
 @router.post("/generate-wallet-transaction", tags=[v1_tag])
@@ -142,6 +123,7 @@ async def create_token(
 ):
     token_data = {
         "tokenname": request.token_name,
+        "tokencode" : request.token_code,
         "tokentype": request.token_type,
         "tokenattributes": request.token_attributes,
         "first_owner": request.first_owner,
@@ -195,11 +177,11 @@ async def get_balance(req: BalanceRequest):
     chain_scanner = Chainscanner()
     if req.balance_type == BalanceType.TOKEN_IN_WALLET:
         balance = chain_scanner.getbaladdtoken(
-            req.wallet_address, int(req.token_code))
+            req.wallet_address, str(req.token_code))
     elif req.balance_type == BalanceType.ALL_TOKENS_IN_WALLET:
         balance = chain_scanner.getbalancesbyaddress(req.wallet_address)
     elif req.balance_type == BalanceType.ALL_WALLETS_FOR_TOKEN:
-        balance = chain_scanner.getbalancesbytoken(int(req.token_code))
+        balance = chain_scanner.getbalancesbytoken(str(req.token_code))
     return {'balance': balance}
 
 @router.get("/get-address-from-publickey", tags=[v1_tag, v2_tag])
@@ -238,6 +220,7 @@ async def add_token(
 ):
     token_data = {
         "tokenname": request.token_name,
+        "tokencode" : request.token_code,
         "tokentype": request.token_type,
         "tokenattributes": request.token_attributes,
         "first_owner": request.first_owner,
@@ -259,9 +242,11 @@ async def add_token(
 @router.post("/add-transfer", tags=[v2_tag])
 async def add_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
+    transfer_type = transfer_request.transfer_type
     trandata = {
-        "asset1_code": int(transfer_request.asset1_code),
-        "asset2_code": int(transfer_request.asset2_code),
+        "transfer_type": transfer_type,
+        "asset1_code": str(transfer_request.asset1_code),
+        "asset2_code": str(transfer_request.asset2_code),
         "wallet1": transfer_request.wallet1_address,
         "wallet2": transfer_request.wallet2_address,
         "asset1_number": int(transfer_request.asset1_qty),
@@ -286,13 +271,121 @@ async def add_transfer(transfer_request: TransferRequest):
         json.dump(fulltrandata, file)
 
     newtransfer = Transfermanager(transfer_data=fulltrandata)
-    newtransfer.loadandcreate()
+    tdatanew = newtransfer.loadandcreate()
+    return tdatanew
 #    with open("./transfernew.json","r") as tfile:
 #        transferfile_path = save_file_and_get_path(tfile)
-    transferfile = FileResponse(
-        "transfernew.json", filename="transferfile.json")
-    with open("transfernew.json") as f:
-        return json.load(f)
+#    transferfile = FileResponse(
+#        "transfernew.json", filename="transferfile.json")
+#    with open("transfernew.json") as f:
+#        return json.load(f)
+
+@router.post("/add-sc", tags=[v2_tag])
+async def add_sc(sc_request: CreateSCRequest):
+    """Used to create a sc object which can be used to set up and deploy a smart contract"""
+    scdata = {
+        "creator":sc_request.creator,
+        "ts_init":None,
+        "name":sc_request.sc_name,
+        "version":sc_request.version,
+        "actmode":sc_request.actmode,
+        "status":0,
+        "next_act_ts":None,
+        "signatories":sc_request.signatories,
+        "parent":None,
+        "oracleids":None,
+        "selfdestruct":1,
+        "contractspecs":sc_request.contractspecs,
+        "legalparams":sc_request.legalparams
+        }
+
+    txspecdata = {
+        "address": None,
+        "function" : "setup",
+        "signers" : [sc_request.creator],
+        "params" : scdata
+    }
+
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": 3,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": txspecdata
+        },
+        "signatures": []
+    }
+#    with open("transfernew.json", 'w') as file:
+#        json.dump(fulltrandata, file)
+    newsc = Transactionmanager()
+    tdatanew = newsc.transactioncreator(fulltrandata)
+    return tdatanew
+
+@router.post("/call-sc", tags=[v2_tag])
+async def call_sc(sc_request: CallSC):
+    """Used to create a sc object which can be used to set up and deploy a smart contract"""
+
+    txspecdata = {
+        "address": sc_request.sc_address,
+        "function" : sc_request.function_called,
+        "signers" : sc_request.signers,
+        "params" : sc_request.params
+    }
+
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": 3,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": txspecdata
+        },
+        "signatures": []
+    }
+#    with open("transfernew.json", 'w') as file:
+#        json.dump(fulltrandata, file)
+    newtx = Transactionmanager()
+    tdatanew = newtx.transactioncreator(fulltrandata)
+    return tdatanew
+
+@router.post("/update-trustscore", tags=[v2_tag])
+async def update_ts(ts_request: TscoreRequest):
+    """Used to update trust score of person1 for person 2 """
+
+    txspecdata = {
+        "address1": ts_request.source_address,
+        "address2": ts_request.destination_address,
+        "new_score" : ts_request.tscore,
+    }
+
+    fulltrandata = {
+        "transaction": {
+            "timestamp": "",
+            "trans_code": "000000",
+            "type": 6,
+            "currency": "INR",
+            "fee": 0.0,
+            "descr": "",
+            "valid": 1,
+            "block_index": 0,
+            "specific_data": txspecdata
+        },
+        "signatures": []
+    }
+#    with open("transfernew.json", 'w') as file:
+#        json.dump(fulltrandata, file)
+    newtx = Transactionmanager()
+    tdatanew = newtx.transactioncreator(fulltrandata)
+    return tdatanew
 
 @router.post("/sign-transaction", tags=[v2_tag])
 async def sign_transaction(wallet_data: dict, transaction_data: dict):

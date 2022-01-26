@@ -1,8 +1,10 @@
 import json
 import os
 import requests
+import sqlite3
+
 from app.codes import blockchain
-from app.constants import NEWRL_PORT, REQUEST_TIMEOUT
+from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 from app.codes.updater import update_db_states
 
@@ -29,26 +31,40 @@ def receive_block(block):
     block_index = block['block_index'] if 'block_index' in block else block['index']
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
-    blockchain.add_block(block)
+    
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    blockchain.add_block(cur, block)
+    con.close()
     return True
 
 
 def sync_chain_from_node(url):
     their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
-    my_last_block = get_last_block_index()
+    my_last_block = get_last_block_index() + 1
 
+    print(their_last_block_index, my_last_block)
+    # return
     while my_last_block < their_last_block_index:
-        my_last_block += 1
         blocks_request = {'block_indexes': [my_last_block]}
         print(f'Asking block node {url} for block {my_last_block}')
         try:
             blocks_data = requests.post(url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT).json()
-            for block in blocks_data:
-                blockchain.add_block(block)
         except Exception as e:
-            print('No more blocks')
+            print('Could not get block', str(e))
+            my_last_block += 1
+            # TODO - Might have to break execution or the chain could be corrupted
+            continue
+        for block in blocks_data:
+            con = sqlite3.connect(NEWRL_DB)
+            cur = con.cursor()
+            blockchain.add_block(cur, block)
+            con.commit()
+            con.close()
+        
+        my_last_block += 1
 
-        # return my_last_block
+    return my_last_block
 
 
 def sync_chain_from_peers():

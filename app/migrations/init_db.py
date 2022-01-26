@@ -34,7 +34,7 @@ def init_db():
 
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS tokens
-                    (tokencode integer  NOT NULL PRIMARY KEY, 
+                    (tokencode text NOT NULL PRIMARY KEY, 
                     tokenname text,
                     tokentype integer,
                     first_owner text,
@@ -44,6 +44,7 @@ def init_db():
                     value_created real,
                     sc_flag integer,
                     disallowed text,
+                    tokendecimal integer,
                     parent_transaction_code text,
                     token_attributes text)
                     ''')
@@ -51,7 +52,7 @@ def init_db():
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS balances
                     (wallet_address text, 
-                    tokencode integer,
+                    tokencode text,
                     balance real, UNIQUE (wallet_address, tokencode))
                     ''')
 
@@ -139,8 +140,8 @@ def init_trust_db():
     
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS trust_scores
-                    (src_person_id text, 
-                    dest_person_id text,
+                    (src_person_id text NOT NULL, 
+                    dest_person_id text NOT NULL,
                     score real,
                     last_time text)
                     ''')

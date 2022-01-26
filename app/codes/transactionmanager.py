@@ -1,5 +1,6 @@
 # program to create and manage objects for wallets
 import codecs
+from re import T, X
 import ecdsa
 from Crypto.Hash import keccak
 import os
@@ -41,11 +42,15 @@ class Transactionmanager:
             validadds.append(trans['specific_data']['custodian_wallet'])
         if ttype == 2:    # token creation, custodian needs to sign
             validadds.append(trans['specific_data']['custodian'])
+        if ttype == 3:      #smart contract tx
+            validadds = get_sc_validadds(trans)
         if ttype == 4:    # two way transfer; both senders need to sign
             validadds.append(trans['specific_data']['wallet1'])
             validadds.append(trans['specific_data']['wallet2'])
         if ttype == 5:    # one way transfer; only sender1 is needed to sign
             validadds.append(trans['specific_data']['wallet1'])
+        if ttype == 6:      #score change transaction, only address1 is added, not address2
+            validadds.append(trans['specific_data']['address1'])
         return validadds
 
     def transactioncreator(self, tran_data_all):
@@ -213,7 +218,7 @@ class Transactionmanager:
             with open(fl, "r") as readfile:
                 trandata = json.load(readfile)['transaction']
             ttype = trandata['type']
-            if ttype < 4:  # 0 is genesis, 1 is wallet creation, 2 is token creation, 3 is token custody
+            if ttype < 3:  # 0 is genesis, 1 is wallet creation, 2 is token creation
                 continue
             if ttype == 5:  # unilateral transaction so will have only asset_1 number
                 if sender == trandata['specific_data']['wallet1'] and trandata['specific_data']['asset1_code'] == tokencode:
@@ -234,29 +239,45 @@ class Transactionmanager:
         self.validity = 0
         if self.transaction['type'] == 1:
             custodian = self.transaction['specific_data']['custodian_wallet']
+            walletaddress=self.transaction['specific_data']['wallet_address']
             if not is_wallet_valid(custodian):
                 print("No custodian address found")
             #	self.transaction['valid']=0
                 self.validity = 0
             else:
                 print("Valid custodian address")
-            #	self.transaction['valid']=1
-                self.validity = 1
-            # additional check for allowed custodian addresses
-                if os.path.exists(ALLOWED_CUSTODIANS_FILE):
-                    print("Found allowed_custodians file; checking against it.")
-                    custallowflag = False
-                    with open(ALLOWED_CUSTODIANS_FILE, "r") as custfile:
-                        allowedcust = json.load(custfile)
-                    for cust in allowedcust:
-                        if custodian == cust['address']:
-                            print("Address ", custodian,
-                                  " is allowed as a custodian.")
-                            custallowflag = True
-                    if not custallowflag:
-                        print("Could not find address ", custodian,
-                              " amongst allowed custodians.")
+#                if self.transaction['specific_data']['specific_data']['linked_wallet']:  #linked wallet
+                if 'linked_wallet' in self.transaction['specific_data']['specific_data']:
+                    linkedwalletstatus=self.transaction['specific_data']['specific_data']['linked_wallet']
+                else:
+                    linkedwalletstatus= False
+                if linkedwalletstatus:
+                    parentwalletaddress = self.transaction['specific_data']['wallet_specific_data']['parentaddress']
+                    if custodian == parentwalletaddress:
+                        self.validity = 1   #linking a new wallet is signed by existing wallet itself
+                    else:
+                        self.validity = 0   #other custodian cannot sign someone's linked wallet address
+                else:   # this is a new wallet and person
+                    if is_wallet_valid(walletaddress):
+                        print("Wallet with address", walletaddress, " already exists.")
                         self.validity = 0
+                    else:
+                        self.validity = 1
+                    # additional check for allowed custodian addresses; valid only for new wallet, not linked ones
+                        if os.path.exists(ALLOWED_CUSTODIANS_FILE):
+                            print("Found allowed_custodians file; checking against it.")
+                            custallowflag = False
+                            with open(ALLOWED_CUSTODIANS_FILE, "r") as custfile:
+                                allowedcust = json.load(custfile)
+                            for cust in allowedcust:
+                                if custodian == cust['address']:
+                                    print("Address ", custodian,
+                                          " is allowed as a custodian.")
+                                    custallowflag = True
+                            if not custallowflag:
+                                print("Could not find address ", custodian,
+                                      " amongst allowed custodians.")
+                                self.validity = 0
 
     #	self.validity=0
         if self.transaction['type'] == 2:  # token addition transaction
@@ -264,9 +285,18 @@ class Transactionmanager:
             custodian = self.transaction['specific_data']['custodian']
             fovalidity = False
             custvalidity = False
-            if is_wallet_valid(firstowner):
-                print("Valid first owner")
-                fovalidity = True
+            if firstowner:
+                if is_wallet_valid(firstowner):
+                    print("Valid first owner")
+                    fovalidity = True
+                else:
+                    fovalidity = False
+            else:   # there is no first owner, transaction to create token only
+                if self.transaction['specific_data']['amount_created']:
+                    print("Amount created cannot be non-zero if there is no first owner.")
+                    fovalidity = False  # amount cannot be non-zero if no first owner
+                else:
+                    fovalidity = True
             if is_wallet_valid(custodian):
                 print("Valid custodian")
                 custvalidity = True
@@ -280,7 +310,34 @@ class Transactionmanager:
             if fovalidity and custvalidity:
                 print("Valid first owner and custodian")
             #	self.transaction['valid']=1
+            #   now checking for instances where more tokens are added for an existing tokencode
                 self.validity = 1
+                if 'tokencode' in self.transaction['specific_data']:
+                    tcode = self.transaction['specific_data']['tokencode']
+                    if tcode and tcode != "0" and tcode !="" and tcode!="string":
+                        if is_token_valid(self.transaction['specific_data']['tokencode']):
+                            existing_custodian = get_custodian_from_token(self.transaction['specific_data']['tokencode'])
+                            if custodian == existing_custodian:
+                                self.validity = 1   #tokencode exists and is run by the given custodian
+                            else:
+                                print("The custodian for that token is someone else.")
+                                self.validity = 0
+                        else:
+                            print("Tokencode provided does not exist. Will append as new one.")
+                            self.validity = 1   #tokencode is provided by user
+                    else:
+                        print("Tokencode provided does not exist. Will append as new one.")
+                        self.validity = 1   #tokencode is provided by user
+
+        if self.transaction['type'] == 3:
+            self.validity = 1
+            for wallet in self.transaction['specific_data']['signers']:
+                if not is_wallet_valid(wallet):
+                    self.validity = 0
+            if 'participants' in self.transaction['specific_data']['params']:
+                for wallet in self.transaction['specific_data']['params']['participants']:
+                    if not is_wallet_valid(wallet):
+                        self.validity = 0
 
     #	self.validity=0
         if self.transaction['type'] == 4 or self.transaction['type'] == 5:
@@ -339,7 +396,7 @@ class Transactionmanager:
                     print("Valid tokens")
                     self.validity = 1
 
-            if self.validity == 0:
+            if self.validity == 0 or not sender1valid or not sender2valid:
                 print("Transaction not valid due to invalid tokens or addresses")
                 return False
 
@@ -372,6 +429,32 @@ class Transactionmanager:
                         "Valid economics of transaction. Changing economic validity value to 1")
                 #	self.transaction['valid']=1;
                     self.validity = 1
+
+        if self.transaction['type'] == 6:   #score change transaction
+            ttype = self.transaction['type']
+        #    personid1 = self.transaction['specific_data']['personid1']
+        #    personid2 = self.transaction['specific_data']['personid2']
+            wallet1 = self.transaction['specific_data']['address1']
+            wallet2 = self.transaction['specific_data']['address2']
+            wallet1valid = False
+            wallet2valid = False
+
+            wallet1valid = is_wallet_valid(wallet1)
+            wallet2valid = is_wallet_valid(wallet2)
+            if not wallet1valid or not wallet2valid:
+                print("One of the wallets is invalid")
+                self.validity = 0
+            else:
+            #    if get_pid_from_wallet(wallet1) != personid1 or get_pid_from_wallet(wallet2) != personid2:
+                if not get_pid_from_wallet(wallet1) or not get_pid_from_wallet(wallet2):
+                    print("One of the wallet addresses does not have a valid associated personids.")
+                    self.validity = 0
+                else:
+                    if self.transaction['specific_data']['new_score'] < 0.0 or self.transaction['specific_data']['new_score'] > 3.0:
+                        print("New_score is out of valid range.")
+                        self.validity = 0
+                    else:
+                        self.validity = 1
 
         if self.validity == 1:
             return True
@@ -407,3 +490,59 @@ def is_wallet_valid(address):
     if wallet is None:
         return False
     return True
+
+def get_wallets_from_pid(personidinput):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    wallet_cursor = cur.execute('SELECT wallet_id FROM person_wallet WHERE person_id=?', (personidinput, )).fetchall()
+    if wallet_cursor is None:
+        return False
+    wallets = [dict(wlt) for wlt in wallet_cursor]
+    return wallets
+
+def get_pid_from_wallet(walletaddinput):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (walletaddinput, ))
+    pid = pid_cursor.fetchone()
+    if pid is None:
+        return False
+    return pid[0]
+
+def get_custodian_from_token(token_code):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    token_cursor = cur.execute('SELECT custodian FROM tokens WHERE tokencode=?', (token_code, ))
+    custodian = token_cursor.fetchone()
+    if custodian is None:
+        return False
+    return custodian[0]
+
+def get_sc_validadds(transaction):
+    validadds=[]
+    funct = transaction['specific_data']['function']
+    address = transaction['specific_data']['address']
+    if not address: #the sc is not yet set up
+        if funct == "setup":     # only setup function allowed in this case
+            validadds.append(transaction['specific_data']['params']['creator'])
+            return validadds
+        else:
+            print("Invalid call to a function of a contract yet to be set up.")
+            return False
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    signatories = cur.execute('SELECT signatories FROM contracts WHERE address=?', (address, )).fetchone()
+    con.close()
+    if signatories is None:
+        print("Contract does not exist.")
+        return False
+    functsignmap = json.loads(signatories[0])
+    if funct in functsignmap:     #function is allowed to be called
+        for signer in (transaction['specific_data']['signers']):    #checking if stated signer is in allowed list
+            if not functsignmap[funct] or signer in functsignmap[funct]:
+                validadds.append(signer)
+            # a function may allow anyone to call or the signer may be present in the dictionary funcsignmap
+        return validadds
+    else:
+        print("Either function is not valid or it cannot be called in a transaction.")
+        return False

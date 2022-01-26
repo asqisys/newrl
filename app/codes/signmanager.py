@@ -2,11 +2,13 @@
 
 import json
 import base64
+import sqlite3
 
 from starlette.responses import FileResponse
 from .transactionmanager import Transactionmanager
 import base64
 from optparse import OptionParser
+from ..constants import NEWRL_DB
 
 # this below one is useful for signing-time check
 
@@ -36,11 +38,15 @@ def getvalidadds(transaction):
         validadds.append(trans['specific_data']['custodian_wallet'])
     if ttype == 2:  # token creation, custodian needs to sign
         validadds.append(trans['specific_data']['custodian'])
+    if ttype == 3:
+        validadds = get_sc_validadds(trans)
     if ttype == 4:  # two way transfer; both senders need to sign
         validadds.append(trans['specific_data']['wallet1'])
         validadds.append(trans['specific_data']['wallet2'])
     if ttype == 5:  # one way transfer; only sender1 is needed to sign
         validadds.append(trans['specific_data']['wallet1'])
+    if ttype == 6:  # trust score change
+        validadds.append(trans['specific_data']['address1'])
     return validadds
 
 # use the below for validator
@@ -143,3 +149,32 @@ def sign_transaction(wallet_data, transaction_data):
     else:
         print("Signing failed. No change made to transaction's signature data")
         return None
+
+def get_sc_validadds(transaction):
+    validadds=[]
+    funct = transaction['specific_data']['function']
+    address = transaction['specific_data']['address']
+    if not address: #the sc is not yet set up
+        if funct == "setup":     # only setup function allowed in this case
+            validadds.append(transaction['specific_data']['params']['creator'])
+            return validadds
+        else:
+            print("Invalid call to a function of a contract yet to be set up.")
+            return False
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    signatories = cur.execute('SELECT signatories FROM contracts WHERE address=?', (address, )).fetchone()
+    con.close()
+    if signatories is None:
+        print("Contract does not exist.")
+        return False
+    functsignmap = json.loads(signatories[0])
+    if funct in functsignmap:     #function is allowed to be called
+        for signer in (transaction['specific_data']['signers']):    #checking if stated signer is in allowed list
+            if not functsignmap[funct] or signer in functsignmap[funct]:
+                validadds.append(signer)
+            # a function may allow anyone to call or the signer may be present in the dictionary funcsignmap
+        return validadds
+    else:
+        print("Either function is not valid or it cannot be called in a transaction.")
+        return False

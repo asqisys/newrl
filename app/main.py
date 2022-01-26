@@ -39,9 +39,9 @@ app.include_router(transport.router)
 @app.on_event('startup')
 async def app_startup():
     try:
+        await update_software(propogate=False)
         await init_bootstrap_nodes()
         sync_chain_from_peers()
-        await update_software(propogate=False)
     except Exception as e:
         print('Bootstrap failed', str(e))
 

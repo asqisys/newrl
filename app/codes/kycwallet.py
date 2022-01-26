@@ -7,9 +7,11 @@ import hashlib
 import json
 import datetime
 import base64
+import sqlite3
 
-from ..constants import TMP_PATH
+from ..constants import TMP_PATH, NEWRL_DB
 from .transactionmanager import Transactionmanager
+from .transactionmanager import get_pid_from_wallet
 
 
 def get_address_from_public_key(public_key):
@@ -59,6 +61,36 @@ def add_wallet(kyccustodian, kycdocs, ownertype, jurisd, public_key, wallet_spec
         transactionfile = trans.dumptransaction(file)
         return transactionfile
 
+def add_linked_wallet(currentaddress, public_key, wallet_specific_data={}):
+        address = get_address_from_public_key(public_key)
+        parentwalletdata = get_walletdata_from_address(address)
+        if not parentwalletdata:
+            print("Current address provided is not valid")
+            return False
+        kycdocs = parentwalletdata['kycdocs']
+        ownertype = parentwalletdata['ownertype']
+        jurisd = parentwalletdata['jurisd']
+        #signed by currentaddress owner, not kyccustodian, do not get that data
+        wallet_specific_data['linked_wallet'] = True
+        wallet_specific_data['parentaddress']=currentaddress
+    #    personid = get_pid_from_wallet(currentaddress)
+    #    wallet_specific_data['personid']= personid
+
+        wallet = {
+            'custodian_wallet': currentaddress,
+            'kyc_docs': kycdocs,
+            'ownertype': ownertype,
+            'jurisd': jurisd,
+            'specific_data': wallet_specific_data,
+            'wallet_address': address,
+            'wallet_public': public_key,
+        }
+        
+        trans = transactioncreator(wallet)
+        ts = str(datetime.datetime.now())
+        file = TMP_PATH + "transaction-1-" + ts[0:10] + "-" + ts[-6:] + ".json"
+        transactionfile = trans.dumptransaction(file)
+        return transactionfile
 
 def generate_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_data={}):
         newkeydata = generate_wallet_address()
@@ -105,3 +137,12 @@ def get_digest(file_path):
                     break
                 h.update(chunk)
         return h.hexdigest()
+
+def get_walletdata_from_address(addressinput):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    wallet_cursor = cur.execute('SELECT * FROM person_wallet WHERE wallet_id=?', (addressinput, )).fetchone()
+    if wallet_cursor is None:
+        return False
+    walletdata = dict(wallet_cursor)
+    return walletdata

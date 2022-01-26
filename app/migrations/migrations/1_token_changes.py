@@ -21,7 +21,8 @@ def migrate():
                     sc_flag integer,
                     disallowed text,
                     parent_transaction_code text,
-                    token_attributes text)
+                    token_attributes text,
+                    tokendecimal integer)
                     ''')
     
     token_cursor = cur.execute(f'''select tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
