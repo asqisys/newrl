@@ -10,7 +10,7 @@ import time
 import sqlite3
 
 #NEWRL_DB = "data/temp.db"
-from ..constants import NEWRL_DB
+from ...constants import NEWRL_DB
 
 class nusd1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
@@ -26,13 +26,11 @@ class nusd1():
         #instantiation convetion: for the first time instantiation of a contract, the contractaddress is None, this is to be immediately followed by setup call
         #in a later call outside chain work or inside it, the contractaddress is present and is used to lookup the specific contract from the db
 
-    def setup(self, cur, callparams):
+    def setup(self, cur, callparamsjson):
         #this is called by a tx type 3 signed by the creator, it calls the function setp with parameters as params
         #setup implies a transaction for contract address creation
-        if isinstance(callparams, str):
-            contractparams=json.loads(callparams)
-        else:
-            contractparams=callparams
+        callparams=json.loads(callparamsjson)
+        contractparams=callparams
         if contractparams['status']==-1:
             print("Contract is already terminated, cannot setup. Exiting.")
             return False

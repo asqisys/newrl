@@ -1,4 +1,5 @@
 import json
+#from ossaudiodev import SNDCTL_FM_LOAD_INSTR
 import sqlite3
 import datetime
 import time
@@ -51,18 +52,19 @@ def update_db_states(cur, newblockindex, transactions):
             update_trust_score(cur, personid1, personid2, new_score, tstamp)
 
         if transaction['type'] == 3:    #smart contract transaction
-            continue
+        #    continue
             if not transaction['specific_data']['address']: # sc is being set up
                 contract = dict(transaction['specific_data']['params'])
                 funct = "setup"
             else:
                 contract = get_contract_from_address(cur, transaction['specific_data']['address'])
                 funct = transaction['specific_data']['function']
-            module = importlib.import_module("contracts."+contract['name'])
-            sc_class = getattr(module,contract['name'])
+            module = importlib.import_module(".codes.contracts."+contract['name'],package="app")
+            sc_class = getattr(module, contract['name'])
             sc_instance = sc_class(transaction['specific_data']['address'])
+        #    sc_instance = nusd1(transaction['specific_data']['address'])
             funct = getattr(sc_instance, funct)
-            funct(cur, transaction['specific_data']['params'])
+            funct(cur, json.dumps(transaction['specific_data']['params']))
 
     return True
 
