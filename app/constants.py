@@ -22,3 +22,4 @@ NEWRL_PORT = 8090
 NEWRL_TOKEN = "newrl_token"
 TREASURY = "treasury_address"
 COINBASE_SC = "coinbase_sc_address"
+TRANSPORT_SERVER = 'http://localhost:8095'
