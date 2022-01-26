@@ -64,7 +64,7 @@ def sync_chain_from_node(url):
         
         my_last_block += 1
 
-        return my_last_block
+    return my_last_block
 
 
 def sync_chain_from_peers():
