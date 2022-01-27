@@ -114,7 +114,14 @@ class Transactionmanager:
             json.dump(transaction_all, writefile)
             print("Wrote to ", file)
         return file
-
+    
+    def get_transaction(self):
+        transaction_all = {
+            'transaction': self.transaction,
+            'signatures': self.signatures
+        }
+        return transaction_all
+    
     # this takes keybytes and not binary string and not base64 string
     def signtransaction(self, keybytes, address):
         msg = json.dumps(self.transaction).encode()

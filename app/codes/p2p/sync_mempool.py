@@ -80,3 +80,9 @@ def validate_transaction(transaction):
         print("Economic validation failed for transaction ", trandata['transaction']['trans_code'])
         return False
     return True
+
+
+def receive_transaction(transaction):
+    transaction_code = transaction['transaction']['trans_code']
+    with open(MEMPOOL_PATH + 'transaction-' + transaction_code + '.json', "w") as transaction_file:
+        json.dump(transaction, transaction_file)

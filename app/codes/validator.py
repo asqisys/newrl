@@ -6,6 +6,9 @@ import json
 import logging
 
 import ecdsa
+import os
+
+from app.codes.p2p.transport import send
 from .transactionmanager import Transactionmanager
 from ..constants import MEMPOOL_PATH
 
@@ -46,6 +49,15 @@ def validate(transaction):
             str(tm.transaction['type']) + "-" + \
             tm.transaction['trans_code'] + ".json"
         tm.dumptransaction(transoutputfile)
+        payload = {
+            'operation': 'send_transaction',
+            'data': tm.get_transaction()
+        }
+        # Send to transport server
+        try:
+            send(payload)
+        except:
+            print('Error sending transaction to transport server')
 
     status = f"Wrote check status as {check} to {checkfile}"
     print(status)
