@@ -1,6 +1,8 @@
 # class to create smart contract for creating stablecoins on Newrl
 import codecs
+from marshal import loads
 from subprocess import call
+import uuid
 import ecdsa
 from Crypto.Hash import keccak
 import os
@@ -8,6 +10,7 @@ import json
 import datetime
 import time
 import sqlite3
+import hashlib
 
 from ...constants import NEWRL_DB
 
@@ -20,16 +23,31 @@ class nusd1():
         if contractaddress:     #as in this is an existing contract
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
-            self.loadcontract(cur, contractaddress)  #this will populate the params for a given instance of the contract
+            params = self.loadcontract(cur, contractaddress)  #this will populate the params for a given instance of the contract
             con.close()
-        #instantiation convetion: for the first time instantiation of a contract, the contractaddress is None, this is to be immediately followed by setup call
-        #in a later call outside chain work or inside it, the contractaddress is present and is used to lookup the specific contract from the db
+        if not params or not contractaddress:   #either no contractaddress provided or new adddress not in db
+            contractparams={}
+            contractparams['creator']=""
+            contractparams['ts_init']=0
+            contractparams['name']=self.template
+            contractparams['version']=self.version
+            contractparams['actmode']="hybrid"
+            contractparams['status']=0
+            contractparams['next_act_ts']=0
+            contractparams['signatories']=[]
+            contractparams['parent']=""
+            contractparams['oracleids']=[]
+            contractparams['contractspecs']={}
+            contractparams['legalparams']={}
+            self.contractparams=contractparams
 
-    def setup(self, cur, callparamsjson):
+    def setup(self, cur, callparams):
         #this is called by a tx type 3 signed by the creator, it calls the function setp with parameters as params
         #setup implies a transaction for contract address creation
-        callparams=json.loads(callparamsjson)
-        contractparams=callparams
+        if isinstance(callparams, str):
+            contractparams=json.loads(callparams)
+        else:
+            contractparams=callparams
         if contractparams['status']==-1:
             print("Contract is already terminated, cannot setup. Exiting.")
             return False
@@ -43,20 +61,9 @@ class nusd1():
             print("Contract already setup, cannot setup again. Exiting.")
             return False
         #add other codes here if in future 4 onwards are used for specifying other contract states.
-        
-        private_key_bytes = os.urandom(32)
-        key = ecdsa.SigningKey.from_string(private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
-        key_bytes = key.to_string()
-        public_key = codecs.encode(key_bytes, 'hex')
-        public_key_bytes = codecs.decode(public_key, 'hex')
-        hash = keccak.new(digest_bits=256)
-        hash.update(public_key_bytes)
-        keccak_digest = hash.hexdigest()
-        self.address = '0x' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
-        # we have ignored the private key and public key of this because we do not want to transact through key-based signing for a contract
+        if not self.address:    #no pre-set address, need to create a new one
+            self.address = create_contract_address()
 
-        # next we set up the contract status as live
-        # params={}
         if contractparams['name']!=self.template:
             print("Mismatch in contractname. Not creating a new contract.")
             return False
@@ -78,6 +85,7 @@ class nusd1():
         cspecs=json.dumps(contractparams['contractspecs'])
         legpars=json.dumps(contractparams['legalparams'])
         signstr=json.dumps(contractparams['signatories'])
+        oraclestr = json.dumps(contractparams['oracleids'])
         qparams=(self.address,
                 contractparams['creator'],
                 contractparams['ts_init'],
@@ -88,7 +96,7 @@ class nusd1():
                 contractparams['next_act_ts'],
                 signstr,
                 contractparams['parent'],
-                contractparams['oracleids'],
+                oraclestr,
                 sdestr,
                 cspecs,
                 legpars
@@ -105,8 +113,15 @@ class nusd1():
         contract_cursor = cur.execute('SELECT * FROM contracts WHERE address = :address', {
                     'address': contractaddress})
         contract_row = contract_cursor.fetchone()
+        if not contract_row:
+            return False
         #print(contract)
-        self.contractparams=dict(contract_row)
+    #    self.contractparams=dict(contract_row)
+        self.contractparams = {k[0]: v for k, v in list(zip(contract_cursor.description, contract_row))}
+        self.contractparams['contractspecs']=json.loads(self.contractparams['contractspecs'])
+        self.contractparams['legalparams']=json.loads(self.contractparams['legalparams'])
+        self.contractparams['signatories']=json.loads(self.contractparams['signatories'])
+        self.contractparams['oracleids'] = json.loads(self.contractparams['oracleids'])
         print("Loaded the contract with following data: \n",self.contractparams)
         return self.contractparams
         
@@ -120,27 +135,31 @@ class nusd1():
                 self.contractparams['status'] = 2     # changed from 1 (setup done) to 2 (deployed and live)
                 cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (self.contractparams['status'], self.address))
                 print("Deployed smart contract - ",self.template,"with address ",self.address)
-                self.updateondeploy(cur, callparams)
+                self.updateondeploy(cur)
                 return True
             else:
                 print("Sender not valid or not allowed this function call.")
                 return False
 
-    def updateondeploy(self, cur, callparams):
+    def updateondeploy(self, cur):
+        if 'legaldochash' in self.contractparams['legalparams']:
+            legaldochash = self.contractparams['legalparams']['legaldochash']
+        else:
+            legaldochash = None
         tokendata={"tokencode": "4242",
                    "tokenname": "NUSD1",
                    "tokentype": 1,
                    "tokenattributes": {"fiat_currency":"USD", "sc_address": self.address},
                    "first_owner": None,
                    "custodian": self.address,
-                   "legaldochash": self.contractparams['legalparams']['legaldochash'],
+                   "legaldochash": legaldochash,
                    "amount_created": None,
                    "value_created": 0,
                    "disallowed": [],
                    "tokendecimal":2,
                    "sc_flag": True
                    }
-        add_token(cur, tokendata, callparams['trans_code'])
+        add_token(cur, tokendata)
 
     def sendervalid(self, senderaddress, function):
         sendervalidity = False
@@ -153,7 +172,10 @@ class nusd1():
                     sendervalidity = True
         return sendervalidity
 
-    def send_nusd_token(self, cur, recipient_address, sender, value):
+    def send_nusd_token(self, cur, callparams):
+        recipient_address = callparams['recipient_address'] 
+        sender = callparams['sender']
+        value = callparams['value']
         try:
             value = float(value)
         except:
@@ -282,6 +304,8 @@ def add_token(cur, token, txcode = None):
             tcodenewflag = True
             existingflag = False
     if 'tokencode' not in token or tcodenewflag:   # new tokencode needs to be created
+        if not txcode:
+            txcode = str(time.mktime(datetime.datetime.now().timetuple()))
         hs = hashlib.blake2b(digest_size=20)
         hs.update(txcode.encode())
         tid = 'tk' + hs.hexdigest()
@@ -366,3 +390,15 @@ def get_pid_from_wallet(cur, walletaddinput):
     if pid is None:
         return False
     return pid[0]
+
+def create_contract_address():
+    private_key_bytes = os.urandom(32)
+    key = ecdsa.SigningKey.from_string(private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
+    key_bytes = key.to_string()
+    public_key = codecs.encode(key_bytes, 'hex')
+    public_key_bytes = codecs.decode(public_key, 'hex')
+    hash = keccak.new(digest_bits=256)
+    hash.update(public_key_bytes)
+    keccak_digest = hash.hexdigest()
+    address = 'ct' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
+    return address

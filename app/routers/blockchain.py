@@ -20,7 +20,7 @@ from app.codes.utils import save_file_and_get_path
 from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
-from app.codes import contract_executor
+from app.codes.contracts.nusd1 import create_contract_address
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -200,6 +200,10 @@ async def generate_wallet_address_api():
 
 # v2 APIs - JSON only
 
+@router.get("/generate-contract-address", tags=[v1_tag, v2_tag])
+async def generate_contract_address_api():
+    return create_contract_address()
+
 @router.post("/add-wallet", tags=[v2_tag])
 async def add_wallet_api(req: AddWalletRequest):
     """Get a transaction file for adding an existing wallet to chain"""
@@ -301,7 +305,7 @@ async def add_sc(sc_request: CreateSCRequest):
         }
 
     txspecdata = {
-        "address": None,
+        "address": sc_request.sc_address,
         "function" : "setup",
         "signers" : [sc_request.creator],
         "params" : scdata

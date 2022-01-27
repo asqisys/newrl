@@ -1,2 +1,3 @@
-export NEWRL_TEST='1' && pytest
+set NEWRL_TEST='1'
+pytest
 unset NEWRL_TEST

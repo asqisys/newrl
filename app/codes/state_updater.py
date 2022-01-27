@@ -53,18 +53,18 @@ def update_db_states(cur, newblockindex, transactions):
 
         if transaction['type'] == 3:    #smart contract transaction
         #    continue
-            if not transaction['specific_data']['address']: # sc is being set up
+            funct = transaction['specific_data']['function']
+            if funct == "setup": # sc is being set up
                 contract = dict(transaction['specific_data']['params'])
-                funct = "setup"
+                transaction['specific_data']['params']['parent']= transaction['trans_code']
             else:
                 contract = get_contract_from_address(cur, transaction['specific_data']['address'])
-                funct = transaction['specific_data']['function']
             module = importlib.import_module(".codes.contracts."+contract['name'],package="app")
             sc_class = getattr(module, contract['name'])
             sc_instance = sc_class(transaction['specific_data']['address'])
         #    sc_instance = nusd1(transaction['specific_data']['address'])
             funct = getattr(sc_instance, funct)
-            funct(cur, json.dumps(transaction['specific_data']['params']))
+            funct(cur, transaction['specific_data']['params'])
 
     return True
 
@@ -251,12 +251,14 @@ def update_token_amount(cur, tid, amt):
     return True
 
 def get_contract_from_address(cur, address):
-    contractdata = cur.execute('SELECT * FROM contracts WHERE address = :address', {
-                    'address': address}).fetchone()
+    contractexec = cur.execute('SELECT * FROM contracts WHERE address = :address', {
+                    'address': address})
+    contractdata = contractexec.fetchone()
     if not contractdata:
         print("Contract with address ", address, " does not exist.")
         return {}
-    contract = dict(contractdata)
+    contract = {k[0]: v for k, v in list(zip(contractexec.description, contractdata))}
+#    contract = dict(contractdata[0])
     return contract
 
 def get_pid_from_wallet(cur, walletaddinput):

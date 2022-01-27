@@ -1,3 +1,4 @@
+from audioop import add
 from fastapi.testclient import TestClient
 from .migrations.init import init_newrl
 
@@ -249,7 +250,14 @@ def add_trust_score(wallet1, wallet2, tscore):
     assert response.status_code == 200
 
 def create_contract(wallet1):
+    response = client.get("/generate-contract-address")
+    assert response.status_code == 200
+    address = response.json()
+    assert address
+    print("created contract with address: ",address)
+
     response = client.post('/add-sc', json={
+        "sc_address": address,
         "sc_name": "nusd1",
         "version": "1.0.0",
         "creator": wallet1['address'],
@@ -280,8 +288,7 @@ def create_contract(wallet1):
     response = client.post('/run-updater')
     assert response.status_code == 200
 
-    ##code to get contract address
-    return True
+    return address
 
 def call_contract(contractaddress, funct, wallet1, params):
     response = client.post('/call-sc', json={
@@ -343,4 +350,6 @@ def test_read_main():
 
 #    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
 #    add_trust_score(wallet1, wallet2, tscore = 2.1)
-    create_contract(wallet1)
+    address = create_contract(wallet1)
+    print(address)
+    call_contract(address,"deploy",wallet1,params={"sender":wallet1['address']})

@@ -522,13 +522,12 @@ def get_sc_validadds(transaction):
     validadds=[]
     funct = transaction['specific_data']['function']
     address = transaction['specific_data']['address']
-    if not address: #the sc is not yet set up
-        if funct == "setup":     # only setup function allowed in this case
-            validadds.append(transaction['specific_data']['params']['creator'])
-            return validadds
-        else:
-            print("Invalid call to a function of a contract yet to be set up.")
-            return False
+    if funct == "setup": #the sc is not yet set up
+        validadds.append(transaction['specific_data']['params']['creator'])
+        return validadds
+    if not address:
+        print("Invalid call to a function of a contract yet to be set up.")
+        return False
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     signatories = cur.execute('SELECT signatories FROM contracts WHERE address=?', (address, )).fetchone()

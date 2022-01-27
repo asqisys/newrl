@@ -49,6 +49,7 @@ class CreateTokenRequest(BaseModel):
     token_attributes: dict
 
 class CreateSCRequest(BaseModel):
+    sc_address: str
     sc_name: str = "nusd1"
     version: str = "1.0.0"
     creator: str = "addressofcreator"
