@@ -44,10 +44,7 @@ class nusd1():
     def setup(self, cur, callparams):
         #this is called by a tx type 3 signed by the creator, it calls the function setp with parameters as params
         #setup implies a transaction for contract address creation
-        if isinstance(callparams, str):
-            contractparams=json.loads(callparams)
-        else:
-            contractparams=callparams
+        contractparams= input_to_dict(callparams)
         if contractparams['status']==-1:
             print("Contract is already terminated, cannot setup. Exiting.")
             return False
@@ -125,8 +122,9 @@ class nusd1():
         print("Loaded the contract with following data: \n",self.contractparams)
         return self.contractparams
         
-    def deploy(self, cur, callparams):
+    def deploy(self, cur, callparamsip):
         # carries out the SC execution steps upon instruction from a transaction - during updater run, post block inclusion
+        callparams= input_to_dict(callparamsip)
         if self.contractparams['status'] != 1:    #the contract is not setup, i.e. is either yet to be setup, already deployed or terminated
             print("The contract is not in the post-setup stage. Exiting without deploying.")
             return False
@@ -163,7 +161,7 @@ class nusd1():
 
     def sendervalid(self, senderaddress, function):
         sendervalidity = False
-        cspecs = self.contractparams['contractspecs']
+        cspecs = input_to_dict(self.contractparams['contractspecs'])
         if 'approved_senders' not in cspecs:
             return True
         for appr_sender in self.contractparams['contractspecs']['approved_senders']:
@@ -172,19 +170,21 @@ class nusd1():
                     sendervalidity = True
         return sendervalidity
 
-    def send_nusd_token(self, cur, callparams):
-        recipient_address = callparams['recipient_address'] 
+    def send_nusd_token(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
+        recipient_address = callparams['recipient_address']
         sender = callparams['sender']
         value = callparams['value']
+        print("callparams are ",callparams)
         try:
             value = float(value)
         except:
             print("Can't read value as a valid number.")
             return False
-        if not is_wallet_valid(recipient_address):
+        if not is_wallet_valid(cur, recipient_address):
             print("Recipient address not valid.")
             return False
-        if not self.sendervalid(sender):
+        if not self.sendervalid(sender, self.sendervalid.__name__):
             print("Sender is not in the approved senders list.")
             return False
 
@@ -341,12 +341,12 @@ def add_token(cur, token, txcode = None):
 
     # now update balance for case of more of existing created
     else:
-        added_balance = int(token['amount_created'] or 0)
-        current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
-        balance = int(current_balance or 0) + added_balance
-        update_wallet_token_balance(
-            cur, token['first_owner'], tid, balance)
-        if token['amount_created']:
+        if token['first_owner'] and token['amount_created']:
+            added_balance = int(token['amount_created'] or 0)
+            current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
+            balance = int(current_balance or 0) + added_balance
+            update_wallet_token_balance(
+                cur, token['first_owner'], tid, balance)
             update_token_amount(cur, tid, token['amount_created'])
 
     return True
@@ -358,8 +358,10 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
     balance = balance_row[0] if balance_row is not None else 0
     return balance
 
-
 def update_token_amount(cur, tid, amt):
+    if not amt:
+        print("Nothing to add.")
+        return True
     tok_val = cur.execute('SELECT tokencode FROM tokens WHERE tokencode = :tokencode', {
                     'tokencode': tid}).fetchone()
     if not tok_val:
@@ -368,11 +370,16 @@ def update_token_amount(cur, tid, amt):
     balance_cursor = cur.execute('SELECT amount_created FROM tokens WHERE tokencode = :tokencode', {
                     'tokencode': tid})
     balance_row = balance_cursor.fetchone()
-    cumul_amt = balance_row[0] if balance_row is not None else 0
+    if balance_row:
+        cumul_amt = int(balance_row[0]) if balance_row[0] else 0
+    else:
+        cumul_amt = int(0)
     cumul_amt = cumul_amt + amt
-    cur.execute(f'''INSERT OR REPLACE INTO tokens
-				(tokencode, amount_created)
-				 VALUES (?, ?)''', (tid, cumul_amt))
+#    cur.execute(f'''INSERT OR REPLACE INTO tokens
+#				(tokencode, amount_created)
+#				 VALUES (?, ?)''', (tid, cumul_amt))
+    cur.execute(f'''UPDATE tokens SET amount_created=? WHERE tokencode=?''',(cumul_amt,tid))
+
     return True
 
 def get_contract_from_address(cur, address):
@@ -402,3 +409,10 @@ def create_contract_address():
     keccak_digest = hash.hexdigest()
     address = 'ct' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
     return address
+
+def input_to_dict(ipval):
+    if isinstance(ipval, str):
+        callparams=json.loads(ipval)
+    else:
+        callparams = ipval
+    return callparams

@@ -1,4 +1,5 @@
 from audioop import add
+import token
 from fastapi.testclient import TestClient
 from .migrations.init import init_newrl
 
@@ -249,6 +250,20 @@ def add_trust_score(wallet1, wallet2, tscore):
     response = client.post('/run-updater')
     assert response.status_code == 200
 
+def get_token_from_tx(txcode):
+    response = client.get('/download-state')
+    assert response.status_code == 200
+    state = response.json()
+
+    tokens = state['tokens']
+    token_in_state = None
+    token_in_state = next(
+        x for x in tokens if x['parent_transaction_code'] == txcode)
+    if token_in_state:
+        return token_in_state['tokencode']
+    else:
+        return False
+
 def create_contract(wallet1):
     response = client.get("/generate-contract-address")
     assert response.status_code == 200
@@ -262,7 +277,7 @@ def create_contract(wallet1):
         "version": "1.0.0",
         "creator": wallet1['address'],
         "actmode": "hybrid",
-        "signatories": {"setup":wallet1['address'],"deploy":wallet1['address']},
+        "signatories": {"setup":wallet1['address'],"deploy":wallet1['address'],"send_nusd_token":wallet1['address']},
         "contractspecs": {},
         "legalparams": {}
     })
@@ -302,7 +317,7 @@ def call_contract(contractaddress, funct, wallet1, params):
     unsigned_transaction = response.json()
     assert unsigned_transaction['transaction']
     assert len(unsigned_transaction['signatures']) == 0
-
+    tcode = unsigned_transaction['transaction']['trans_code']
     response = client.post('/sign-transaction', json={
         "wallet_data": wallet1,
         "transaction_data": unsigned_transaction
@@ -318,6 +333,9 @@ def call_contract(contractaddress, funct, wallet1, params):
 
     response = client.post('/run-updater')
     assert response.status_code == 200
+
+    return tcode
+#    return signed_transaction['transaction']['trans_code']
 
 def test_read_main():
     custodian_wallet = {
@@ -352,4 +370,19 @@ def test_read_main():
 #    add_trust_score(wallet1, wallet2, tscore = 2.1)
     address = create_contract(wallet1)
     print(address)
-    call_contract(address,"deploy",wallet1,params={"sender":wallet1['address']})
+
+    txdeploy = call_contract(address,"deploy",wallet1,params={"sender":wallet1['address']})
+    print("got a tx of deployment as ", txdeploy)
+#    tokencode = get_token_from_tx(txdeploy)
+    rec_add = custodian_wallet['address']
+    trvalue = 101
+    tx_transfernew = call_contract(address,"send_nusd_token",wallet1,params={"sender":wallet1['address'],"recipient_address":rec_add,"value":trvalue})
+
+#    response = client.post('/get-balance', json={
+#        "balance_type": "TOKEN_IN_WALLET",
+#        "token_code": tokencode,
+#        "wallet_address": rec_add
+#    })
+#    assert response.status_code == 200
+#    balance = response.json()['balance']
+#    assert balance == trvalue

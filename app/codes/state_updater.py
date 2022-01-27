@@ -186,12 +186,12 @@ def add_token(cur, token, txcode = None):
 
     # now update balance for case of more of existing created
     else:
-        added_balance = int(token['amount_created'] or 0)
-        current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
-        balance = int(current_balance or 0) + added_balance
-        update_wallet_token_balance(
-            cur, token['first_owner'], tid, balance)
-        if token['amount_created']:
+        if token['first_owner'] and token['amount_created']:
+            added_balance = int(token['amount_created'] or 0)
+            current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
+            balance = int(current_balance or 0) + added_balance
+            update_wallet_token_balance(
+                cur, token['first_owner'], tid, balance)
             update_token_amount(cur, tid, token['amount_created'])
 
     return True
@@ -245,9 +245,10 @@ def update_token_amount(cur, tid, amt):
     balance_row = balance_cursor.fetchone()
     cumul_amt = balance_row[0] if balance_row is not None else 0
     cumul_amt = cumul_amt + amt
-    cur.execute(f'''INSERT OR REPLACE INTO tokens
-				(tokencode, amount_created)
-				 VALUES (?, ?)''', (tid, cumul_amt))
+#    cur.execute(f'''INSERT OR REPLACE INTO tokens
+#				(tokencode, amount_created)
+#				 VALUES (?, ?)''', (tid, cumul_amt))
+    cur.execute(f'''UPDATE tokens SET amount_created=? WHERE tokencode=?''',(cumul_amt,tid))
     return True
 
 def get_contract_from_address(cur, address):
