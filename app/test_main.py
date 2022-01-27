@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from .migrations.init import init_newrl
 
 from .main import app
+from .codes.contracts.nusd1 import nusd1
 
 client = TestClient(app)
 
@@ -343,4 +344,3 @@ def test_read_main():
 #    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
 #    add_trust_score(wallet1, wallet2, tscore = 2.1)
     create_contract(wallet1)
-    

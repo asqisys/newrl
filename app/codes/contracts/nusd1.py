@@ -9,7 +9,6 @@ import datetime
 import time
 import sqlite3
 
-#NEWRL_DB = "data/temp.db"
 from ...constants import NEWRL_DB
 
 class nusd1():
