@@ -27,7 +27,7 @@ def update_db_states(cur, newblockindex, transactions):
         update_state_from_transaction(
             cur,
             transaction['type'],
-            transaction['specific_data'],
+            transaction_data,
             transaction_code,
             transaction['timestamp']
         )
