@@ -9,6 +9,7 @@ import ecdsa
 import os
 
 from app.codes.p2p.transport import send
+from .blockchain import get_last_block_hash
 from .transactionmanager import Transactionmanager
 from ..constants import MEMPOOL_PATH
 
@@ -112,7 +113,18 @@ def validate_block_using_receipts(block):
     return True
 
 
-def validate_block(block):
+def validate_block(block, validate_receipts=True):
+    block_data = block['data']
+
+    if block_data['hash'][:4] != '0000':
+        return False
+    
+    last_block = get_last_block_hash()
+    if last_block['hash'] != block_data['previous_hash']:
+        return False
+
+    # Also check for block index
+
     sign_valid = validate_signature(
         data=block['data'],
         public_key=block['signature']['public_key'],
@@ -123,9 +135,10 @@ def validate_block(block):
         logger.info('Invalid block signature')
         return False
 
-    receipts_valid = validate_block_using_receipts(block)
-    if not receipts_valid:
-        logger.info('Invalid receipts')
-        return False
+    if validate_receipts:
+        receipts_valid = validate_block_using_receipts(block)
+        if not receipts_valid:
+            logger.info('Invalid receipts')
+            return False
     
     return True

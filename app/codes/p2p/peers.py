@@ -27,7 +27,11 @@ def get_auth():
         print('auth', auth_data)
         return auth_data
 
-auth_data = get_auth()
+try:
+    auth_data = get_auth()
+except:
+    auth_data = {}
+    print(f'Could not get auth data. Make auth file {AUTH_FILE_PATH} is present')
 
 def clear_peer_db():
     con = sqlite3.connect(NEWRL_P2P_DB)
