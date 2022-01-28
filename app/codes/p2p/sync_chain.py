@@ -1,3 +1,4 @@
+import logging
 import json
 import os
 import requests
@@ -7,6 +8,10 @@ from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 from app.codes.updater import update_db_states
+from app.codes.validator import validate_block, validate_receipt_signature
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def get_blocks(block_indexes):
@@ -32,10 +37,25 @@ def receive_block(block):
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
     
+    validate_block(block)
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     blockchain.add_block(cur, block)
     con.close()
+    
+    return True
+
+
+def receive_receipt(receipt):
+    logger.info('Recieved receipt: %s', receipt)
+    if not validate_receipt_signature(receipt):
+        logger.info('Invalid receipt signature')
+        return False
+
+    # TODO - Add the receipt to an existing block in Temp folder
+    #   if no corresponding block exists, store the receipt in temp folder and request  
+    #   sender node for the block in receipt
+
     return True
 
 
@@ -54,8 +74,9 @@ def sync_chain_from_node(url):
             print('Could not get block', str(e))
             my_last_block += 1
             # TODO - Might have to break execution or the chain could be corrupted
-            continue
+            break
         for block in blocks_data:
+            validate_block(block, validate_receipts=False)
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
             blockchain.add_block(cur, block)

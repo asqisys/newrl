@@ -3,6 +3,7 @@
 import json
 import base64
 import sqlite3
+import ecdsa
 
 from starlette.responses import FileResponse
 from .transactionmanager import Transactionmanager
@@ -178,3 +179,11 @@ def get_sc_validadds(transaction):
     else:
         print("Either function is not valid or it cannot be called in a transaction.")
         return False
+
+def sign_object(private_key, data):
+    pvtkeybytes = base64.b64decode(private_key)
+    msg = json.dumps(data).encode()
+    sk = ecdsa.SigningKey.from_string(pvtkeybytes, curve=ecdsa.SECP256k1)
+    msgsignbytes = sk.sign(msg)
+    msgsign = base64.b64encode(msgsignbytes).decode('utf-8')
+    return msgsign
