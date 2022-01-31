@@ -39,39 +39,7 @@ def chainmatch(chain1, chain2):
 
 def run_updater():
     logger = BufferedLog()
-    globaldir = "/data/asqi/newrl/"
-    #blockchain = Blockchain("inginesis.json")
     blockchain = Blockchain()
-    cs_prev = Chainscanner(CHAIN_FILE)
-#	blockchain = Blockchain();
-#	blockchain.loadfromfile("chain.json");
-
-    destchain = globaldir+CHAIN_FILE
-    deststate = globaldir+STATE_FILE
-    if os.path.exists(destchain):
-        logger.log("Found global chain. Checking for match with local.")
-        globalchain = Blockchain(destchain)
-        if globalchain.chain_valid(globalchain.chain):
-            if chainmatch(globalchain.chain, blockchain.chain):
-                logger.log(
-                    "Global chain matching local chain available, checking for update.")
-                if len(globalchain.chain) <= len(blockchain.chain):
-                    logger.log(
-                        "Chains are of matching and local chain is longer or of same length, not updating local.")
-                else:
-                    logger.log(
-                        "Chains are of matching but global longer than local, updating local file and loading it again.")
-                    shutil.copy(destchain, CHAIN_FILE)
-                    blockchain = Blockchain(CHAIN_FILE)
-            else:
-                logger.log(
-                    "Global chain does not match local chain. Investigae. Not copying to local but continuing with local-only update.")
-        else:
-            logger.log(
-                "Global chain is not valid, investigate. Continuing with local-only update.")
-    else:
-        logger.log("No global chain found. Continuing with local-only update.")
-
 
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()

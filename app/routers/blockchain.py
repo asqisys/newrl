@@ -267,8 +267,8 @@ async def add_transfer(transfer_request: TransferRequest):
         },
         "signatures": []
     }
-    with open("transfernew.json", 'w') as file:
-        json.dump(fulltrandata, file)
+    # with open("transfernew.json", 'w') as file:
+    #     json.dump(fulltrandata, file)
 
     newtransfer = Transfermanager(transfer_data=fulltrandata)
     tdatanew = newtransfer.loadandcreate()
