@@ -116,7 +116,7 @@ def validate_block_using_receipts(block):
 def validate_block(block, validate_receipts=True):
     block_data = block['data']
 
-    if block_data['hash'][:4] != '0000':
+    if block['hash'][:4] != '0000':
         return False
     
     last_block = get_last_block_hash()

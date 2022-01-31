@@ -75,7 +75,7 @@ def test_block_validation_success():
                 ]
             ]
         },
-        "previous_hash": "0000fd83acfc2f42f07493b8711d4f7fffa75f53e3eece24c0d3b55c4df7b7e2"
+        "previous_hash": "00007f86fcdcfabc4a7b1d825abb006b381eca375e223f2b036f1f706053c8c0"
     }
 
     block_signature = {
