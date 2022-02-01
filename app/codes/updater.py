@@ -12,6 +12,8 @@ from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager
 from .state_updater import update_db_states
 from .crypto import calculate_hash, sign_object, _private, _public
+from .consensus.consensus import generate_block_receipt
+
 
 MAX_BLOCK_SIZE = 10
 
@@ -104,6 +106,11 @@ def run_updater():
 
     if not IS_TEST:
         broadcast_block(block)
+
+    # Generate and add a single receipt to the block of mining node
+    block_receipt = generate_block_receipt(block)
+    block['receipts'] = [block_receipt]
+
     return logger.get_logs()
 
 def broadcast_block(block):

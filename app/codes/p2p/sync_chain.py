@@ -6,6 +6,9 @@ from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 from app.codes.validator import validate_block, validate_block_data, validate_receipt_signature
+from app.codes.updater import update_db_states
+from app.codes.fs.temp_manager import append_receipt_to_block, append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,9 +53,18 @@ def receive_receipt(receipt):
         logger.info('Invalid receipt signature')
         return False
 
-    # TODO - Add the receipt to an existing block in Temp folder
-    #   if no corresponding block exists, store the receipt in temp folder and request  
-    #   sender node for the block in receipt
+    receipt_data = receipt['data']
+    block_index = receipt_data['block_index']
+    blocks = get_blocks_for_index_from_storage(block_index)
+    if len(blocks) == 0:
+        store_receipt_to_temp(receipt)
+        block = ask_peers_for_block(block_index)
+        if block is not None:
+            append_receipt_to_block(block, receipt)
+            store_block_to_temp(block)
+    else:
+        blocks_appended = append_receipt_to_block_in_storage(receipt)
+        # TODO - Validate blocks_appended and propogate
 
     return True
 
@@ -128,3 +140,25 @@ def get_best_peer_to_sync(peers):
         except Exception as e:
             print('Error getting block index from peer at', url)
     return best_peer
+
+
+def ask_peer_for_block(peer_url, block_index):
+    blocks_request = {'block_indexes': [block_index]}
+    print(f'Asking block node {peer_url} for block {block_index}')
+    try:
+        blocks_data = requests.post(peer_url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT).json()
+        return blocks_data
+    except Exception as e:
+        print('Could not get block', str(e))
+        return None
+
+
+def ask_peers_for_block(block_index):
+    peers = get_peers()
+    peers = []
+    for peer in peers:
+        url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
+        block = ask_peer_for_block(url, block_index)
+        if block is not None:
+            return block
+    return None
