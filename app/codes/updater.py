@@ -18,6 +18,8 @@ from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager
 from .chainscanner import Chainscanner, get_wallet_token_balance
 from .state_updater import update_db_states
+from .consensus.consensus import generate_block_receipt
+
 
 def chainmatch(chain1, chain2):
     len1 = len(chain1)
@@ -184,7 +186,10 @@ def run_updater():
     con.commit()
     con.close()
 
-#    broadcast_block(block)
+    # Generate and add a single receipt to the block of mining node
+    block_receipt = generate_block_receipt(block)
+    block['receipts'] = [block_receipt]
+    broadcast_block(block)
     return logger.get_logs()
 
 def broadcast_block(block):

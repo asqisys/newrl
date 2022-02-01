@@ -165,3 +165,9 @@ def get_last_block_hash():
         }
     else:
         return None
+
+
+def calculate_hash(block):
+    """Calculate hash of a given block using sha256"""
+    encoded_block = json.dumps(block, sort_keys=True).encode()
+    return hashlib.sha256(encoded_block).hexdigest()
