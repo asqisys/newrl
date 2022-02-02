@@ -20,6 +20,8 @@ class TransferType(int, Enum):
     TYPE4 = 4
     TYPE5 = 5
 
+class GetTokenRequest(BaseModel):
+    trans_code: str
 
 class TransferRequest(BaseModel):
     transfer_type: TransferType = TransferType.TYPE4

@@ -11,7 +11,7 @@ from starlette.responses import FileResponse
 
 from app.codes.transactionmanager import Transactionmanager
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -244,6 +244,14 @@ async def add_token(
     with open(token_create_transaction_filename) as f:
         return json.load(f)
 
+@router.post("/get-token-from-tx", tags=[v2_tag])
+async def add_wallet_api(req: GetTokenRequest):
+    """Get a transaction file for getting a token from its parent tx"""
+    trans_code = req.trans_code
+    tokencode = get_token_from_tx(trans_code)
+    ### to be written
+    return tokencode
+
 @router.post("/add-transfer", tags=[v2_tag])
 async def add_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
@@ -361,15 +369,6 @@ async def call_sc(sc_request: CallSC):
     newtx = Transactionmanager()
     tdatanew = newtx.transactioncreator(fulltrandata)
     return tdatanew
-
-@router.post("/run-contract", tags=[v2_tag])
-async def run_contract(req: RunSmartContractRequest):
-    """Run a smart contract"""
-    try:
-        return contract_executor.run(req.contract_name, req.params)
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/update-trustscore", tags=[v2_tag])
 async def update_ts(ts_request: TscoreRequest):

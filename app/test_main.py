@@ -264,7 +264,7 @@ def get_token_from_tx(txcode):
     else:
         return False
 
-def create_contract(wallet1):
+def create_contract(wallet1, tokencode, tokenname):
     response = client.get("/generate-contract-address")
     assert response.status_code == 200
     address = response.json()
@@ -278,7 +278,7 @@ def create_contract(wallet1):
         "creator": wallet1['address'],
         "actmode": "hybrid",
         "signatories": {"setup":wallet1['address'],"deploy":wallet1['address'],"send_nusd_token":wallet1['address']},
-        "contractspecs": {},
+        "contractspecs": {"tokencode":tokencode, "tokenname":tokenname},
         "legalparams": {}
     })
 
@@ -368,7 +368,8 @@ def test_read_main():
 
 #    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
 #    add_trust_score(wallet1, wallet2, tscore = 2.1)
-    address = create_contract(wallet1)
+    tcode="4545"
+    address = create_contract(wallet1, tcode, "nusd-v5")
     print(address)
 
     txdeploy = call_contract(address,"deploy",wallet1,params={"sender":wallet1['address']})
@@ -378,11 +379,11 @@ def test_read_main():
     trvalue = 101
     tx_transfernew = call_contract(address,"send_nusd_token",wallet1,params={"sender":wallet1['address'],"recipient_address":rec_add,"value":trvalue})
 
-#    response = client.post('/get-balance', json={
-#        "balance_type": "TOKEN_IN_WALLET",
-#        "token_code": tokencode,
-#        "wallet_address": rec_add
-#    })
-#    assert response.status_code == 200
-#    balance = response.json()['balance']
-#    assert balance == trvalue
+    response = client.post('/get-balance', json={
+        "balance_type": "TOKEN_IN_WALLET",
+        "token_code": tcode,
+        "wallet_address": rec_add
+    })
+    assert response.status_code == 200
+    balance = response.json()['balance']
+    assert balance == trvalue * 100

@@ -144,8 +144,9 @@ class nusd1():
             legaldochash = self.contractparams['legalparams']['legaldochash']
         else:
             legaldochash = None
-        tokendata={"tokencode": "4242",
-                   "tokenname": "NUSD1",
+        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        tokendata={"tokencode": cspecs['tokencode'],
+                   "tokenname": cspecs['tokenname'],
                    "tokentype": 1,
                    "tokenattributes": {"fiat_currency":"USD", "sc_address": self.address},
                    "first_owner": None,
@@ -157,7 +158,7 @@ class nusd1():
                    "tokendecimal":2,
                    "sc_flag": True
                    }
-        add_token(cur, tokendata)
+        add_token(cur, tokendata, self.contractparams['parent'])
 
     def sendervalid(self, senderaddress, function):
         sendervalidity = False
@@ -187,8 +188,9 @@ class nusd1():
         if not self.sendervalid(sender, self.sendervalid.__name__):
             print("Sender is not in the approved senders list.")
             return False
+        cspecs = input_to_dict(self.contractparams['contractspecs'])
 
-        tokendata={"tokencode": "4242",
+        tokendata={"tokencode": cspecs['tokencode'],
                    "first_owner": recipient_address,
                    "custodian": self.address,
                    "amount_created": int(value*100),
@@ -197,8 +199,8 @@ class nusd1():
                    }
         add_token(cur, tokendata)
         
-    def destroy_nusd_token(self,sender_address, value):
-        pass        
+    def burn_nusd_token(self,sender_address, value):
+        pass
 
     def checkstatus(self):
         #returns status without adding a chain transaction; status is one of : awaiting tx confirmations, awaiting deployment, live, terminated, etc
@@ -304,10 +306,9 @@ def add_token(cur, token, txcode = None):
             tcodenewflag = True
             existingflag = False
     if 'tokencode' not in token or tcodenewflag:   # new tokencode needs to be created
-        if not txcode:
-            txcode = str(time.mktime(datetime.datetime.now().timetuple()))
+        randcode = create_contract_address()
         hs = hashlib.blake2b(digest_size=20)
-        hs.update(txcode.encode())
+        hs.update(randcode.encode())
         tid = 'tk' + hs.hexdigest()
         existingflag = False
 
