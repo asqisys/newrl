@@ -1,18 +1,12 @@
 # class to create smart contract for creating stablecoins on Newrl
-import codecs
-from marshal import loads
-from subprocess import call
-import uuid
-import ecdsa
-from Crypto.Hash import keccak
-import os
 import json
 import datetime
 import time
 import sqlite3
-import hashlib
 
 from ...constants import NEWRL_DB
+from ..statemanager import string_to_dict, add_token, is_wallet_valid
+from ..contractmanager import create_contract_address
 
 class nusd1():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
@@ -44,7 +38,7 @@ class nusd1():
     def setup(self, cur, callparams):
         #this is called by a tx type 3 signed by the creator, it calls the function setp with parameters as params
         #setup implies a transaction for contract address creation
-        contractparams= input_to_dict(callparams)
+        contractparams= string_to_dict(callparams)
         if contractparams['status']==-1:
             print("Contract is already terminated, cannot setup. Exiting.")
             return False
@@ -124,7 +118,7 @@ class nusd1():
         
     def deploy(self, cur, callparamsip):
         # carries out the SC execution steps upon instruction from a transaction - during updater run, post block inclusion
-        callparams= input_to_dict(callparamsip)
+        callparams= string_to_dict(callparamsip)
         if self.contractparams['status'] != 1:    #the contract is not setup, i.e. is either yet to be setup, already deployed or terminated
             print("The contract is not in the post-setup stage. Exiting without deploying.")
             return False
@@ -144,7 +138,7 @@ class nusd1():
             legaldochash = self.contractparams['legalparams']['legaldochash']
         else:
             legaldochash = None
-        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        cspecs = string_to_dict(self.contractparams['contractspecs'])
         tokendata={"tokencode": cspecs['tokencode'],
                    "tokenname": cspecs['tokenname'],
                    "tokentype": 1,
@@ -162,7 +156,7 @@ class nusd1():
 
     def sendervalid(self, senderaddress, function):
         sendervalidity = False
-        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        cspecs = string_to_dict(self.contractparams['contractspecs'])
         if 'approved_senders' not in cspecs:
             return True
         for appr_sender in self.contractparams['contractspecs']['approved_senders']:
@@ -172,7 +166,7 @@ class nusd1():
         return sendervalidity
 
     def send_nusd_token(self, cur, callparamsip):
-        callparams = input_to_dict(callparamsip)
+        callparams = string_to_dict(callparamsip)
         recipient_address = callparams['recipient_address']
         sender = callparams['sender']
         value = callparams['value']
@@ -188,7 +182,7 @@ class nusd1():
         if not self.sendervalid(sender, self.sendervalid.__name__):
             print("Sender is not in the approved senders list.")
             return False
-        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        cspecs = string_to_dict(self.contractparams['contractspecs'])
 
         tokendata={"tokencode": cspecs['tokencode'],
                    "first_owner": recipient_address,
@@ -218,202 +212,202 @@ class nusd1():
             print("Contract terminated. Not live")
             return -1
 
-def is_wallet_valid(cur, address):
-    wallet_cursor = cur.execute('SELECT wallet_public FROM wallets WHERE wallet_address=?', (address, ))
-    wallet = wallet_cursor.fetchone()
-    if wallet is None:
-        return False
-    return True
+# def is_wallet_valid(cur, address):
+#     wallet_cursor = cur.execute('SELECT wallet_public FROM wallets WHERE wallet_address=?', (address, ))
+#     wallet = wallet_cursor.fetchone()
+#     if wallet is None:
+#         return False
+#     return True
+# 
+# def transfer_tokens_and_update_balances(cur, sender, reciever, tokencode, amount):
+#     sender_balance = get_wallet_token_balance(cur, sender, tokencode)
+#     print("Sender is ",sender  ," and their balance is ", sender_balance)
+#     reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
+#     print("Receiver is ",reciever  ," and their balance is ", reciever_balance)
+#     sender_balance = sender_balance - amount
+#     reciever_balance = reciever_balance + amount
+#     print("Amount is ", amount)
+#     print("Updating sender's balance with ", sender_balance)
+#     print("Updating reciever's balance with ", reciever_balance)
+#     update_wallet_token_balance(cur, sender, tokencode, sender_balance)
+#     update_wallet_token_balance(cur, reciever, tokencode, reciever_balance)
+#     sender_balance = get_wallet_token_balance(cur, sender, tokencode)
+#     print("Sender is ",sender  ," and their balance is ", sender_balance)
+#     reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
+#     print("Receiver is ",reciever  ," and their balance is ", reciever_balance)
 
-def transfer_tokens_and_update_balances(cur, sender, reciever, tokencode, amount):
-    sender_balance = get_wallet_token_balance(cur, sender, tokencode)
-    print("Sender is ",sender  ," and their balance is ", sender_balance)
-    reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
-    print("Receiver is ",reciever  ," and their balance is ", reciever_balance)
-    sender_balance = sender_balance - amount
-    reciever_balance = reciever_balance + amount
-    print("Amount is ", amount)
-    print("Updating sender's balance with ", sender_balance)
-    print("Updating reciever's balance with ", reciever_balance)
-    update_wallet_token_balance(cur, sender, tokencode, sender_balance)
-    update_wallet_token_balance(cur, reciever, tokencode, reciever_balance)
-    sender_balance = get_wallet_token_balance(cur, sender, tokencode)
-    print("Sender is ",sender  ," and their balance is ", sender_balance)
-    reciever_balance = get_wallet_token_balance(cur, reciever, tokencode)
-    print("Receiver is ",reciever  ," and their balance is ", reciever_balance)
+# def update_wallet_token_balance(cur, wallet_address, token_code, balance):
+#     cur.execute(f'''INSERT OR REPLACE INTO balances
+# 				(wallet_address, tokencode, balance)
+# 				 VALUES (?, ?, ?)''', (wallet_address, token_code, balance))
 
-def update_wallet_token_balance(cur, wallet_address, token_code, balance):
-    cur.execute(f'''INSERT OR REPLACE INTO balances
-				(wallet_address, tokencode, balance)
-				 VALUES (?, ?, ?)''', (wallet_address, token_code, balance))
+# def update_trust_score(cur, personid1, personid2, new_score, tstamp):
+#     cur.execute(f'''INSERT OR REPLACE INTO trust_scores
+# 				(src_person_id, dest_person_id, score, last_time)
+# 				 VALUES (?, ?, ?, ?)''', (personid1, personid2, new_score, tstamp))
 
-def update_trust_score(cur, personid1, personid2, new_score, tstamp):
-    cur.execute(f'''INSERT OR REPLACE INTO trust_scores
-				(src_person_id, dest_person_id, score, last_time)
-				 VALUES (?, ?, ?, ?)''', (personid1, personid2, new_score, tstamp))
+# def add_wallet_pid(cur, wallet):
+#     # checking if this is a linked wallet or new one; for linked, no new personid is created
+#     linkedstatus =  wallet['specific_data']['linked_wallet'] if 'linked_wallet' in wallet['specific_data'] else False
+#     if linkedstatus:
+#         pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (wallet['specific_data']['parentaddress'], )).fetchone()
+#         pid = pid_cursor[0]
+#         if not pid:
+#             print("No personid linked to the parentwallet.")
+#             return False
+#     else:     #not a linked wallet, so create a new pid and update person table
+#         hs = hashlib.blake2b(digest_size=20)
+#         hs.update((wallet['wallet_address']).encode())
+#         pid = 'pi' + hs.hexdigest()
+#         query_params=(pid, time.mktime(datetime.datetime.now().timetuple()))
+#         cur.execute(f'''INSERT OR IGNORE INTO person
+#                     (person_id, created_time)
+#                     VALUES (?, ?)''', query_params)
 
-def add_wallet_pid(cur, wallet):
-    # checking if this is a linked wallet or new one; for linked, no new personid is created
-    linkedstatus =  wallet['specific_data']['linked_wallet'] if 'linked_wallet' in wallet['specific_data'] else False
-    if linkedstatus:
-        pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (wallet['specific_data']['parentaddress'], )).fetchone()
-        pid = pid_cursor[0]
-        if not pid:
-            print("No personid linked to the parentwallet.")
-            return False
-    else:     #not a linked wallet, so create a new pid and update person table
-        hs = hashlib.blake2b(digest_size=20)
-        hs.update((wallet['wallet_address']).encode())
-        pid = 'pi' + hs.hexdigest()
-        query_params=(pid, time.mktime(datetime.datetime.now().timetuple()))
-        cur.execute(f'''INSERT OR IGNORE INTO person
-                    (person_id, created_time)
-                    VALUES (?, ?)''', query_params)
+#     #for both new and linked wallet, update the wallet table and person_wallet table
+#     kyc_doc_json = json.dumps(wallet['kyc_docs'])
+#     data_json = json.dumps(wallet['specific_data'])
+#     query_params = (wallet['wallet_address'],
+#                     wallet['wallet_public'],
+#                     wallet['custodian_wallet'],
+#                     kyc_doc_json,
+#                     wallet['ownertype'],
+#                     wallet['jurisd'],
+#                     data_json
+#                     )
+#     cur.execute(f'''INSERT OR IGNORE INTO wallets
+#             (wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction, specific_data)
+#             VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
 
-    #for both new and linked wallet, update the wallet table and person_wallet table
-    kyc_doc_json = json.dumps(wallet['kyc_docs'])
-    data_json = json.dumps(wallet['specific_data'])
-    query_params = (wallet['wallet_address'],
-                    wallet['wallet_public'],
-                    wallet['custodian_wallet'],
-                    kyc_doc_json,
-                    wallet['ownertype'],
-                    wallet['jurisd'],
-                    data_json
-                    )
-    cur.execute(f'''INSERT OR IGNORE INTO wallets
-            (wallet_address, wallet_public, custodian_wallet, kyc_docs, owner_type, jurisdiction, specific_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
+#     query_params=(pid, wallet['wallet_address'])
+#     cur.execute(f'''INSERT OR IGNORE INTO person_wallet
+#                 (person_id, wallet_id)
+#                 VALUES (?, ?)''', query_params)
 
-    query_params=(pid, wallet['wallet_address'])
-    cur.execute(f'''INSERT OR IGNORE INTO person_wallet
-                (person_id, wallet_id)
-                VALUES (?, ?)''', query_params)
+# def add_token(cur, token, txcode = None):
+#     tcodenewflag = False
+#     existingflag = False
+#     if 'tokencode' in token:    #creating more of an existing token or tokencode provided by user
+#         if token['tokencode'] and token['tokencode'] != "0" and token['tokencode'] != "":
+#             tid = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token['tokencode'], )).fetchone()
+#             if tid: #tokencode exists, more of an existing token is being added to the first_owner
+#                 tid = tid[0]
+#                 existingflag = True
+#             else:
+#                 tid = str(token['tokencode'])    #if provided code does not exist, it is considered new token addition
+#                 existingflag = False
+#         else:   # mistakenly entered tokencode value as "" or "0" or 0
+#             tcodenewflag = True
+#             existingflag = False
+#     if 'tokencode' not in token or tcodenewflag:   # new tokencode needs to be created
+#         randcode = create_contract_address()
+#         hs = hashlib.blake2b(digest_size=20)
+#         hs.update(randcode.encode())
+#         tid = 'tk' + hs.hexdigest()
+#         existingflag = False
 
-def add_token(cur, token, txcode = None):
-    tcodenewflag = False
-    existingflag = False
-    if 'tokencode' in token:    #creating more of an existing token or tokencode provided by user
-        if token['tokencode'] and token['tokencode'] != "0" and token['tokencode'] != "":
-            tid = cur.execute('SELECT tokencode FROM tokens WHERE tokencode=?', (token['tokencode'], )).fetchone()
-            if tid: #tokencode exists, more of an existing token is being added to the first_owner
-                tid = tid[0]
-                existingflag = True
-            else:
-                tid = str(token['tokencode'])    #if provided code does not exist, it is considered new token addition
-                existingflag = False
-        else:   # mistakenly entered tokencode value as "" or "0" or 0
-            tcodenewflag = True
-            existingflag = False
-    if 'tokencode' not in token or tcodenewflag:   # new tokencode needs to be created
-        randcode = create_contract_address()
-        hs = hashlib.blake2b(digest_size=20)
-        hs.update(randcode.encode())
-        tid = 'tk' + hs.hexdigest()
-        existingflag = False
+#     if not existingflag:    # new token to be created
+#         tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
+#         tokendecimal = int(tokendecimal)
+#         token_attributes_json = json.dumps(token['tokenattributes'])
+#         disallowedjason=json.dumps(token['disallowed'])
+#         query_params = (
+#             tid,
+#             token['tokenname'],
+#             token['tokentype'],
+#             token['first_owner'],
+#             token['custodian'],
+#             token['legaldochash'],
+#             token['amount_created'],
+#             token['value_created'],
+#             token['sc_flag'],
+#             disallowedjason,
+#             txcode,
+#             tokendecimal,
+#             token_attributes_json
+#             )
+#         cur.execute(f'''INSERT OR IGNORE INTO tokens
+#             (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
+#             amount_created, value_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
+#             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+#         if token['amount_created']:
+#             update_wallet_token_balance(
+#                 cur, token['first_owner'], tid, token['amount_created'])
 
-    if not existingflag:    # new token to be created
-        tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
-        tokendecimal = int(tokendecimal)
-        token_attributes_json = json.dumps(token['tokenattributes'])
-        disallowedjason=json.dumps(token['disallowed'])
-        query_params = (
-            tid,
-            token['tokenname'],
-            token['tokentype'],
-            token['first_owner'],
-            token['custodian'],
-            token['legaldochash'],
-            token['amount_created'],
-            token['value_created'],
-            token['sc_flag'],
-            disallowedjason,
-            txcode,
-            tokendecimal,
-            token_attributes_json
-            )
-        cur.execute(f'''INSERT OR IGNORE INTO tokens
-            (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-            amount_created, value_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
-        if token['amount_created']:
-            update_wallet_token_balance(
-                cur, token['first_owner'], tid, token['amount_created'])
+#     # now update balance for case of more of existing created
+#     else:
+#         if token['first_owner'] and token['amount_created']:
+#             added_balance = int(token['amount_created'] or 0)
+#             current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
+#             balance = int(current_balance or 0) + added_balance
+#             update_wallet_token_balance(
+#                 cur, token['first_owner'], tid, balance)
+#             update_token_amount(cur, tid, token['amount_created'])
 
-    # now update balance for case of more of existing created
-    else:
-        if token['first_owner'] and token['amount_created']:
-            added_balance = int(token['amount_created'] or 0)
-            current_balance = get_wallet_token_balance(cur, token['first_owner'], tid)
-            balance = int(current_balance or 0) + added_balance
-            update_wallet_token_balance(
-                cur, token['first_owner'], tid, balance)
-            update_token_amount(cur, tid, token['amount_created'])
+#     return True
 
-    return True
+# def get_wallet_token_balance(cur, wallet_address, token_code):
+#     balance_cursor = cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {
+#                     'address': wallet_address, 'tokencode': token_code})
+#     balance_row = balance_cursor.fetchone()
+#     balance = balance_row[0] if balance_row is not None else 0
+#     return balance
 
-def get_wallet_token_balance(cur, wallet_address, token_code):
-    balance_cursor = cur.execute('SELECT balance FROM balances WHERE wallet_address = :address AND tokencode = :tokencode', {
-                    'address': wallet_address, 'tokencode': token_code})
-    balance_row = balance_cursor.fetchone()
-    balance = balance_row[0] if balance_row is not None else 0
-    return balance
+# def update_token_amount(cur, tid, amt):
+#     if not amt:
+#         print("Nothing to add.")
+#         return True
+#     tok_val = cur.execute('SELECT tokencode FROM tokens WHERE tokencode = :tokencode', {
+#                     'tokencode': tid}).fetchone()
+#     if not tok_val:
+#         print("Tokencode ", tid, " does not exist.")
+#         return False
+#     balance_cursor = cur.execute('SELECT amount_created FROM tokens WHERE tokencode = :tokencode', {
+#                     'tokencode': tid})
+#     balance_row = balance_cursor.fetchone()
+#     if balance_row:
+#         cumul_amt = int(balance_row[0]) if balance_row[0] else 0
+#     else:
+#         cumul_amt = int(0)
+#     cumul_amt = cumul_amt + amt
+# #    cur.execute(f'''INSERT OR REPLACE INTO tokens
+# #				(tokencode, amount_created)
+# #				 VALUES (?, ?)''', (tid, cumul_amt))
+#     cur.execute(f'''UPDATE tokens SET amount_created=? WHERE tokencode=?''',(cumul_amt,tid))
 
-def update_token_amount(cur, tid, amt):
-    if not amt:
-        print("Nothing to add.")
-        return True
-    tok_val = cur.execute('SELECT tokencode FROM tokens WHERE tokencode = :tokencode', {
-                    'tokencode': tid}).fetchone()
-    if not tok_val:
-        print("Tokencode ", tid, " does not exist.")
-        return False
-    balance_cursor = cur.execute('SELECT amount_created FROM tokens WHERE tokencode = :tokencode', {
-                    'tokencode': tid})
-    balance_row = balance_cursor.fetchone()
-    if balance_row:
-        cumul_amt = int(balance_row[0]) if balance_row[0] else 0
-    else:
-        cumul_amt = int(0)
-    cumul_amt = cumul_amt + amt
-#    cur.execute(f'''INSERT OR REPLACE INTO tokens
-#				(tokencode, amount_created)
-#				 VALUES (?, ?)''', (tid, cumul_amt))
-    cur.execute(f'''UPDATE tokens SET amount_created=? WHERE tokencode=?''',(cumul_amt,tid))
+#     return True
 
-    return True
+# def get_contract_from_address(cur, address):
+#     contractdata = cur.execute('SELECT * FROM contracts WHERE address = :address', {
+#                     'address': address}).fetchone()
+#     if not contractdata:
+#         print("Contract with address ", address, " does not exist.")
+#         return {}
+#     contract = dict(contractdata)
+#     return contract
 
-def get_contract_from_address(cur, address):
-    contractdata = cur.execute('SELECT * FROM contracts WHERE address = :address', {
-                    'address': address}).fetchone()
-    if not contractdata:
-        print("Contract with address ", address, " does not exist.")
-        return {}
-    contract = dict(contractdata)
-    return contract
+# def get_pid_from_wallet(cur, walletaddinput):
+#     pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (walletaddinput, ))
+#     pid = pid_cursor.fetchone()
+#     if pid is None:
+#         return False
+#     return pid[0]
 
-def get_pid_from_wallet(cur, walletaddinput):
-    pid_cursor = cur.execute('SELECT person_id FROM person_wallet WHERE wallet_id=?', (walletaddinput, ))
-    pid = pid_cursor.fetchone()
-    if pid is None:
-        return False
-    return pid[0]
-
-def create_contract_address():
-    private_key_bytes = os.urandom(32)
-    key = ecdsa.SigningKey.from_string(private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
-    key_bytes = key.to_string()
-    public_key = codecs.encode(key_bytes, 'hex')
-    public_key_bytes = codecs.decode(public_key, 'hex')
-    hash = keccak.new(digest_bits=256)
-    hash.update(public_key_bytes)
-    keccak_digest = hash.hexdigest()
-    address = 'ct' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
-    return address
-
-def input_to_dict(ipval):
-    if isinstance(ipval, str):
-        callparams=json.loads(ipval)
-    else:
-        callparams = ipval
-    return callparams
+# def create_contract_address():
+#     private_key_bytes = os.urandom(32)
+#     key = ecdsa.SigningKey.from_string(private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
+#     key_bytes = key.to_string()
+#     public_key = codecs.encode(key_bytes, 'hex')
+#     public_key_bytes = codecs.decode(public_key, 'hex')
+#     hash = keccak.new(digest_bits=256)
+#     hash.update(public_key_bytes)
+#     keccak_digest = hash.hexdigest()
+#     address = 'ct' + keccak_digest[-40:]   # this overwrites the None value in the init call, whenever on-chain contract is setup
+#     return address
+# 
+# def string_to_dict(ipval):
+#     if isinstance(ipval, str):
+#         callparams=json.loads(ipval)
+#     else:
+#         callparams = ipval
+#     return callparams
