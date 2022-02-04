@@ -89,28 +89,25 @@ def get_node_trust_score(public_key):
     # TODO - Return the actual trust score of the node by lookup on public_key
     return 1
 
-def validate_block_using_receipts(block):
+def validate_block_receipts(block):
     total_receipt_count = 0
-    score_weighted_validity_count = 0
-
+    postitive_receipt_count = 0
     for receipt in block['receipts']:
         total_receipt_count += 1
 
         if not validate_receipt_signature(receipt):
-            continue
+            raise Exception('Invalid receipt signature')
 
-        if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash'] or receipt['data']['vote'] < 1:
-            continue
-
-        trust_score = get_node_trust_score(receipt['public_key'])
-        valid_probability = 0 if trust_score < 0 else (trust_score + 2) / 5
-
-        score_weighted_validity_count += valid_probability
-
-    if score_weighted_validity_count < 0.75:
-        return False
+        if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash']:
+            raise Exception('Invalid receipt data')
+        
+        if receipt['data']['vote'] == 1:
+            postitive_receipt_count += 1
     
-    return True
+    return {
+        'total_receipt_count': total_receipt_count,
+        'postitive_receipt_count': postitive_receipt_count,
+    }
 
 
 def validate_block(block, validate_receipts=True):
@@ -136,7 +133,7 @@ def validate_block(block, validate_receipts=True):
         return False
 
     if validate_receipts:
-        receipts_valid = validate_block_using_receipts(block)
+        receipts_valid = validate_block_receipts(block)
         if not receipts_valid:
             logger.info('Invalid receipts')
             return False

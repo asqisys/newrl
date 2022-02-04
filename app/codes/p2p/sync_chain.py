@@ -7,9 +7,10 @@ import sqlite3
 from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
-from app.codes.updater import update_db_states
+from app.codes.updater import broadcast_block, update_db_states
 from app.codes.validator import validate_block, validate_receipt_signature
 from app.codes.fs.temp_manager import append_receipt_to_block, append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
+from app.codes.consensus.consensus import check_community_consensus
 
 
 logging.basicConfig(level=logging.INFO)
@@ -30,44 +31,6 @@ def get_block(block_index):
 def get_last_block_index():
     last_block = blockchain.get_last_block_index()
     return last_block
-
-
-def receive_block(block):
-    print('Recieved block', block)
-
-    block_index = block['block_index'] if 'block_index' in block else block['index']
-    if block_index > get_last_block_index() + 1:
-        sync_chain_from_peers()
-    
-    validate_block(block)
-    con = sqlite3.connect(NEWRL_DB)
-    cur = con.cursor()
-    blockchain.add_block(cur, block)
-    con.close()
-    
-    return True
-
-
-def receive_receipt(receipt):
-    logger.info('Recieved receipt: %s', receipt)
-    if not validate_receipt_signature(receipt):
-        logger.info('Invalid receipt signature')
-        return False
-
-    receipt_data = receipt['data']
-    block_index = receipt_data['block_index']
-    blocks = get_blocks_for_index_from_storage(block_index)
-    if len(blocks) == 0:
-        store_receipt_to_temp(receipt)
-        block = ask_peers_for_block(block_index)
-        if block is not None:
-            append_receipt_to_block(block, receipt)
-            store_block_to_temp(block)
-    else:
-        blocks_appended = append_receipt_to_block_in_storage(receipt)
-        # TODO - Validate blocks_appended and propogate
-
-    return True
 
 
 def sync_chain_from_node(url):
@@ -104,6 +67,7 @@ def sync_chain_from_peers():
     url = get_best_peer_to_sync(peers)
     print('Syncing from peer', url)
     sync_chain_from_node(url)
+
 
 
 # TODO - use mode of max last 
@@ -144,3 +108,57 @@ def ask_peers_for_block(block_index):
         if block is not None:
             return block
     return None
+
+
+def accept_block(block, broadcast=True):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    blockchain.add_block(cur, block)
+    con.close()
+
+    broadcast_block(block)
+
+
+def receive_block(block):
+    print('Recieved block', block)
+
+    block_index = block['block_index'] if 'block_index' in block else block['index']
+    if block_index > get_last_block_index() + 1:
+        sync_chain_from_peers()
+    
+    # Validate and reject block if first priciples fail or any receipt are invalid
+    validate_block(block, validate_receipts=False)
+
+    if check_community_consensus(block):
+        accept_block(block)
+    else:
+        store_block_to_temp(block)
+    
+    
+    return True
+
+
+def receive_receipt(receipt):
+    logger.info('Recieved receipt: %s', receipt)
+    if not validate_receipt_signature(receipt):
+        logger.info('Invalid receipt signature')
+        return False
+
+    receipt_data = receipt['data']
+    block_index = receipt_data['block_index']
+    blocks = get_blocks_for_index_from_storage(block_index)
+    if len(blocks) == 0:
+        store_receipt_to_temp(receipt)
+        block = ask_peers_for_block(block_index)
+        if block is not None:
+            append_receipt_to_block(block, receipt)
+            store_block_to_temp(block)
+    else:
+        blocks_appended = append_receipt_to_block_in_storage(receipt)
+        for block in blocks_appended:
+            if check_community_consensus(block):
+                accept_block(block)
+                
+
+
+    return True
