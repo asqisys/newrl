@@ -24,3 +24,9 @@ NEWRL_TOKEN = "newrl_token"
 TREASURY = "treasury_address"
 COINBASE_SC = "coinbase_sc_address"
 TRANSPORT_SERVER = 'http://localhost:8095'
+
+COMMITTEE_SIZE = 6
+MINIMUM_ACCEPTANCE_VOTES = 4
+MINIMUM_ACCEPTANCE_RATIO = 0.6
+NO_RECEIPT_COMMITTEE_TIMEOUT = 10  # Timeout in seconds
+NO_BLOCK_TIMEOUT = 5  # No block received timeout in seconds
