@@ -12,8 +12,8 @@ class BalanceType(Enum):
 
 class BalanceRequest(BaseModel):
     balance_type: BalanceType = BalanceType.TOKEN_IN_WALLET
-    token_code: str = 't0021'
-    wallet_address: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
+    token_code: Optional[str] = 't0021'
+    wallet_address: Optional[str] = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
 
 
 class TransferType(int, Enum):

@@ -33,15 +33,17 @@ class Chainscanner():
         return transactions
 
     def getbalancesbytoken(self,tokencode):
-        #function to scan through the chain and produce an array of wallet addresses, and their balances by token codes
+        """Get token balance across wallets"""
         balances = []
-        wallets = self.getallwallets()
-#        tokens = self.getalltokens()
-#        for index in (1,self.chainlength+1):    #blockindex starts at 1 and not 0
-#            transactions=self.gettransactions(index)
-        for wallet in wallets:
-            balance = self.getbaladdtoken(wallet['wallet_address'],tokencode)
-            balances.append({'wallet_address':wallet['wallet_address'],'balance':balance})
+        balances_cur = self.cur.execute('SELECT wallet_address, balance FROM balances WHERE tokencode = :tokencode', {'tokencode': tokencode})
+        for row in balances_cur:
+            print(row)
+            balances.append({
+                'wallet': row[0],
+                'token_code': tokencode,
+                'balance': row[1]
+            })
+        
         return balances
         
     def getalltransids(self):
@@ -147,13 +149,17 @@ class Chainscanner():
         print("Dumped all balances data to ",file)
 
     def getbalancesbyaddress(self, address):
-        #function to get balances of all tokens for a given address
+        """Get all tokens in address"""
         balances = []
-        tokens=self.getalltokens()
-        for token in tokens:
-            balance = self.getbaladdtoken(address,token['tokencode'])
-#            balances.append('wallet_public'=address,'tokencode'=token,'balance'=balance)
-            balances.append({'tokencode':token['tokencode'],'balance':balance})
+        balances_cur = self.cur.execute('SELECT tokencode, balance FROM balances WHERE wallet_address = :address', {'address': address})
+        for row in balances_cur:
+            print(row)
+            balances.append({
+                'wallet': address,
+                'token_code': row[0],
+                'balance': row[1]
+            })
+        
         return balances
         
     def getbaladdtoken(self, address, tokencode):
