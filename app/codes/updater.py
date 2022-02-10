@@ -18,6 +18,7 @@ from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager
 from .chainscanner import Chainscanner, get_wallet_token_balance
 from .state_updater import update_db_states
+from .p2p.transport import send_to_peers
 
 def chainmatch(chain1, chain2):
     len1 = len(chain1)
@@ -194,6 +195,7 @@ def broadcast_block(block):
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting to peer', url)
         try:
+            send_to_peers('send_block', block)
             requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
