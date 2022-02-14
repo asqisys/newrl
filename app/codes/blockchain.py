@@ -44,6 +44,14 @@ class Blockchain:
 
         return block
 
+    def empty_block_hash(self, block):
+        proof = 42  # Hardcoded value for empty block
+        block_hash = self.calculate_hash(block)
+        block_hash = '0000' + block_hash[:4]
+        block['proof'] = proof
+
+        return block_hash
+
     def proof_of_work(self, block):
         """Proof of work which takes a block with proof set as 0 as input and 
            returns the proof that makes its hash start with 0000"""
@@ -82,20 +90,27 @@ class Blockchain:
         """Mine a new block"""
         print("Starting the mining step 1")
         last_block_cursor = cur.execute(
-            'SELECT block_index, hash FROM blocks ORDER BY block_index DESC LIMIT 1')
+            'SELECT block_index, hash, timestamp FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
         last_block_index = last_block[0] if last_block is not None else 0
         last_block_hash = last_block[1] if last_block is not None else 0
+        last_block_timestamp = last_block[2] if last_block is not None else 0
 
         block = {
             'index': last_block_index + 1,
-            'timestamp': str(datetime.datetime.now()),
             'proof': 0,
             'text': text,
             'previous_hash': last_block_hash
         }
 
-        block_hash = self.proof_of_work(block)
+        if len(text['transactions']) == 0:
+            # TODO - Fix the timestamp. Supposed to be real timestamp
+            block['timestamp'] = last_block_timestamp + 1
+            block_hash = self.empty_block_hash(block)
+        else:
+            block['timestamp'] = str(datetime.datetime.now())
+            block_hash = self.proof_of_work(block)
+        
         print("New block hash is ", block_hash)
 
         block = self.create_block(cur, block, block_hash)
