@@ -5,6 +5,7 @@ IS_TEST = os.environ.get('NEWRL_TEST') is not None
 if IS_TEST:
     print('Using constants for Test')
 
+EMPTY_BLOCK_NONCE = 42
 DATA_PATH = 'data_test/' if IS_TEST else 'data/'
 MEMPOOL_PATH = DATA_PATH + 'mempool/'
 TMP_PATH = DATA_PATH + 'tmp/'

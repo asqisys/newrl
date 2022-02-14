@@ -5,7 +5,7 @@ import json
 
 import sqlite3
 
-from ..constants import NEWRL_DB
+from ..constants import EMPTY_BLOCK_NONCE, NEWRL_DB
 from .state_updater import update_db_states
 
 
@@ -45,7 +45,7 @@ class Blockchain:
         return block
 
     def empty_block_hash(self, block):
-        proof = 42  # Hardcoded value for empty block
+        proof = EMPTY_BLOCK_NONCE  # Hardcoded value for empty block
         block_hash = self.calculate_hash(block)
         block_hash = '0000' + block_hash[:4]
         block['proof'] = proof

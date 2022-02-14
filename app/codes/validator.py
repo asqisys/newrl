@@ -11,7 +11,7 @@ import os
 from app.codes.p2p.transport import send
 from .blockchain import get_last_block_hash
 from .transactionmanager import Transactionmanager
-from ..constants import MEMPOOL_PATH
+from ..constants import EMPTY_BLOCK_NONCE, MEMPOOL_PATH
 
 
 logging.basicConfig(level=logging.INFO)
@@ -125,6 +125,9 @@ def validate_block(block, validate_receipts=True):
 
     # Also check for block index
 
+    if not validate_empty_block(block):
+        return False
+
     sign_valid = validate_signature(
         data=block['data'],
         public_key=block['signature']['public_key'],
@@ -140,5 +143,14 @@ def validate_block(block, validate_receipts=True):
         if not receipts_valid:
             logger.info('Invalid receipts')
             return False
+    
+    return True
+
+
+def validate_empty_block(block):
+    data = block['data']
+
+    if len(data['text']['transactions']) == 0 and data['proof'] != EMPTY_BLOCK_NONCE:
+        return False
     
     return True
