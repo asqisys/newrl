@@ -14,3 +14,4 @@ firsttoken.json
 newwallet.json
 *.pyc
 .auth.json
+data_test/

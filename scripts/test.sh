@@ -1,3 +1,4 @@
+mkdir data_test/
 rm data_test/mempool/*.json
 rm data_test/tmp/*.json
 rm data_test/newrl.db
