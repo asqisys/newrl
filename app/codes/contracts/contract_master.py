@@ -17,9 +17,7 @@ from ..db_updater import *
 
 class ContractMaster():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
-    def __init__(self,contractaddress=None):
-        self.template=""
-        self.version=""
+    def __init__(self, template, version, contractaddress=None):
         self.address=contractaddress    #this is for instances of this class created for tx creation and other non-chain work
         if contractaddress:     #as in this is an existing contract
             con = sqlite3.connect(NEWRL_DB)
@@ -30,8 +28,8 @@ class ContractMaster():
             contractparams={}
             contractparams['creator']=""
             contractparams['ts_init']=0
-            contractparams['name']=self.template
-            contractparams['version']=self.version
+            contractparams['name']=template
+            contractparams['version']=version
             contractparams['actmode']="hybrid"
             contractparams['status']=0
             contractparams['next_act_ts']=0

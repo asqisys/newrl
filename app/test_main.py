@@ -368,7 +368,7 @@ def test_read_main():
 
 #    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
 #    add_trust_score(wallet1, wallet2, tscore = 2.1)
-    tcode="4848"
+    tcode="9999"
     address = create_contract(wallet1, tcode, "nusd-v5")
     print(address)
 
