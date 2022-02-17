@@ -40,7 +40,7 @@ def receive_block(block):
     validate_block(block, validate_receipts=False)
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
-    blockchain.add_block(cur, block)
+    blockchain.add_block(cur, block['data'])
     con.close()
     
     return True
