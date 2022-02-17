@@ -7,7 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.codes.p2p.sync_chain import sync_chain_from_peers
 
 from .constants import NEWRL_PORT
-from .codes.p2p.peers import init_bootstrap_nodes, update_software
+from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
+from .codes.clock.global_time import start_mining_clock, update_time_difference
 
 from .routers import blockchain
 from .routers import p2p
@@ -39,6 +40,9 @@ app.include_router(transport.router)
 @app.on_event('startup')
 async def app_startup():
     try:
+        await update_time_difference()
+        await update_my_address()
+        start_mining_clock()
         await update_software(propogate=False)
         await init_bootstrap_nodes()
         sync_chain_from_peers()
