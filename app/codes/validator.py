@@ -114,16 +114,10 @@ def validate_block_using_receipts(block):
 
 
 def validate_block(block, validate_receipts=True, should_validate_signature=True):
-    block_data = block['data']
-
     if block['hash'][:4] != '0000':
         return False
-    
-    last_block = get_last_block_hash()
 
-    if last_block['index'] != block['block_index'] - 1:
-        return False
-    if last_block and last_block['hash'] != block_data['previous_hash']:
+    if not validate_block_data(block['data']):
         return False
 
     if should_validate_signature:
@@ -143,4 +137,20 @@ def validate_block(block, validate_receipts=True, should_validate_signature=True
             logger.info('Invalid receipts')
             return False
     
+    return True
+
+
+def validate_block_data(block):
+    last_block = get_last_block_hash()
+
+    if not last_block:
+        # No local chain. Sync anyway.
+        return True
+
+    if last_block['hash'] != block['previous_hash']:
+        return False
+    
+    block_index = block['block_index'] if 'block_index' in block else block['index']
+    if last_block['index'] != block_index - 1:
+        return False
     return True

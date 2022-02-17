@@ -8,7 +8,7 @@ from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 from app.codes.updater import update_db_states
-from app.codes.validator import validate_block, validate_receipt_signature
+from app.codes.validator import validate_block, validate_block_data, validate_receipt_signature
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -76,7 +76,9 @@ def sync_chain_from_node(url):
             # TODO - Might have to break execution or the chain could be corrupted
             break
         for block in blocks_data:
-            validate_block(block, validate_receipts=False, should_validate_signature=False)
+            if not validate_block_data(block):
+                print('Invalid block')
+                break
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
             blockchain.add_block(cur, block)
