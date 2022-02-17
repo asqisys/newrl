@@ -7,6 +7,7 @@ from multiprocessing.dummy import current_process
 import os
 import shutil
 import hashlib
+from codes.crypto import calculate_hash, sign_object, _private, _public
 
 import requests
 import sqlite3
@@ -163,9 +164,9 @@ def run_updater():
         logger.log("No new transactions,checking for time.")
         logger.log("latest ts:", latest_ts, "\tNow: ", datetime.datetime.now())
         logger.log("Time since last block: ", round(
-            (datetime.datetime.now() - latest_ts).total_seconds()/3600, 2), " hours")
+            (datetime.datetime.now() - latest_ts).total_seconds(), 2), " seconds")
         # no transactions for 1 hours
-        if (datetime.datetime.now() - latest_ts).total_seconds() < 3600*block_time_limit:
+        if (datetime.datetime.now() - latest_ts).total_seconds() < 30:  # TODO - Change the block time limit
             logger.log(
                 "No new transactions, not enough time since last block. Exiting.")
             # exit();
@@ -184,17 +185,32 @@ def run_updater():
     con.commit()
     con.close()
 
-#    broadcast_block(block)
+    broadcast_block(block)
     return logger.get_logs()
 
 def broadcast_block(block):
     peers = get_peers()
 
+    private_key = _private
+    public_key = _public
+    signature = {
+        'public_key': public_key,
+        'msgsign': sign_object(private_key, block)
+    } 
+    block_payload = {
+        'block_index': block['index'],
+        'hash': calculate_hash(block),
+        'data': block,
+        'signature': signature
+    }
+
+    print(json.dumps(block_payload))
+
     for peer in peers:
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting to peer', url)
         try:
-            requests.post(url + '/receive-block', json={'block': block}, timeout=REQUEST_TIMEOUT)
+            requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
             print(e)

@@ -37,7 +37,7 @@ def receive_block(block):
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
     
-    validate_block(block)
+    validate_block(block, validate_receipts=False)
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     blockchain.add_block(cur, block)
@@ -76,7 +76,7 @@ def sync_chain_from_node(url):
             # TODO - Might have to break execution or the chain could be corrupted
             break
         for block in blocks_data:
-            validate_block(block, validate_receipts=False)
+            validate_block(block, validate_receipts=False, should_validate_signature=False)
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
             blockchain.add_block(cur, block)

@@ -1,4 +1,5 @@
 import logging
+import argparse
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
@@ -16,6 +17,12 @@ from .routers import transport
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--disablenetwork", help="run the node local only with no network connection", action="store_true")
+parser.add_argument("--disableupdate", help="run the node without updating software", action="store_true")
+parser.add_argument("--disablebootstrap", help="run the node without bootstrapping", action="store_true")
+args = parser.parse_args()
 
 app = FastAPI(
     title="The Newrl APIs",
@@ -39,11 +46,15 @@ app.include_router(transport.router)
 @app.on_event('startup')
 async def app_startup():
     try:
-        await update_software(propogate=False)
-        await init_bootstrap_nodes()
-        sync_chain_from_peers()
+        if not args.disablenetwork:
+            if not args.disableupdate:
+                await update_software(propogate=False)
+            if not args.disablebootstrap:
+                await init_bootstrap_nodes()
+            sync_chain_from_peers()
     except Exception as e:
-        print('Bootstrap failed', str(e))
+        print('Bootstrap failed')
+        logging.critical(e, exc_info=True)
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host="0.0.0.0", port=NEWRL_PORT, reload=True)
