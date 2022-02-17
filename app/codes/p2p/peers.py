@@ -7,7 +7,7 @@ import subprocess
 from app.codes.signmanager import sign_object
 from app.codes.validator import validate_signature
 from app.migrations.init import init_newrl
-from ...constants import AUTH_FILE_PATH, BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT
+from ...constants import AUTH_FILE_PATH, BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT, MY_ADDRESS
 
 
 logging.basicConfig(level=logging.INFO)
@@ -172,6 +172,10 @@ async def update_peers():
 async def get_my_address():
     return requests.get('https://api.ipify.org?format=json').json()['ip']
 
+
+async def update_my_address():
+    MY_ADDRESS = await get_my_address()
+    return True
 
 async def update_software(propogate):
     "Update the client software from repo"
