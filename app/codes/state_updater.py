@@ -1,15 +1,10 @@
 import json
-import sqlite3
-import datetime
-import time
-import hashlib
+import importlib
 
 from ..constants import NEWRL_DB
 from .db_updater import *
 
 def update_db_states(cur, newblockindex, transactions):
-#    con = sqlite3.connect(NEWRL_DB)
-#    cur = con.cursor()
     last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
     last_block = last_block_cursor.fetchone()
@@ -63,15 +58,15 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         update_trust_score(cur, personid1, personid2, new_score, tstamp)
 
     if transaction_type == 3:    #smart contract transaction
-        if not transaction_data['address']: # sc is being set up
+        funct = transaction_data['function']
+        if funct == "setup": # sc is being set up
             contract = dict(transaction_data['params'])
-            funct = "setup"
+            transaction_data['params']['parent']= transaction_code
         else:
             contract = get_contract_from_address(cur, transaction_data['address'])
-            funct = transaction_data['function']
-        modulename = contract['name']
-        module = __import__(modulename)
-        sc_class = getattr(module,modulename)
+        module = importlib.import_module(".codes.contracts."+contract['name'],package="app")
+        sc_class = getattr(module, contract['name'])
         sc_instance = sc_class(transaction_data['address'])
+    #    sc_instance = nusd1(transaction['specific_data']['address'])
         funct = getattr(sc_instance, funct)
         funct(cur, transaction_data['params'])

@@ -20,6 +20,8 @@ class TransferType(int, Enum):
     TYPE4 = 4
     TYPE5 = 5
 
+class GetTokenRequest(BaseModel):
+    trans_code: str
 
 class TransferRequest(BaseModel):
     transfer_type: TransferType = TransferType.TYPE4
@@ -49,6 +51,7 @@ class CreateTokenRequest(BaseModel):
     token_attributes: dict
 
 class CreateSCRequest(BaseModel):
+    sc_address: str
     sc_name: str = "nusd1"
     version: str = "1.0.0"
     creator: str = "addressofcreator"
@@ -62,6 +65,10 @@ class CallSC(BaseModel):
     function_called: str
     signers: List[str]
     params: dict
+
+class RunSmartContractRequest(BaseModel):
+    contract_name: str = 'simple_loan_v1'
+    params: dict = {'tenor': '1y', 'amount': 250000, 'rate': 0.0675}
 
 class KYCDoc(BaseModel):
     type: int

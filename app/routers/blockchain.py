@@ -11,7 +11,7 @@ from starlette.responses import FileResponse
 
 from app.codes.transactionmanager import Transactionmanager
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, TransferRequest, CreateSCRequest, TscoreRequest
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
 from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
@@ -20,6 +20,7 @@ from app.codes.utils import save_file_and_get_path
 from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
+from app.codes.contracts.contract_master import create_contract_address
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -199,6 +200,10 @@ async def generate_wallet_address_api():
 
 # v2 APIs - JSON only
 
+@router.get("/generate-contract-address", tags=[v1_tag, v2_tag])
+async def generate_contract_address_api():
+    return create_contract_address()
+
 @router.post("/add-wallet", tags=[v2_tag])
 async def add_wallet_api(req: AddWalletRequest):
     """Get a transaction file for adding an existing wallet to chain"""
@@ -300,7 +305,7 @@ async def add_sc(sc_request: CreateSCRequest):
         }
 
     txspecdata = {
-        "address": None,
+        "address": sc_request.sc_address,
         "function" : "setup",
         "signers" : [sc_request.creator],
         "params" : scdata

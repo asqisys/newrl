@@ -1,7 +1,9 @@
 from audioop import add
+from random import random
 import token
 from fastapi.testclient import TestClient
 from .migrations.init import init_newrl
+import random
 
 from .main import app
 from .codes.contracts.nusd1 import nusd1
@@ -368,7 +370,7 @@ def test_read_main():
 
 #    add_trust_score(test_wallet1, test_wallet2, tscore = 2.1)
 #    add_trust_score(wallet1, wallet2, tscore = 2.1)
-    tcode="9999"
+    tcode = str(round(random.random()*1000,0))
     address = create_contract(wallet1, tcode, "nusd-v5")
     print(address)
 

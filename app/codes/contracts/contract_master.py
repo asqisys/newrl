@@ -1,4 +1,4 @@
-# class to create smart contract for creating stablecoins on Newrl
+# class to create smart contract master template
 #import codecs
 #from marshal import loads
 #from subprocess import call
