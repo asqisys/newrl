@@ -7,7 +7,6 @@ from multiprocessing.dummy import current_process
 import os
 import shutil
 import hashlib
-from codes.crypto import calculate_hash, sign_object, _private, _public
 
 import requests
 import sqlite3
@@ -19,6 +18,7 @@ from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager
 from .chainscanner import Chainscanner, get_wallet_token_balance
 from .state_updater import update_db_states
+from .crypto import calculate_hash, sign_object, _private, _public
 
 def chainmatch(chain1, chain2):
     len1 = len(chain1)
