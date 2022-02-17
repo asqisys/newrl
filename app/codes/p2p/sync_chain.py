@@ -41,6 +41,7 @@ def receive_block(block):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     blockchain.add_block(cur, block['data'])
+    con.commit()
     con.close()
     
     return True

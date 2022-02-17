@@ -11,7 +11,7 @@ import hashlib
 import requests
 import sqlite3
 
-from ..constants import NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
+from ..constants import IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, STATE_FILE, CHAIN_FILE, MEMPOOL_PATH
 from .p2p.peers import get_peers
 from .utils import BufferedLog
 from .blockchain import Blockchain
@@ -185,7 +185,8 @@ def run_updater():
     con.commit()
     con.close()
 
-    broadcast_block(block)
+    if not IS_TEST:
+        broadcast_block(block)
     return logger.get_logs()
 
 def broadcast_block(block):
