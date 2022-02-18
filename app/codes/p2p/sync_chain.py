@@ -61,41 +61,58 @@ def receive_receipt(receipt):
 
 
 def sync_chain_from_node(url):
-    their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
-    my_last_block = get_last_block_index() + 1
+    """Update local chain and state from remote node"""
+    response = requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT)
+    their_last_block_index = int(response.text)
+    my_last_block = get_last_block_index()
+    print(f'I have {my_last_block} blocks. Node {url} has {their_last_block_index} blocks.')
 
-    print(their_last_block_index, my_last_block)
-    # return
-    while my_last_block < their_last_block_index:
-        blocks_request = {'block_indexes': [my_last_block]}
-        print(f'Asking block node {url} for block {my_last_block}')
+    block_idx = my_last_block + 1
+    block_batch_size = 10  # Fetch blocks in batches
+    while block_idx <= their_last_block_index:
+        failed_for_invalid_block = False
+        blocks_to_request = list(range(block_idx, min(their_last_block_index, block_idx + block_batch_size)))
+        blocks_request = {'block_indexes': blocks_to_request}
+        print(f'Asking block node {url} for blocks {blocks_request}')
         try:
-            blocks_data = requests.post(url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT).json()
-        except Exception as e:
-            print('Could not get block', str(e))
-            my_last_block += 1
-            # TODO - Might have to break execution or the chain could be corrupted
+            response = requests.post(
+                    url + '/get-blocks',
+                    json=blocks_request,
+                    timeout=REQUEST_TIMEOUT
+                )
+            blocks_data = response.json()
+        except Exception as err:
+            print('Could not get block', str(err))
+            failed_for_invalid_block = True
             break
         for block in blocks_data:
             if not validate_block_data(block):
                 print('Invalid block')
+                failed_for_invalid_block = True
                 break
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
             blockchain.add_block(cur, block)
             con.commit()
             con.close()
-        
-        my_last_block += 1
 
-    return my_last_block
+        if failed_for_invalid_block:
+            break
+
+        block_idx += block_batch_size
+
+    return their_last_block_index
 
 
 def sync_chain_from_peers():
     peers = get_peers()
     url = get_best_peer_to_sync(peers)
-    print('Syncing from peer', url)
-    sync_chain_from_node(url)
+
+    if url:
+        print('Syncing from peer', url)
+        sync_chain_from_node(url)
+    else:
+        print('No node available to sync')
 
 
 # TODO - use mode of max last 

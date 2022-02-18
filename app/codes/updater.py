@@ -95,64 +95,64 @@ def run_updater():
             totalchecks = 0
             validchecks = 0
             specificvalfiles = []
-            for flname in validationfiles:
-                if trancodestr in flname:
-                    validationfile = mempool+flname
-                    # to enable easy move out later from mempool
-                    specificvalfiles.append(validationfile)
-                    try:
-                        with open(validationfile, "r") as read_file:
-                            validitydata = json.load(read_file)
-                        totalchecks += 1  # all checks including those that rejected
-                        if validitydata['valid'] == 1:
-                            validchecks += 1  # only the successful checks
-                    except:
-                        logger.log(
-                            "could not load validity data from ", validationfile)
-            tranvalidity = 0
-            if totalchecks < 1:
-                tranvalidity = 0
-            else:
-                logger.log("Proportion of valid checks = ",
-                           float(validchecks/totalchecks))
-                if float(validchecks/totalchecks) > 0.5:  # majority
-                    tranvalidity = 1
+            # for flname in validationfiles:
+            #     if trancodestr in flname:
+            #         validationfile = mempool+flname
+            #         # to enable easy move out later from mempool
+            #         specificvalfiles.append(validationfile)
+            #         try:
+            #             with open(validationfile, "r") as read_file:
+            #                 validitydata = json.load(read_file)
+            #             totalchecks += 1  # all checks including those that rejected
+            #             if validitydata['valid'] == 1:
+            #                 validchecks += 1  # only the successful checks
+            #         except:
+            #             logger.log(
+            #                 "could not load validity data from ", validationfile)
+            # tranvalidity = 0
+            # if totalchecks < 1:
+            #     tranvalidity = 0
+            # else:
+            #     logger.log("Proportion of valid checks = ",
+            #                float(validchecks/totalchecks))
+            #     if float(validchecks/totalchecks) > 0.5:  # majority
+            #         tranvalidity = 1
 
             traninclusionflag = False
-            if tranvalidity == 1:
+            # if tranvalidity == 1:
                 #	logger.log("Found valid transaction, adding to block. Moving file to ",incltrans)
+            logger.log(
+                "Found valid transaction, checking if it is already included")
+            transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'")
+            row = transactions_cursor.fetchone()
+            if row is not None:
+                traninclusionflag = True
+                continue
+            if traninclusionflag:  # the current transaction is already included in some earlier block
+                continue  # this takes the process to the next transaction
+            
+            if trandata['transaction']['trans_code'] not in txcodes:
+                textarray.append(transaction)
+                signarray.append(signatures)
+                txcodes.append(trandata['transaction']['trans_code'])
+                try:
+                    os.remove(file)
+                    # shutil.move(file, incltrans);
+                except:
+                    logger.log("Couldn't delete:",file)
+            # for vfile in specificvalfiles:
+            # 	try:
+            # 		shutil.move(vfile, options.itpool)
+            # 	except:
+            # 		logger.log("couldn't move ",vfile)
+            block_height += 1
+            if block_height >= max_block_height:
                 logger.log(
-                    "Found valid transaction, checking if it is already included")
-                transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'")
-                row = transactions_cursor.fetchone()
-                if row is not None:
-                    traninclusionflag = True
-                    continue
-                if traninclusionflag:  # the current transaction is already included in some earlier block
-                    continue  # this takes the process to the next transaction
-                
-                if trandata['transaction']['trans_code'] not in txcodes:
-                    textarray.append(transaction)
-                    signarray.append(signatures)
-                    txcodes.append(trandata['transaction']['trans_code'])
-                    try:
-                        os.remove(file)
-                    	# shutil.move(file, incltrans);
-                    except:
-                    	logger.log("Couldn't delete:",file)
-                # for vfile in specificvalfiles:
-                # 	try:
-                # 		shutil.move(vfile, options.itpool)
-                # 	except:
-                # 		logger.log("couldn't move ",vfile)
-                block_height += 1
-                if block_height >= max_block_height:
-                    logger.log(
-                        "Reached max block height, moving forward with the collected transactions")
-                    break
-            else:
-                logger.log(
-                    "Did not find valid transaction, not adding to block")
+                    "Reached max block height, moving forward with the collected transactions")
+                break
+            # else:
+            #     logger.log(
+            #         "Did not find valid transaction, not adding to block")
 #			else:
 #				logger.log("Transaction before the latest timestamp; not adding to block")
 
