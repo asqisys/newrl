@@ -9,7 +9,8 @@ from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_softwar
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, receive_receipt, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
 from app.constants import NEWRL_PORT
-from app.migrations.init_db import clear_db, init_db
+from app.migrations.init_db import clear_db, init_db, revert_chain
+from app.codes.p2p.peers import call_api_on_peers
 from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionsRequest
 
 
@@ -102,6 +103,13 @@ async def clear_peer_api(req: Request):
 async def initiate_peer_api(address: str):
     "Test only, used to first connect a client"
     return await add_peer(address)
+
+@router.post("/revert-chain", tags=[p2p_tag])
+async def revert_chain_api(block_index: int, propogate: bool = False):
+    await revert_chain(block_index)
+    if propogate:
+        await call_api_on_peers(f'/revert-chain?block_index={block_index}')
+    return {'status': 'SUCCESS'}
 
 @router.post("/update-software", tags=[p2p_tag])
 async def update_software_api(propogate: bool = False):

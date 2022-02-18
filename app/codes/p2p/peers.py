@@ -195,3 +195,23 @@ def validate_auth(auth):
         public_key=auth['public_key'],
         signature=signature
     )
+
+
+async def call_api_on_peers(url):
+    my_peers = get_peers()
+    my_address = await get_my_address()
+
+    for peer in my_peers:
+        address = peer['address']
+        logger.info(f'Calling API {url} on peer {address}')
+        if socket.gethostbyname(address) == my_address:
+            continue
+        try:
+            response = requests.get(
+                'http://' + address + f':{NEWRL_PORT}' + url,
+                timeout=REQUEST_TIMEOUT
+            )
+            assert response.status_code == 200
+            assert response.json()['status'] == 'SUCCESS'
+        except Exception as e:
+            print(f'Error calling API on node {address}', str(e))
