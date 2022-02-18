@@ -9,8 +9,9 @@ from ...constants import NEWRL_DB
 
 
 def migrate():
-    print('Running migration ' + __file__)
-    revert_chain(291)
+    pass
+    # print('Running migration ' + __file__)
+    # revert_chain(291)
 
 def revert_chain(block_index):
     """Revert chain to given index"""
