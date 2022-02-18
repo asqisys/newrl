@@ -40,29 +40,27 @@ def validate(transaction):
         msg = "Invalid signatures"
     check = {'valid': valid, 'msg': msg}
 
-    checkfile = MEMPOOL_PATH+tm.transaction['trans_code'] + \
-        "_validation"+str("-"+ts[0:10]+"-"+ts[-6:]+".json")
-    with open(checkfile, "w") as ckfile:
-        json.dump(check, ckfile)
+    # checkfile = MEMPOOL_PATH+tm.transaction['trans_code'] + \
+    #     "_validation"+str("-"+ts[0:10]+"-"+ts[-6:]+".json")
+    # with open(checkfile, "w") as ckfile:
+    #     json.dump(check, ckfile)
 
     if valid == 1:  # econ and signvalid are both True
-        transoutputfile = MEMPOOL_PATH + "transaction-" + \
-            str(tm.transaction['type']) + "-" + \
-            tm.transaction['trans_code'] + ".json"
-        tm.dumptransaction(transoutputfile)
-        payload = {
-            'operation': 'send_transaction',
-            'data': tm.get_transaction()
-        }
+        transaction_file = f"{MEMPOOL_PATH}transaction-{tm.transaction['type']}-{tm.transaction['trans_code']}.json"
+        tm.dumptransaction(transaction_file)
+
         # Send to transport server
         try:
+            payload = {
+                'operation': 'send_transaction',
+                'data': tm.get_transaction()
+            }
             send(payload)
         except:
             print('Error sending transaction to transport server')
 
-    status = f"Wrote check status as {check} to {checkfile}"
-    print(status)
-    return status
+    print(check)
+    return check
 
 
 def validate_signature(data, public_key, signature):
@@ -148,9 +146,11 @@ def validate_block_data(block):
         return True
 
     if last_block['hash'] != block['previous_hash']:
+        print('Previous block hash does not match latest block')
         return False
     
     block_index = block['block_index'] if 'block_index' in block else block['index']
     if last_block['index'] != block_index - 1:
+        print('New block index is not 1 more than last block index')
         return False
     return True
