@@ -6,6 +6,7 @@ import json
 import sqlite3
 
 from ..constants import NEWRL_DB
+from .crypto import calculate_hash
 from .state_updater import update_db_states
 
 
@@ -117,12 +118,14 @@ class Blockchain:
         return ts
 
 
-def add_block(cur, block):
+def add_block(cur, block, block_hash=None):
     """Add a block to db, add transactions and update states"""
     # Needed for backward compatibility of blocks
     block_index = block['block_index'] if 'block_index' in block else block['index']
-    block_hash = block['hash'] if 'hash' in block else ''
-    transactions_hash = block['transactions_hash'] if 'transactions_hash' in block else ''
+    if not block_hash:
+        block_hash = block['hash'] if 'hash' in block else ''
+    # transactions_hash = block['transactions_hash'] if 'transactions_hash' in block else ''
+    transactions_hash = calculate_hash(block['text']['transactions'])
     print('Adding block', block_index)
     db_block_data = (
         block_index,

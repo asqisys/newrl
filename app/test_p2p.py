@@ -7,12 +7,12 @@ client = TestClient(app)
 
 init_newrl()
 
-def _receive_block(previous_block_index):
+def _receive_block(block_index):
     block_payload = {
-    "block_index": previous_block_index,
+    "block_index": block_index,
     "hash": "0000be5942ea740bdfc244ca59aee40029d32e1bbc32cd5dc6fa2cd4012ba38c",
     "data": {
-        "index": previous_block_index,
+        "index": block_index,
         "timestamp": "2022-02-17 13:29:00.746425",
         "proof": 27359,
         "text": {
@@ -63,6 +63,12 @@ def _receive_block(previous_block_index):
     print(response.text)
     assert response.status_code == 200
     unsigned_transaction = response.json()
+
+    response = client.post('/get-blocks', json={'block_indexes': [block_index]})
+    blocks = response.json()
+    assert len(blocks) == 1
+    block = blocks[0]
+    assert block['hash'] == block_payload['hash']
     
 
 def test_block_receive():
