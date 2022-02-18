@@ -42,4 +42,5 @@ def revert_chain(block_index):
 
 
 if __name__ == '__main__':
-    migrate()
+    # migrate()
+    pass

@@ -207,6 +207,7 @@ def broadcast_block(block):
 
     print(json.dumps(block_payload))
 
+    # TODO - Do not send to self
     for peer in peers:
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting to peer', url)
