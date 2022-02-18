@@ -1,10 +1,12 @@
+from decimal import ROUND_UP
 import json
 import importlib
+from lib2to3.pgen2 import token
 
 from ..constants import NEWRL_DB
 from .db_updater import *
 
-def update_db_states(cur, newblockindex, transactions):
+def update_db_states(cur, newblockindex, transactions, creator = None):
     last_block_cursor = cur.execute(
             f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
     last_block = last_block_cursor.fetchone()
@@ -13,6 +15,10 @@ def update_db_states(cur, newblockindex, transactions):
         return False
 #    latest_index = cur.execute('SELECT MAX(block_index) FROM blocks')
     add_tx_to_block(cur, newblockindex, transactions)
+
+    if creator:
+        add_block_reward(cur, creator, newblockindex)
+
     for transaction in transactions:
         transaction_data = transaction['specific_data']
         while isinstance(transaction_data, str):
@@ -70,3 +76,16 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
     #    sc_instance = nusd1(transaction['specific_data']['address'])
         funct = getattr(sc_instance, funct)
         funct(cur, transaction_data['params'])
+
+def add_block_reward(cur, creator, blockindex):
+    reward = 0
+    RATIO = 2/3
+    STARTING_REWARD = 1000
+    block_step = ROUND_UP(float(blockindex)/1000000.0,0)
+    reward = STARTING_REWARD * (RATIO^(block_step - 1))
+    reward_tx_data = {  'tokencode':"newrl",
+                        'first_owner': creator,
+                        'amount_created':reward
+                        }
+    add_token(cur, reward_tx_data)
+    return True
