@@ -8,8 +8,8 @@ client = TestClient(app)
 
 
 test_wallet = {
-    "public": "wTxCEIm7oaKrYmmWIaeEcd4B49DsHb+D4VilmzhQZJCEmhT1XMFa/WmWoyBK3SRDuNGc9iOYdRBBCfeE0esH6A==",
-    "private": "erMsIsopb9N6MYnDxvWtC+iaNb4PmQTY72D3jM5+lFE=",
+    "publicKey": "wTxCEIm7oaKrYmmWIaeEcd4B49DsHb+D4VilmzhQZJCEmhT1XMFa/WmWoyBK3SRDuNGc9iOYdRBBCfeE0esH6A==",
+    "privateKey": "erMsIsopb9N6MYnDxvWtC+iaNb4PmQTY72D3jM5+lFE=",
     "address": "0x08a04d6f6a90248df7c392083c8eb52bba929597"
 }
 
@@ -23,8 +23,8 @@ def test_validate_block_receipt():
 
     receipt = {
         "data": receipt_data,
-        "public_key": test_wallet["public"],
-        "signature": sign_object(test_wallet["private"], receipt_data)
+        "publicKey": test_wallet["publicKey"],
+        "signature": sign_object(test_wallet["privateKey"], receipt_data)
     }
 
     assert validate_receipt_signature(receipt) is True
@@ -79,8 +79,8 @@ def test_block_validation_success():
     }
 
     block_signature = {
-        "public_key": test_wallet["public"],
-        "msgsign": sign_object(test_wallet["private"], block_data)
+        "publicKey": test_wallet["publicKey"],
+        "msgsign": sign_object(test_wallet["privateKey"], block_data)
     }
     receipt_data = {
         "block_index": 241,
@@ -95,13 +95,13 @@ def test_block_validation_success():
         "receipts": [
             {
                 "data": receipt_data,
-                "public_key": test_wallet["public"],
-                "signature": sign_object(test_wallet["private"], receipt_data)
+                "publicKey": test_wallet["publicKey"],
+                "signature": sign_object(test_wallet["privateKey"], receipt_data)
             },
             {
                 "data": receipt_data,
-                "public_key": test_wallet["public"],
-                "signature": sign_object(test_wallet["private"], receipt_data)
+                "publicKey": test_wallet["publicKey"],
+                "signature": sign_object(test_wallet["privateKey"], receipt_data)
             }
         ]
     }

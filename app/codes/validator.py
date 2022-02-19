@@ -19,41 +19,29 @@ logger = logging.getLogger(__name__)
 
 
 def validate(transaction):
-    #blockchain = Blockchain("inginesis.json")
-    #	blockchain = Blockchain(options.chainfile)
-    #	blockchain = Blockchain();
-    #	blockchain.loadfromfile("chain.json");
-
-    ts = str(datetime.datetime.now())
-    tm = Transactionmanager()
-    tm.set_transaction_data(transaction)
-    econ = tm.econvalidator()
-    signvalid = tm.verifytransigns()
-    valid = 0
-    if econ and signvalid:
-        #		tm.dumptransaction(options.transfile);
+    transaction_manager = Transactionmanager()
+    transaction_manager.set_transaction_data(transaction)
+    economics_valid = transaction_manager.econvalidator()
+    signatures_valid = transaction_manager.verifytransigns()
+    valid = False
+    if economics_valid and signatures_valid:
         msg = "All well"
-        valid = 1
-    if not econ:
+        valid = True
+    if not economics_valid:
         msg = "Economic validation failed"
-    if not signvalid:
+    if not signatures_valid:
         msg = "Invalid signatures"
     check = {'valid': valid, 'msg': msg}
 
-    # checkfile = MEMPOOL_PATH+tm.transaction['trans_code'] + \
-    #     "_validation"+str("-"+ts[0:10]+"-"+ts[-6:]+".json")
-    # with open(checkfile, "w") as ckfile:
-    #     json.dump(check, ckfile)
+    if valid:  # Economics and signatures are both valid
+        transaction_file = f"{MEMPOOL_PATH}transaction-{transaction_manager.transaction['type']}-{transaction_manager.transaction['trans_code']}.json"
+        transaction_manager.save_transaction_to_mempool(transaction_file)
 
-    if valid == 1:  # econ and signvalid are both True
-        transaction_file = f"{MEMPOOL_PATH}transaction-{tm.transaction['type']}-{tm.transaction['trans_code']}.json"
-        tm.dumptransaction(transaction_file)
-
-        # Send to transport server
+        # Broadcaset transaction
         try:
             payload = {
                 'operation': 'send_transaction',
-                'data': tm.get_transaction()
+                'data': transaction_manager.get_transaction_complete()
             }
             send(payload)
         except:
@@ -77,7 +65,7 @@ def validate_signature(data, public_key, signature):
 
 def validate_receipt_signature(receipt):
     try:
-        return validate_signature(receipt['data'], receipt['public_key'], receipt['signature'])
+        return validate_signature(receipt['data'], receipt['publicKey'], receipt['signature'])
     except:
         logger.error('Error validating receipt signature')
         return False
@@ -100,7 +88,7 @@ def validate_block_using_receipts(block):
         if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash'] or receipt['data']['vote'] < 1:
             continue
 
-        trust_score = get_node_trust_score(receipt['public_key'])
+        trust_score = get_node_trust_score(receipt['publicKey'])
         valid_probability = 0 if trust_score < 0 else (trust_score + 2) / 5
 
         score_weighted_validity_count += valid_probability
@@ -121,7 +109,7 @@ def validate_block(block, validate_receipts=True, should_validate_signature=True
     if should_validate_signature:
         sign_valid = validate_signature(
             data=block['data'],
-            public_key=block['signature']['public_key'],
+            public_key=block['signature']['publicKey'],
             signature=block['signature']['msgsign']
         )
 

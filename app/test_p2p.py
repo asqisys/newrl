@@ -53,7 +53,7 @@ def _receive_block(block_index):
         "previous_hash": "0000ae69c361c65f088b52af8f5372f94f5f62d84f0980ea4c2cd71551206024"
     },
     "signature": {
-        "public_key": "4trPBhDwdxWat2I8tE4Mj+7R6tiTJ+44GWtTdf5QpXnh/Ia1i5x4ETDufrCn3mjYN8gJs/w3iiMlDEmAAs7kvg==",
+        "publicKey": "4trPBhDwdxWat2I8tE4Mj+7R6tiTJ+44GWtTdf5QpXnh/Ia1i5x4ETDufrCn3mjYN8gJs/w3iiMlDEmAAs7kvg==",
         "msgsign": "8odtLy4zlyXNn7GFK4lpDtubGOS3bLFijmxXR1T8+TlLOl39+mA9Ajw8S4Sw3enJlGiWGorJr+0ULKdmeqf4Hw=="
     }
     }

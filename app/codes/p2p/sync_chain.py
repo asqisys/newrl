@@ -1,13 +1,10 @@
 import logging
-import json
-import os
 import requests
 import sqlite3
 
 from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
-from app.codes.updater import update_db_states
 from app.codes.validator import validate_block, validate_block_data, validate_receipt_signature
 
 logging.basicConfig(level=logging.INFO)

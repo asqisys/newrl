@@ -4,6 +4,7 @@ import datetime
 
 from .transactionmanager import Transactionmanager
 
+
 def create_token_transaction(token_data):
     transaction = {
         'timestamp': str(datetime.datetime.now()),
@@ -19,5 +20,5 @@ def create_token_transaction(token_data):
     trans = Transactionmanager()
     transaction_data = {'transaction': transaction, 'signatures': []}
     trans.transactioncreator(transaction_data)
-    transaction_file = trans.dumptransaction()
+    transaction_file = trans.save_transaction_to_mempool()
     return transaction_file

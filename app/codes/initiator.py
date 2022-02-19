@@ -1,15 +1,14 @@
-# Python programm to create the genesis block with a given chain creator wallet address
-
+"""Python programm to create the genesis block with a given chain creator wallet address"""
 import json
 import os
 import shutil
 
 from .blockchain import Blockchain
-from ..constants import ALL_WALLETS_FILE, CHAIN_FILE, MEMPOOL_PATH
+from ..constants import MEMPOOL_PATH
 
 
 def main():
-    blockchain = Blockchain(CHAIN_FILE)
+    blockchain = Blockchain()
     print("Loaded chain validity status : ",
           blockchain.chain_valid(blockchain.chain))
 
@@ -36,14 +35,6 @@ def main():
         os.mkdir(MEMPOOL_PATH)
     else:
         print("WRN: Mempool already exists, beware of possible errors")
-    # if not os.path.exists("./incltranspool/"):
-    # 	os.mkdir("./incltranspool/")
-    # else:
-    # 	print("WRN: Incltranspool already exists, beware of possible errors")
-    # if not os.path.exists("./statearchive/"):
-    # 	os.mkdir("./statearchive/")
-    # else:
-    # 	print("WRN: statearchive  already exists, beware of possible errors")
 
 
 if __name__ == "__main__":

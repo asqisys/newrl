@@ -1,4 +1,5 @@
 """Python programm to create object that enables addition of a block"""
+import time
 import datetime
 import hashlib
 import json
@@ -11,7 +12,9 @@ from .state_updater import update_db_states
 
 
 class Blockchain:
-    def __init__(self, chain=[]) -> None:
+    """Main blockchain related functions"""
+
+    def __init__(self) -> None:
         self.chain = []
 
     def create_block(self, cur, block, block_hash):
@@ -90,7 +93,7 @@ class Blockchain:
 
         block = {
             'index': last_block_index + 1,
-            'timestamp': str(datetime.datetime.now()),
+            'timestamp': time.time_ns() // 1000000,
             'proof': 0,
             'text': text,
             'previous_hash': last_block_hash
@@ -160,7 +163,7 @@ def get_last_block_hash():
     )
     last_block = last_block_cursor.fetchone()
     con.close()
-    
+
     if last_block is not None:
         return {
             'index': last_block[0],

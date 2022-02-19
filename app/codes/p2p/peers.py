@@ -17,11 +17,11 @@ def get_auth():
     with open(AUTH_FILE_PATH, 'r') as f:
         auth_data = json.load(f)
         wallet = auth_data['wallet']
-        private_key = wallet['private']
+        private_key = wallet['privateKey']
         auth_data = {
             'person_id': auth_data['person_id'],
             'wallet_id': wallet['address'],
-            'public_key': wallet['public'],
+            'publicKey': wallet['publicKey'],
         }
         auth_data['signature'] = sign_object(private_key, auth_data)
         print('auth', auth_data)
@@ -187,12 +187,12 @@ def validate_auth(auth):
     data = {
         'person_id': auth['person_id'],
         'wallet_id': auth['wallet_id'],
-        'public_key': auth['public_key'],
+        'publicKey': auth['publicKey'],
     }
     signature = auth['signature']
     return validate_signature(
         data=data,
-        public_key=auth['public_key'],
+        public_key=auth['publicKey'],
         signature=signature
     )
 
