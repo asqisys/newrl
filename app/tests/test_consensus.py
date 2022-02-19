@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from .main import app
-from .codes.validator import validate_block, validate_receipt_signature
-from .codes.signmanager import sign_object
+from ..main import app
+from ..codes.validator import validate_block, validate_receipt_signature
+from ..codes.signmanager import sign_object
 
 client = TestClient(app)
 

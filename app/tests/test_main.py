@@ -2,11 +2,11 @@ from audioop import add
 from random import random
 import token
 from fastapi.testclient import TestClient
-from .migrations.init import init_newrl
+from ..migrations.init import init_newrl
 import random
 
-from .main import app
-from .codes.contracts.nusd1 import nusd1
+from ..main import app
+from ..codes.contracts.nusd1 import nusd1
 
 client = TestClient(app)
 

@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
-from .migrations.init import init_newrl
+from ..migrations.init import init_newrl
 
-from .main import app
+from ..main import app
 
 client = TestClient(app)
 
