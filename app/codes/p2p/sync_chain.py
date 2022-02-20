@@ -127,6 +127,7 @@ def sync_chain_from_peers():
 
 
 
+
 # TODO - use mode of max last 
 def get_best_peer_to_sync(peers):
     best_peer = None
