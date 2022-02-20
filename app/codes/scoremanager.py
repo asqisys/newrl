@@ -1,28 +1,29 @@
-# code for managing trust scores between two persons
-import datetime
-
+"""Code for managing trust scores between two persons"""
 from .transactionmanager import Transactionmanager
+from .utils import get_time_ms
+from ..types import TRANSACTION_TRUST_SCORE_CHANGE
 
 
 def update_score_transaction(personid1, address1, personid2, address2, new_score):
     transaction = {
-        'timestamp': str(datetime.datetime.now()),
-        'type': 6,
+        'timestamp': get_time_ms(),
+        'type': TRANSACTION_TRUST_SCORE_CHANGE,
         'currency': "INR",
         'fee': 0.0,
         'descr': "Score update",
         'valid': 1,
         'block_index': 0,
-        'specific_data': {"personid1": personid1,
-                          "address1": address1,
-                          "personid2": personid2,
-                          "address2": address2,
-                          "new_score": new_score
-                          }
+        'specific_data': {
+            "personid1": personid1,
+            "address1": address1,
+            "personid2": personid2,
+            "address2": address2,
+            "new_score": new_score
+        }
     }
 
-    trans = Transactionmanager()
+    transaction_manager = Transactionmanager()
     transaction_data = {'transaction': transaction, 'signatures': []}
-    trans.transactioncreator(transaction_data)
-    transaction_file = trans.save_transaction_to_mempool()
+    transaction_manager.transactioncreator(transaction_data)
+    transaction_file = transaction_manager.save_transaction_to_mempool()
     return transaction_file
