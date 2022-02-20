@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.codes.p2p.sync_chain import sync_chain_from_peers
 
 from .constants import NEWRL_PORT
-from .codes.p2p.peers import init_bootstrap_nodes, update_software
+from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
+from .codes.clock.global_time import start_mining_clock, update_time_difference
 
 from .routers import blockchain
 from .routers import p2p
@@ -52,6 +53,9 @@ async def app_startup():
             if not args.disablebootstrap:
                 await init_bootstrap_nodes()
             sync_chain_from_peers()
+        await update_time_difference()
+        await update_my_address()
+        # start_mining_clock()
     except Exception as e:
         print('Bootstrap failed')
         logging.critical(e, exc_info=True)
