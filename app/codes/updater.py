@@ -105,8 +105,8 @@ def run_updater():
     con.close()
 
     # Generate and add a single receipt to the block of mining node
-    block_receipt = generate_block_receipt(block)
-    block['receipts'] = [block_receipt]
+    # block_receipt = generate_block_receipt(block)
+    # block['receipts'] = [block_receipt]
 
     if not IS_TEST:
         broadcast_block(block)
