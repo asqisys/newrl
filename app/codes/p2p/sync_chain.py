@@ -55,28 +55,6 @@ def receive_block(block):
     return True
 
 
-def receive_receipt(receipt):
-    logger.info('Recieved receipt: %s', receipt)
-    if not validate_receipt_signature(receipt):
-        logger.info('Invalid receipt signature')
-        return False
-
-    receipt_data = receipt['data']
-    block_index = receipt_data['block_index']
-    blocks = get_blocks_for_index_from_storage(block_index)
-    if len(blocks) == 0:
-        store_receipt_to_temp(receipt)
-        block = ask_peers_for_block(block_index)
-        if block is not None:
-            append_receipt_to_block(block, receipt)
-            store_block_to_temp(block)
-    else:
-        blocks_appended = append_receipt_to_block_in_storage(receipt)
-        # TODO - Validate blocks_appended and propogate
-
-    return True
-
-
 def sync_chain_from_node(url):
     """Update local chain and state from remote node"""
     response = requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT)
