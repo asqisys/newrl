@@ -55,7 +55,7 @@ async def app_startup():
             sync_chain_from_peers()
         await update_time_difference()
         await update_my_address()
-        start_mining_clock()
+        # start_mining_clock()
     except Exception as e:
         print('Bootstrap failed')
         logging.critical(e, exc_info=True)

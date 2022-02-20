@@ -40,6 +40,12 @@ def receive_block(block):
         sync_chain_from_peers()
     
     validate_block(block, validate_receipts=False)
+
+    # if check_community_consensus(block):
+    #     accept_block(block)
+    # else:
+    #     store_block_to_temp(block)
+
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     blockchain.add_block(cur, block['data'], block['hash'])
@@ -175,25 +181,6 @@ def accept_block(block, broadcast=True):
     con.close()
 
     broadcast_block(block)
-
-
-def receive_block(block):
-    print('Recieved block', block)
-
-    block_index = block['block_index'] if 'block_index' in block else block['index']
-    if block_index > get_last_block_index() + 1:
-        sync_chain_from_peers()
-    
-    # Validate and reject block if first priciples fail or any receipt are invalid
-    validate_block(block, validate_receipts=False)
-
-    if check_community_consensus(block):
-        accept_block(block)
-    else:
-        store_block_to_temp(block)
-    
-    
-    return True
 
 
 def receive_receipt(receipt):

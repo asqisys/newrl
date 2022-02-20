@@ -104,12 +104,12 @@ def run_updater():
     con.commit()
     con.close()
 
-    if not IS_TEST:
-        broadcast_block(block)
-
     # Generate and add a single receipt to the block of mining node
     block_receipt = generate_block_receipt(block)
     block['receipts'] = [block_receipt]
+
+    if not IS_TEST:
+        broadcast_block(block)
 
     return logger.get_logs()
 
