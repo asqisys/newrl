@@ -5,12 +5,13 @@ import ecdsa
 
 
 def calculate_hash(block):
-        """Calculate hash of a given block using sha256"""
-        encoded_block = json.dumps(block, sort_keys=True).encode()
-        return hashlib.sha256(encoded_block).hexdigest()
+    """Calculate hash of a given block using sha256"""
+    encoded_block = json.dumps(block, sort_keys=True).encode()
+    return hashlib.sha256(encoded_block).hexdigest()
 
 
 def sign_object(private_key, data):
+    """Sign an object using private key"""
     pvtkeybytes = base64.b64decode(private_key)
     msg = json.dumps(data).encode()
     sk = ecdsa.SigningKey.from_string(pvtkeybytes, curve=ecdsa.SECP256k1)

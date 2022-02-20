@@ -1,3 +1,6 @@
+import time
+
+
 def save_file_and_get_path(upload_file):
     if upload_file is None:
         return None
@@ -17,3 +20,8 @@ class BufferedLog():
     
     def get_logs(self):
         return self.buffer
+
+
+def get_time_ms():
+    """Return time in milliseconds"""
+    return time.time_ns() // 1000000
