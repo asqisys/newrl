@@ -1,4 +1,3 @@
 # newrl
 
-### Running newrl
-
+### Newrl blockchain's python client
