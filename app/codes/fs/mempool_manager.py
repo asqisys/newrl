@@ -3,8 +3,7 @@
 import glob
 import json
 
-from constants import MEMPOOL_PATH, TMP_PATH
-
+from ...constants import MEMPOOL_PATH, TMP_PATH
 
 def get_receipts_from_storage(block_index, folder=MEMPOOL_PATH):
     """Returns a list of receipts matching a block index from mempool"""
