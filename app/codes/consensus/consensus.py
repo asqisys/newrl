@@ -6,16 +6,17 @@ from ..blockchain import calculate_hash
 from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
 from ...constants import MINIMUM_ACCEPTANCE_RATIO, MINIMUM_ACCEPTANCE_VOTES
+from codes.auth.auth import get_wallet
 
 
 try:
-    auth_data = get_auth()
+    wallet_data = get_wallet()
 except:
-    auth_data = {
-        'wallet': {'public': '', 'private': ''},
+    wallet_data = {
+        
     }
-public_key = auth_data['wallet']['public']
-private_key = auth_data['wallet']['private']
+public_key = wallet_data['publicKey']
+private_key = wallet_data['privateKey']
 
 def generate_block_receipt(block):
     receipt_data = {

@@ -7,8 +7,10 @@ import json
 import sqlite3
 
 from ..constants import NEWRL_DB
+from .utils import get_time_ms
 from .crypto import calculate_hash
 from .state_updater import update_db_states
+from .auth.auth import get_auth
 
 
 class Blockchain:
@@ -82,7 +84,7 @@ class Blockchain:
 
         return True
 
-    def mine_block(self, cur, text):
+    def mine_block(self, cur, text, reward=0):
         """Mine a new block"""
         print("Starting the mining step 1")
         last_block_cursor = cur.execute(
@@ -93,9 +95,11 @@ class Blockchain:
 
         block = {
             'index': last_block_index + 1,
-            'timestamp': time.time_ns() // 1000000,
+            'timestamp': get_time_ms(),
             'proof': 0,
             'text': text,
+            'miner': get_auth()['wallet_id'],
+            'reward': reward,
             'previous_hash': last_block_hash
         }
 
