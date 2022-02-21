@@ -3,7 +3,7 @@
 import glob
 import json
 
-from constants import MEMPOOL_PATH, TMP_PATH
+from ...constants import MEMPOOL_PATH, TMP_PATH
 
 
 def get_blocks_for_index_from_storage(block_index, folder=TMP_PATH):
