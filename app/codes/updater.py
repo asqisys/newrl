@@ -35,6 +35,8 @@ def run_updater():
     txcodes = []
     tmtemp = Transactionmanager()
 
+    transaction_fees = 0
+
     for filename in transfiles:
         file = MEMPOOL_PATH + filename
         try:
@@ -73,6 +75,8 @@ def run_updater():
             textarray.append(transaction)
             signarray.append(signatures)
             txcodes.append(trandata['transaction']['trans_code'])
+
+            transaction_fees += get_fees_for_transaction(trandata['transaction'])
             try:
                 os.remove(file)
             except:
@@ -101,7 +105,7 @@ def run_updater():
             logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
     print(transactionsdata)
-    block = blockchain.mine_block(cur, transactionsdata)
+    block = blockchain.mine_block(cur, transactionsdata, transaction_fees)
     update_db_states(cur, block['index'], transactionsdata['transactions'])
     con.commit()
     con.close()
@@ -142,4 +146,8 @@ def broadcast_block(block):
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
             print(e)
-    return True    
+    return True
+
+
+def get_fees_for_transaction(transaction):
+    return 1
