@@ -25,6 +25,7 @@ TREASURY = "treasury_address"
 COINBASE_SC = "coinbase_sc_address"
 TRANSPORT_SERVER = 'http://localhost:8095'
 
+TIME_BETWEEN_BLOCKS_SECONDS = 30  # The time period between blocks
 COMMITTEE_SIZE = 6
 MINIMUM_ACCEPTANCE_VOTES = 4
 MINIMUM_ACCEPTANCE_RATIO = 0.6

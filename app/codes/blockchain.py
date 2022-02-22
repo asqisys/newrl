@@ -114,12 +114,12 @@ class Blockchain:
             cur = con.cursor()
             should_close_db_conn = True
         last_block_cursor = cur.execute(
-            'SELECT timestamp FROM blocks ORDER BY timestamp DESC LIMIT 1')
+            'SELECT block_index, timestamp FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
         if last_block is None:
             ts = None
         else:
-            ts = last_block[0]
+            ts = last_block[1]
         if should_close_db_conn:
             con.close()
         return ts

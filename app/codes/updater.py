@@ -5,7 +5,7 @@ import os
 import sqlite3
 import requests
 
-from ..constants import IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH
+from ..constants import IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
 from .p2p.peers import get_peers
 from .utils import BufferedLog, get_time_ms
 from .blockchain import Blockchain
@@ -90,11 +90,11 @@ def run_updater():
         logger.log("No new transactions. Checking for time.")
         logger.log("latest ts:", latest_ts, "\tNow: ", datetime.datetime.now())
         try:
-            time_diff = int(get_time_ms() - int(latest_ts))
+            time_diff = get_time_ms() - int(latest_ts)
         except Exception as e:
-            time_diff = 10000000  # Set a high timelimit as no last block timestamp found
+            time_diff = TIME_BETWEEN_BLOCKS_SECONDS * 1000 + 1  # Set a high timelimit as no last block timestamp found
         logger.log("Time since last block: ", time_diff, " seconds")
-        if time_diff < 30:  # TODO - Change the block time limit
+        if time_diff < TIME_BETWEEN_BLOCKS_SECONDS * 1000:  # TODO - Change the block time limit
             logger.log("No new transactions, not enough time since last block. Exiting.")
             return logger.get_logs()
         else:
