@@ -131,13 +131,13 @@ def init_trust_db():
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS person
                     (person_id text NOT NULL PRIMARY KEY, 
-                    created_time text)
+                    created_time integer)
                     ''')
     
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS person_wallet
                     (person_id text NOT NULL PRIMARY KEY, 
-                    wallet_id text)
+                    wallet_id integer)
                     ''')
     
     cur.execute('''
@@ -145,7 +145,7 @@ def init_trust_db():
                     (src_person_id text NOT NULL, 
                     dest_person_id text NOT NULL,
                     score real,
-                    last_time text)
+                    last_time integer)
                     ''')
 
     con.commit()

@@ -1,6 +1,9 @@
 """Global constants in this file"""
 import os
 
+NWRL_TOKEN_CODE = 'NWRL'
+TREASURY_WALLET_ADDRESS = '0xc29193dbab0fe018d878e258c93064f01210ec1a'
+
 IS_TEST = os.environ.get('NEWRL_TEST') is not None
 if IS_TEST:
     print('Using constants for Test')
@@ -15,7 +18,7 @@ STATE_FILE = 'state.json'
 CHAIN_FILE = 'chain.json'
 ALLOWED_CUSTODIANS_FILE = 'allowed_custodians.json'
 DB_MIGRATIONS_PATH = 'app/migrations/migrations'
-AUTH_FILE_PATH = '.auth.json'
+AUTH_FILE_PATH = DATA_PATH + '.auth.json'
 
 BOOTSTRAP_NODES = ['newrl.net']
 REQUEST_TIMEOUT = 5
