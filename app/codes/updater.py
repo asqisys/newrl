@@ -98,7 +98,7 @@ def run_updater():
             logger.log("No new transactions, not enough time since last block. Exiting.")
             return logger.get_logs()
         else:
-            logger.log(f"More than {block_time_limit} seconds since the last block. Adding a new empty one.")
+            logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
     print(transactionsdata)
     block = blockchain.mine_block(cur, transactionsdata)
