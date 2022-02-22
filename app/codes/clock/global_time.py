@@ -44,7 +44,7 @@ def get_time_difference():
     return global_epoch - local_epoch
 
 
-async def update_time_difference():
+def update_time_difference():
     TIME_DIFF_WITH_GLOBAL = get_time_difference()
     print('Time difference with global is ', TIME_DIFF_WITH_GLOBAL)
     if TIME_DIFF_WITH_GLOBAL > MAX_ALLOWED_TIME_DIFF_SECONDS:

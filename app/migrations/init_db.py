@@ -152,7 +152,7 @@ def init_trust_db():
     con.close()
 
 
-async def revert_chain(block_index):
+def revert_chain(block_index):
     """Revert chain to given index"""
     print('Reverting chain to index ', block_index)
     con = sqlite3.connect(NEWRL_DB)

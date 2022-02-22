@@ -64,7 +64,7 @@ def get_peers():
     return peers
 
 
-async def add_peer(peer_address):
+def add_peer(peer_address):
     peer_address = str(peer_address)
 
     if peer_address == '127.0.0.1':
@@ -109,17 +109,17 @@ def clear_peers():
     con.close()
     return True
 
-async def init_bootstrap_nodes():
+def init_bootstrap_nodes():
     print(f'Initiating node discovery from bootstrap nodes: {BOOTSTRAP_NODES}')
     # clear_peer_db()
     init_peer_db()
 
-    my_address = await get_my_address()
+    my_address = get_my_address()
     for node in BOOTSTRAP_NODES:
         if socket.gethostbyname(node) == my_address:
             continue
         logger.info(f'Boostrapping from node {node}')
-        await add_peer(node)
+        add_peer(node)
         try:
             response = requests.get('http://' + node + f':{NEWRL_PORT}/get-peers', timeout=REQUEST_TIMEOUT)
             their_peers = response.json()
@@ -128,7 +128,7 @@ async def init_bootstrap_nodes():
             print('Error getting nodes.', e)
         print(f'Peers from node {node} : {their_peers}')
         for their_peer in their_peers:
-            await add_peer (their_peer['address'])
+            add_peer (their_peer['address'])
     
     my_peers = get_peers()
 
@@ -137,21 +137,21 @@ async def init_bootstrap_nodes():
         if socket.gethostbyname(address) == my_address:
             continue
         try:
-            response = await register_me_with_them(address)
+            response = register_me_with_them(address)
         except Exception as e:
             print(f'Peer unreachable, deleting: {peer}')
             remove_peer(peer['address'])
     return True
 
 
-async def register_me_with_them(address):
+def register_me_with_them(address):
     logger.info(f'Registering me with node {address}')
     response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', json=auth_data, timeout=REQUEST_TIMEOUT)
     return response.json()
 
-async def update_peers():
+def update_peers():
     my_peers = get_peers()
-    my_address = await get_my_address()
+    my_address = get_my_address()
 
     for peer in my_peers:
         address = peer['address']
@@ -169,22 +169,22 @@ async def update_peers():
             print('Error updating software on peer', str(e))
     return True
 
-async def get_my_address():
+def get_my_address():
     return requests.get('https://api.ipify.org?format=json').json()['ip']
 
 
-async def update_my_address():
-    MY_ADDRESS = await get_my_address()
+def update_my_address():
+    MY_ADDRESS = get_my_address()
     return True
 
-async def update_software(propogate):
+def update_software(propogate):
     "Update the client software from repo"
     logger.info('Getting latest code from repo')
     subprocess.call(["git", "pull"])
     init_newrl()
     if propogate is True:
         logger.info('Propogaring update request to network')
-        await update_peers()
+        update_peers()
 
 
 def validate_auth(auth):
@@ -201,9 +201,9 @@ def validate_auth(auth):
     )
 
 
-async def call_api_on_peers(url):
+def call_api_on_peers(url):
     my_peers = get_peers()
-    my_address = await get_my_address()
+    my_address = get_my_address()
 
     for peer in my_peers:
         address = peer['address']

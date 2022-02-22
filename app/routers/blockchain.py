@@ -31,7 +31,7 @@ v2_tag = 'V2 For Machines'
 
 
 @router.post("/run-updater", tags=[v2_tag], response_class=HTMLResponse)
-async def run_updater():
+def run_updater():
     try:
         log = updater.run_updater()
     except Exception as e:
@@ -42,7 +42,7 @@ async def run_updater():
 
 
 @router.get("/get-transaction", tags=[v2_tag])
-async def get_transaction_api(transaction_code: str):
+def get_transaction_api(transaction_code: str):
     try:
         return get_transaction(transaction_code)
     except Exception as e:
@@ -50,17 +50,17 @@ async def get_transaction_api(transaction_code: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/download-chain", tags=[v2_tag])
-async def download_chain_api():
+def download_chain_api():
     return download_chain()
 
 
 @router.get("/download-state", tags=[v2_tag])
-async def download_state_api():
+def download_state_api():
     return download_state()
 
 
 @router.post("/get-balance", tags=[v2_tag])
-async def get_balance(req: BalanceRequest):
+def get_balance(req: BalanceRequest):
     chain_scanner = Chainscanner()
     if req.balance_type == BalanceType.TOKEN_IN_WALLET:
         balance = chain_scanner.getbaladdtoken(
@@ -72,7 +72,7 @@ async def get_balance(req: BalanceRequest):
     return {'balance': balance}
 
 @router.get("/get-address-from-publickey", tags=[v2_tag])
-async def get_address_from_public_key_api(public_key: str):
+def get_address_from_public_key_api(public_key: str):
     try:
         address = get_address_from_public_key(public_key)
         return {'address': address}
@@ -81,17 +81,17 @@ async def get_address_from_public_key_api(public_key: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/generate-wallet-address", tags=[v2_tag])
-async def generate_wallet_address_api():
+def generate_wallet_address_api():
     return generate_wallet_address()
 
 # v2 APIs - JSON only
 
 @router.get("/generate-contract-address", tags=[v2_tag])
-async def generate_contract_address_api():
+def generate_contract_address_api():
     return create_contract_address()
 
 @router.post("/add-wallet", tags=[v2_tag])
-async def add_wallet_api(req: AddWalletRequest):
+def add_wallet_api(req: AddWalletRequest):
     """Get a transaction file for adding an existing wallet to chain"""
     try:
         req_dict = req.dict()
@@ -106,7 +106,7 @@ async def add_wallet_api(req: AddWalletRequest):
     # return FileResponse(add_wallet_transaction, filename="add_wallet_transaction.json")
 
 @router.post("/add-token", tags=[v2_tag])
-async def add_token(
+def add_token(
     request: CreateTokenRequest
 ):
     token_data = {
@@ -131,7 +131,7 @@ async def add_token(
         return json.load(f)
 
 @router.post("/add-transfer", tags=[v2_tag])
-async def add_transfer(transfer_request: TransferRequest):
+def add_transfer(transfer_request: TransferRequest):
     """Used to create a transfer file which can be signed and executed by /sign and /transfer respectively"""
     transfer_type = transfer_request.transfer_type
     trandata = {
@@ -172,7 +172,7 @@ async def add_transfer(transfer_request: TransferRequest):
 #        return json.load(f)
 
 @router.post("/add-sc", tags=[v2_tag])
-async def add_sc(sc_request: CreateSCRequest):
+def add_sc(sc_request: CreateSCRequest):
     """Used to create a sc object which can be used to set up and deploy a smart contract"""
     scdata = {
         "creator":sc_request.creator,
@@ -218,7 +218,7 @@ async def add_sc(sc_request: CreateSCRequest):
     return tdatanew
 
 @router.post("/call-sc", tags=[v2_tag])
-async def call_sc(sc_request: CallSC):
+def call_sc(sc_request: CallSC):
     """Used to create a sc object which can be used to set up and deploy a smart contract"""
 
     txspecdata = {
@@ -249,7 +249,7 @@ async def call_sc(sc_request: CallSC):
     return tdatanew
 
 @router.post("/update-trustscore", tags=[v2_tag])
-async def update_ts(ts_request: TscoreRequest):
+def update_ts(ts_request: TscoreRequest):
     """Used to update trust score of person1 for person 2 """
 
     txspecdata = {
@@ -279,7 +279,7 @@ async def update_ts(ts_request: TscoreRequest):
     return tdatanew
 
 @router.post("/sign-transaction", tags=[v2_tag])
-async def sign_transaction(wallet_data: dict, transaction_data: dict):
+def sign_transaction(wallet_data: dict, transaction_data: dict):
     """Custodian wallet file can be used to sign a transaction"""
     # transactionfile_path = save_file_and_get_path(transactionfile)
     # wallet_file = save_file_and_get_path(wallet_file)
@@ -287,7 +287,7 @@ async def sign_transaction(wallet_data: dict, transaction_data: dict):
     return singed_transaction_file
 
 @router.post("/validate-transaction", tags=[v2_tag])
-async def validate_transaction(transaction_data: dict):
+def validate_transaction(transaction_data: dict):
     """Validate a given transaction file if it's included in chain"""
     try:
         response = validator.validate(transaction_data)

@@ -45,16 +45,16 @@ app.include_router(p2p.router)
 app.include_router(transport.router)
 
 @app.on_event('startup')
-async def app_startup():
+def app_startup():
     try:
         if not args.disablenetwork:
             if not args.disableupdate:
-                await update_software(propogate=False)
+                update_software(propogate=False)
             if not args.disablebootstrap:
-                await init_bootstrap_nodes()
+                init_bootstrap_nodes()
             sync_chain_from_peers()
-        await update_time_difference()
-        await update_my_address()
+        update_time_difference()
+        update_my_address()
         # start_mining_clock()
     except Exception as e:
         print('Bootstrap failed')
