@@ -115,7 +115,10 @@ class Blockchain:
         last_block_cursor = cur.execute(
             'SELECT timestamp FROM blocks ORDER BY timestamp DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
-        ts = datetime.datetime.strptime(last_block[0], "%Y-%m-%d %H:%M:%S.%f")
+        if last_block is None:
+            ts = None
+        else:
+            ts = last_block[0]
         if should_close_db_conn:
             con.close()
         return ts
