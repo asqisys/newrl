@@ -19,99 +19,99 @@ router = APIRouter()
 p2p_tag = 'p2p'
 
 @router.post("/list-mempool-transactions", tags=[p2p_tag])
-async def list_mempool_transactions_api():
+def list_mempool_transactions_api():
     return list_mempool_transactions()
 
 @router.post("/get-mempool-transactions", tags=[p2p_tag])
-async def get_mempool_transactions_api(req: TransactionsRequest):
+def get_mempool_transactions_api(req: TransactionsRequest):
     return get_mempool_transactions(req.transaction_codes)
 
 @router.post("/get-blocks", tags=[p2p_tag])
-async def get_mempool_transactions_api(req: BlockRequest):
+def get_mempool_transactions_api(req: BlockRequest):
     return get_blocks(req.block_indexes)
 
 @router.post("/receive-block", tags=[p2p_tag])
-async def receive_block_api(req: BlockAdditionRequest):
+def receive_block_api(req: BlockAdditionRequest):
     return receive_block(req.block)
 
 @router.post("/receive-receipt", tags=[p2p_tag])
-async def receive_receipt_api(req: ReceiptAdditionRequest):
+def receive_receipt_api(req: ReceiptAdditionRequest):
     if receive_receipt(req.receipt):
         return {'status': 'SUCCESS'}
     else:
         return {'status': 'FAILURE'}
 
 @router.get("/get-last-block-index", tags=[p2p_tag])
-async def get_last_block_index_api():
+def get_last_block_index_api():
     return get_last_block_index()
 
 @router.post("/sync-mempool-transactions", tags=[p2p_tag])
-async def sync_mempool_transactions_api():
+def sync_mempool_transactions_api():
     return sync_mempool_transactions()
 
 @router.post("/sync-chain-from-node", tags=[p2p_tag])
-async def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.com'):
+def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.com'):
     try:
         return sync_chain_from_node(url)
     except Exception as e:
         raise HTTPException(status_code=500, detail='No more blocks')
 
 @router.post("/sync-chain-from-peers", tags=[p2p_tag])
-async def sync_chain_from_peers_api():
+def sync_chain_from_peers_api():
     return sync_chain_from_peers()
 
 @router.post("/sync-chain-from-peers", tags=[p2p_tag])
-async def sync_chain_from_peers_api():
+def sync_chain_from_peers_api():
     return sync_chain_from_peers()
 
 @router.get("/get-transaction", tags=[p2p_tag])
-async def get_transaction_api(transaction_code: str):
+def get_transaction_api(transaction_code: str):
     return get_transaction(transaction_code)
 
 @router.get("/download-chain", tags=[p2p_tag])
-async def download_chain_api():
+def download_chain_api():
     return download_chain()
 
 @router.get("/download-chain", tags=[p2p_tag])
-async def download_chain_api():
+def download_chain_api():
     return download_chain()
 
 @router.get("/download-state", tags=[p2p_tag])
-async def download_state_api():
+def download_state_api():
     return download_state()
 
 @router.post("/clear-db-test-only", tags=[p2p_tag])
-async def clear_db_api():
+def clear_db_api():
     """ For testing only. To be removed. Clear and initialise a fresh db """
     clear_db()
     init_db()
     return True
 
 @router.get("/get-peers", tags=[p2p_tag])
-async def get_peers_api():
+def get_peers_api():
     return get_peers()
 
 @router.post("/add-peer", tags=[p2p_tag])
-async def add_peer_api(req: Request):
-    return await add_peer(req.client.host)
+def add_peer_api(req: Request):
+    return add_peer(req.client.host)
 
 @router.post("/clear-peers", tags=[p2p_tag])
-async def clear_peer_api(req: Request):
+def clear_peer_api(req: Request):
     return clear_peers()
 
 @router.post("/initiate-peer-connection", tags=[p2p_tag])
-async def initiate_peer_api(address: str):
+def initiate_peer_api(address: str):
     "Test only, used to first connect a client"
-    return await add_peer(address)
+    return add_peer(address)
 
 @router.post("/revert-chain", tags=[p2p_tag])
-async def revert_chain_api(block_index: int, propogate: bool = False):
-    await revert_chain(block_index)
+def revert_chain_api(block_index: int, propogate: bool = False):
+    revert_chain(block_index)
     if propogate:
-        await call_api_on_peers(f'/revert-chain?block_index={block_index}')
+        call_api_on_peers(f'/revert-chain?block_index={block_index}')
     return {'status': 'SUCCESS'}
 
 @router.post("/update-software", tags=[p2p_tag])
-async def update_software_api(propogate: bool = False):
-    await update_software(propogate)
+def update_software_api(propogate: bool = False):
+    update_software(propogate)
     return {'status': 'SUCCESS'}
