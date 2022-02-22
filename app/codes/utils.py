@@ -24,4 +24,4 @@ class BufferedLog():
 
 def get_time_ms():
     """Return time in milliseconds"""
-    return time.time_ns() // 1000000
+    return round(time.time() * 1000)

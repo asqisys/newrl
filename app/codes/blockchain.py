@@ -9,6 +9,7 @@ import sqlite3
 from ..constants import NEWRL_DB
 from .crypto import calculate_hash
 from .state_updater import update_db_states
+from .utils import get_time_ms
 
 
 class Blockchain:
@@ -93,7 +94,7 @@ class Blockchain:
 
         block = {
             'index': last_block_index + 1,
-            'timestamp': time.time_ns() // 1000000,
+            'timestamp': get_time_ms(),
             'proof': 0,
             'text': text,
             'previous_hash': last_block_hash
