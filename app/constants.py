@@ -1,8 +1,6 @@
 """Global constants in this file"""
 import os
 
-NWRL_TOKEN_CODE = 'NWRL'
-TREASURY_WALLET_ADDRESS = '0xc29193dbab0fe018d878e258c93064f01210ec1a'
 
 IS_TEST = os.environ.get('NEWRL_TEST') is not None
 if IS_TEST:

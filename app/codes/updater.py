@@ -106,7 +106,7 @@ def run_updater():
 
     print(transactionsdata)
     block = blockchain.mine_block(cur, transactionsdata, transaction_fees)
-    update_db_states(cur, block['index'], transactionsdata['transactions'])
+    update_db_states(cur, block)
     con.commit()
     con.close()
 

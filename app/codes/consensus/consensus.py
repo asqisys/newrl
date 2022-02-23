@@ -7,6 +7,7 @@ from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_stor
 from ...constants import MINIMUM_ACCEPTANCE_RATIO, MINIMUM_ACCEPTANCE_VOTES
 from ..auth.auth import get_wallet
 
+
 try:
     wallet_data = get_wallet()
 except:

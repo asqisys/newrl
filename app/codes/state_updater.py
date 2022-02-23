@@ -7,18 +7,20 @@ from ..constants import NEWRL_DB
 from .db_updater import *
 
 
-def update_db_states(cur, newblockindex, transactions, creator=None):
+def update_db_states(cur, block):
+    newblockindex = block['index']
+    transactions = block['text']['transactions']
     last_block_cursor = cur.execute(
         f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
     last_block = last_block_cursor.fetchone()
-    if newblockindex != last_block[0]:
+    if newblockindex != last_block[0] + 1:
         print("The latest block index does not match given previous index")
         return False
 #    latest_index = cur.execute('SELECT MAX(block_index) FROM blocks')
     add_tx_to_block(cur, newblockindex, transactions)
 
-    if creator:
-        add_block_reward(cur, creator, newblockindex)
+    if 'creator_wallet' in block:
+        add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
         transaction_data = transaction['specific_data']

@@ -1,5 +1,7 @@
 import sqlite3
 
+from ...ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME
+
 from ...constants import NEWRL_DB
 
 FOUNDATION_WALLET = '0xc29193dbab0fe018d878e258c93064f01210ec1a'
@@ -7,6 +9,7 @@ ASQI_WALLET = '0x20513a419d5b11cd510ae518dc04ac1690afbed6'
 FOUNDATION_PUBLIC_KEY = 'sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg=='
 ASQI_PUBLIC_KEY = 'PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg=='
 
+NEWRL_TOTAL_SUPPLY = 5000000000
 FOUNDATION_RESERVE = 1500000000
 
 def migrate():
@@ -17,34 +20,34 @@ def init_newrl_tokens():
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
 
-    credit_wallet(cur, ASQI_WALLET, FOUNDATION_RESERVE)
+    create_newrl_tokens(cur)
     credit_wallet(cur, FOUNDATION_WALLET, FOUNDATION_RESERVE)
+    credit_wallet(cur, ASQI_WALLET, FOUNDATION_RESERVE)
 
     con.commit()
     con.close()
 
 
-def credit_wallet(cur, wallet, amount):
+def create_newrl_tokens(cur):
     query_params = (
-            'NWRL',
-            'Newrl',
+            NEWRL_TOKEN_CODE,
+            NEWRL_TOKEN_NAME,
             '1',
-            wallet,
-            '00000',
-            amount,
+            NEWRL_TOTAL_SUPPLY,
             False,
-            '0000',
             0,
-            {}
+            '{}',
         )
     cur.execute(f'''INSERT OR IGNORE INTO tokens
-        (tokencode, tokenname, tokentype, first_owner, custodian, 
-        amount_created, sc_flag, parent_transaction_code, tokendecimal, token_attributes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+        (tokencode, tokenname, tokentype, 
+        amount_created, sc_flag, tokendecimal, token_attributes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)''', query_params)
     
+
+def credit_wallet(cur, wallet, amount):
     cur.execute(f'''INSERT OR IGNORE INTO balances
 				(wallet_address, tokencode, balance)
-				 VALUES (?, ?, ?)''', (wallet, 'NWRL', amount))
+				 VALUES (?, ?, ?)''', (wallet, NEWRL_TOKEN_CODE, amount))
     
 
 if __name__ == '__main__':

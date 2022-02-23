@@ -65,6 +65,7 @@ def init_db():
                     proof integer,
                     previous_hash text,
                     hash text,
+                    creator_wallet text,
                     transactions_hash text)
                     ''')
 
