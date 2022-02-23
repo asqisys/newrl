@@ -46,9 +46,9 @@ class Blockchain:
 
     def empty_block_hash(self, block):
         proof = EMPTY_BLOCK_NONCE  # Hardcoded value for empty block
+        block['proof'] = proof
         block_hash = self.calculate_hash(block)
         block_hash = '0000' + block_hash[:4]
-        block['proof'] = proof
 
         return block_hash
 
