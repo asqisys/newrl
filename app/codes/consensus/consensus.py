@@ -13,8 +13,8 @@ except:
     wallet_data = {
         'wallet': {'public': '', 'private': ''},
     }
-public_key = wallet_data['publicKey']
-private_key = wallet_data['privateKey']
+public_key = wallet_data['public']
+private_key = wallet_data['private']
 
 def generate_block_receipt(block):
     receipt_data = {
