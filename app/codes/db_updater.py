@@ -10,8 +10,6 @@ import time
 import sqlite3
 import hashlib
 
-from ..constants import NEWRL_DB
-
 
 def is_wallet_valid(cur, address):
     wallet_cursor = cur.execute(

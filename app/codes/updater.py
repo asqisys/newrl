@@ -61,9 +61,9 @@ def run_updater():
             os.remove(file)
             continue
         # Pay fee for transaction. If payee doesn't have enough funds, remove transaction
-        # if not pay_fee_for_transaction(cur, transaction):
-        #     os.remove(file)
-        #     continue
+        if not pay_fee_for_transaction(cur, transaction):
+            os.remove(file)
+            continue
         if not tmtemp.econvalidator():
             logger.log("Economic validation failed for transaction ",
                         trandata['transaction']['trans_code'])
@@ -157,7 +157,8 @@ def broadcast_block(block):
 
 
 def get_fees_for_transaction(transaction):
-    return 1
+    return transaction['fee']
+
 
 def pay_fee_for_transaction(cur, transaction):
     fee = get_fees_for_transaction(transaction)
