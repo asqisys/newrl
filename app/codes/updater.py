@@ -3,16 +3,19 @@ import datetime
 import json
 import os
 import sqlite3
+from nvalues import TREASURY_WALLET_ADDRESS
 import requests
 
-from ..constants import IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
+from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
 from .p2p.peers import get_peers
 from .utils import BufferedLog, get_time_ms
 from .blockchain import Blockchain
-from .transactionmanager import Transactionmanager
+from .transactionmanager import Transactionmanager, get_valid_addresses
 from .state_updater import update_db_states
 from .crypto import calculate_hash, sign_object, _private, _public
 from .consensus.consensus import generate_block_receipt
+from .chainscanner import get_wallet_token_balance
+from .db_updater import transfer_tokens_and_update_balances
 
 
 MAX_BLOCK_SIZE = 10
@@ -57,6 +60,10 @@ def run_updater():
                 f"Transaction id {trandata['transaction']['trans_code']} has invalid signatures")
             os.remove(file)
             continue
+        # Pay fee for transaction. If payee doesn't have enough funds, remove transaction
+        # if not pay_fee_for_transaction(cur, transaction):
+        #     os.remove(file)
+        #     continue
         if not tmtemp.econvalidator():
             logger.log("Economic validation failed for transaction ",
                         trandata['transaction']['trans_code'])
@@ -151,3 +158,29 @@ def broadcast_block(block):
 
 def get_fees_for_transaction(transaction):
     return 1
+
+def pay_fee_for_transaction(cur, transaction):
+    fee = get_fees_for_transaction(transaction)
+
+    # Check for 0 fee transactions and deprioritize accordingly
+    if fee == 0:
+        return True
+
+    currency = transaction['currency']
+    if currency not in ALLOWED_FEE_PAYMENT_TOKENS:
+        return False
+
+    payees = get_valid_addresses(transaction)
+
+    for payee in payees:
+        balance = get_wallet_token_balance(payee, currency)
+        if balance < fee / len(payees):
+            return False
+        transfer_tokens_and_update_balances(
+            cur,
+            payee,
+            TREASURY_WALLET_ADDRESS,
+            transaction['currency'],
+            fee / len(payees)
+        )
+    return True

@@ -18,6 +18,7 @@ def setup_test_files():
         os.remove('data_test/.auth.json')
     shutil.copyfile('data_test/template/.auth.json', 'data_test/.auth.json')
     init_peer_db()
+    os.environ['NEWRL_TEST'] = '1'
 
 
 @pytest.fixture(scope="session", autouse=True)

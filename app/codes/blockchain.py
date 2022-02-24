@@ -85,7 +85,7 @@ class Blockchain:
 
         return True
 
-    def mine_block(self, cur, text, reward=0):
+    def mine_block(self, cur, text, fees=0):
         """Mine a new block"""
         print("Starting the mining step 1")
         last_block_cursor = cur.execute(
@@ -100,7 +100,7 @@ class Blockchain:
             'proof': 0,
             'text': text,
             'creator_wallet': get_node_wallet_address(),
-            'reward': reward,
+            'fees': fees,
             'previous_hash': last_block_hash
         }
 

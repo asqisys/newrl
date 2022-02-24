@@ -9,7 +9,6 @@ ASQI_WALLET = '0x20513a419d5b11cd510ae518dc04ac1690afbed6'
 FOUNDATION_PUBLIC_KEY = 'sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg=='
 ASQI_PUBLIC_KEY = 'PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg=='
 
-NEWRL_TOTAL_SUPPLY = 5000000000
 FOUNDATION_RESERVE = 1500000000
 
 def migrate():
@@ -20,7 +19,7 @@ def init_newrl_tokens():
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
 
-    create_newrl_tokens(cur)
+    create_newrl_tokens(cur, FOUNDATION_RESERVE * 2)
     credit_wallet(cur, FOUNDATION_WALLET, FOUNDATION_RESERVE)
     credit_wallet(cur, ASQI_WALLET, FOUNDATION_RESERVE)
 
@@ -28,12 +27,12 @@ def init_newrl_tokens():
     con.close()
 
 
-def create_newrl_tokens(cur):
+def create_newrl_tokens(cur, amount):
     query_params = (
             NEWRL_TOKEN_CODE,
             NEWRL_TOKEN_NAME,
             '1',
-            NEWRL_TOTAL_SUPPLY,
+            amount,
             False,
             0,
             '{}',
