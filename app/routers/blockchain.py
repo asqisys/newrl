@@ -290,6 +290,7 @@ def sign_transaction(wallet_data: dict, transaction_data: dict):
 def validate_transaction(transaction_data: dict):
     """Validate a given transaction file if it's included in chain"""
     try:
+        print('Received transaction: ', transaction_data)
         response = validator.validate(transaction_data)
     except Exception as e:
         logger.exception(e)
