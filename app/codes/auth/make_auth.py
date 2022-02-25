@@ -23,8 +23,8 @@ def make_auth_json():
         json.dump(auth_data, f)
     
     print('Share the public key with a custodian to create your wallet on chain')
-    print('Public key: ', wallet['publicKey'])
-    return wallet['publicKey']
+    print('Public key: ', wallet['public'])
+    return wallet['public']
 
 
 if __name__ == '__main__':

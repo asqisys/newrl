@@ -15,7 +15,7 @@ STATE_FILE = 'state.json'
 CHAIN_FILE = 'chain.json'
 ALLOWED_CUSTODIANS_FILE = 'allowed_custodians.json'
 DB_MIGRATIONS_PATH = 'app/migrations/migrations'
-AUTH_FILE_PATH = '.auth.json'
+AUTH_FILE_PATH = DATA_PATH + '.auth.json'
 
 BOOTSTRAP_NODES = ['newrl.net']
 REQUEST_TIMEOUT = 5

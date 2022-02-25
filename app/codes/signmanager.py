@@ -19,8 +19,8 @@ def check_signing_address(transaction, address):
 def sign_transaction(wallet_data, transaction_data):
     """Sign a transaction using a given wallet"""
     address = wallet_data['address']
-    private_key_bytes = base64.b64decode(wallet_data['privateKey'])
-    public_key_bytes = base64.b64decode(wallet_data['publicKey'])
+    private_key_bytes = base64.b64decode(wallet_data['private'])
+    public_key_bytes = base64.b64decode(wallet_data['public'])
     if not private_key_bytes:
         print("No private key found for the address")
         return False
