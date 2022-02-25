@@ -12,6 +12,7 @@ from app.codes.p2p.transport import send
 from .blockchain import get_last_block_hash
 from .transactionmanager import Transactionmanager
 from ..constants import MEMPOOL_PATH
+from .p2p.outgoing import propogate_transaction_to_peers
 
 
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +38,10 @@ def validate(transaction):
         transaction_file = f"{MEMPOOL_PATH}transaction-{transaction_manager.transaction['type']}-{transaction_manager.transaction['trans_code']}.json"
         transaction_manager.save_transaction_to_mempool(transaction_file)
 
-        # Broadcaset transaction
+        # Broadcast transaction to peers
+        propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
+
+        # Broadcaset transaction via transport server
         try:
             payload = {
                 'operation': 'send_transaction',
