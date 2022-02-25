@@ -25,7 +25,7 @@ def get_address_from_public_key(public_key):
 
 def generate_wallet_address():
     private_key_bytes = os.urandom(32)
-    key_data = {'publicKey': None, 'privateKey': None, 'address': None}
+    key_data = {'public': None, 'private': None, 'address': None}
     key = ecdsa.SigningKey.from_string(
         private_key_bytes, curve=ecdsa.SECP256k1).verifying_key
 
@@ -35,8 +35,8 @@ def generate_wallet_address():
     private_key_final = base64.b64encode(private_key_bytes).decode('utf-8')
     public_key_final = base64.b64encode(key_bytes).decode('utf-8')
     key_data['address'] = get_address_from_public_key(public_key_final)
-    key_data['privateKey'] = private_key_final
-    key_data['publicKey'] = public_key_final
+    key_data['private'] = private_key_final
+    key_data['public'] = public_key_final
     return key_data
 
 
@@ -100,7 +100,7 @@ def generate_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_da
         'jurisd': jurisd,
         'specific_data': wallet_specific_data,
         'wallet_address': newkeydata['address'],
-        'wallet_public': newkeydata['publicKey'],
+        'wallet_public': newkeydata['public'],
     }
 
     print("Now adding transaction")

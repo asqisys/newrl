@@ -121,7 +121,7 @@ def broadcast_block(block):
     private_key = _private
     public_key = _public
     signature = {
-        'publicKey': public_key,
+        'public': public_key,
         'msgsign': sign_object(private_key, block)
     } 
     block_payload = {
