@@ -71,7 +71,7 @@ def get_balance(req: BalanceRequest):
         balance = chain_scanner.getbalancesbytoken(str(req.token_code))
     return {'balance': balance}
 
-@router.get("/get-address-from-publicKey", tags=[v2_tag])
+@router.get("/get-address-from-publickey", tags=[v2_tag])
 def get_address_from_public_key_api(public_key: str):
     try:
         address = get_address_from_public_key(public_key)
