@@ -8,7 +8,7 @@ def setup_test_files():
     print('Setting up test files')
     if not os.path.exists('data_test/'):
         os.makedirs('data_test/')
-    if not os.path.exists('data_test/newrl.db'):
+    if os.path.exists('data_test/newrl.db'):
         os.remove('data_test/newrl.db')
     shutil.copyfile('data_test/template/newrl.db', 'data_test/newrl.db')
 
