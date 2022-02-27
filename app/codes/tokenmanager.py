@@ -1,13 +1,12 @@
 # Python programm to create object that enables addition of a block
 
-import datetime
-
+from .utils import get_time_ms
 from .transactionmanager import Transactionmanager
 
 
 def create_token_transaction(token_data):
     transaction = {
-        'timestamp': str(datetime.datetime.now()),
+        'timestamp': get_time_ms(),
         'type': 2,
         'currency': "INR",
         'fee': 0.0,

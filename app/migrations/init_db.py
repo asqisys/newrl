@@ -16,6 +16,7 @@ def clear_db():
     cur.execute('DROP TABLE IF EXISTS transactions')
     cur.execute('DROP TABLE IF EXISTS transfers')
     cur.execute('DROP TABLE IF EXISTS contracts')
+    cur.execute('DROP TABLE IF EXISTS miners')
     con.commit()
     con.close()
 
@@ -112,6 +113,13 @@ def init_db():
                     legalparams TEXT)
                     ''')
 
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS miners
+                    (id text NOT NULL PRIMARY KEY,
+                    address text NOT NULL,
+                    wallet_address text,
+                    )
+                    ''')
     con.commit()
     con.close()
 
