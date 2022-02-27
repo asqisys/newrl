@@ -8,7 +8,7 @@ import datetime
 import base64
 import sqlite3
 
-from ..types import TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSCATION_TOKEN_CREATION
+from ..types import TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSACTION_TOKEN_CREATION
 from .chainscanner import get_wallet_token_balance
 from ..constants import ALLOWED_CUSTODIANS_FILE, MEMPOOL_PATH, NEWRL_DB
 from .utils import get_time_ms
@@ -540,7 +540,7 @@ def get_valid_addresses(transaction):
     if transaction_type == TRANSACTION_WALLET_CREATION:  # Custodian needs to sign
         valid_addresses.append(
             transaction['specific_data']['custodian_wallet'])
-    if transaction_type == TRANSCATION_TOKEN_CREATION:    # Custodian needs to sign
+    if transaction_type == TRANSACTION_TOKEN_CREATION:    # Custodian needs to sign
         valid_addresses.append(transaction['specific_data']['custodian'])
     if transaction_type == TRANSACTION_SMART_CONTRACT:
         valid_addresses = get_sc_validadds(transaction)
