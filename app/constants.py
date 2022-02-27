@@ -21,7 +21,7 @@ DB_MIGRATIONS_PATH = 'app/migrations/migrations'
 AUTH_FILE_PATH = DATA_PATH + '.auth.json'
 
 BOOTSTRAP_NODES = ['newrl.net']
-REQUEST_TIMEOUT = 5
+REQUEST_TIMEOUT = 1
 NEWRL_PORT = 8090
 NEWRL_TOKEN = "newrl_token"
 TREASURY = "treasury_address"

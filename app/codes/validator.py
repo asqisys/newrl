@@ -12,6 +12,7 @@ from app.codes.p2p.transport import send
 from .blockchain import get_last_block_hash
 from .transactionmanager import Transactionmanager
 from ..constants import MEMPOOL_PATH
+from .p2p.outgoing import propogate_transaction_to_peers
 
 
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +38,10 @@ def validate(transaction):
         transaction_file = f"{MEMPOOL_PATH}transaction-{transaction_manager.transaction['type']}-{transaction_manager.transaction['trans_code']}.json"
         transaction_manager.save_transaction_to_mempool(transaction_file)
 
-        # Broadcaset transaction
+        # Broadcast transaction to peers
+        propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
+
+        # Broadcaset transaction via transport server
         try:
             payload = {
                 'operation': 'send_transaction',
@@ -65,7 +69,7 @@ def validate_signature(data, public_key, signature):
 
 def validate_receipt_signature(receipt):
     try:
-        return validate_signature(receipt['data'], receipt['publicKey'], receipt['signature'])
+        return validate_signature(receipt['data'], receipt['public'], receipt['signature'])
     except:
         logger.error('Error validating receipt signature')
         return False
@@ -87,7 +91,7 @@ def validate_block_receipts(block):
         if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash'] or receipt['data']['vote'] < 1:
             continue
 
-        trust_score = get_node_trust_score(receipt['publicKey'])
+        trust_score = get_node_trust_score(receipt['public'])
         valid_probability = 0 if trust_score < 0 else (trust_score + 2) / 5
             # raise Exception('Invalid receipt signature')
 
@@ -113,7 +117,7 @@ def validate_block(block, validate_receipts=True, should_validate_signature=True
     if should_validate_signature:
         sign_valid = validate_signature(
             data=block['data'],
-            public_key=block['signature']['publicKey'],
+            public_key=block['signature']['public'],
             signature=block['signature']['msgsign']
         )
 

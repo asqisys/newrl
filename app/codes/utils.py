@@ -1,3 +1,4 @@
+import hashlib
 import time
 
 
@@ -25,3 +26,10 @@ class BufferedLog():
 def get_time_ms():
     """Return time in milliseconds"""
     return round(time.time() * 1000)
+
+
+def get_person_id_for_wallet_address(wallet_address):
+    hs = hashlib.blake2b(digest_size=20)
+    hs.update(wallet_address.encode())
+    person_id = 'pi' + hs.hexdigest()
+    return person_id

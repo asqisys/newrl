@@ -23,10 +23,10 @@ def test_usd1():
             "legalparams":{}
         }
     callparamjson=json.dumps(callparams)
-    scoin1=nstablecoin.nusd1()
-    cur = "x"
-    scoin1.setup(cur, callparamjson)
-    scoin1.deploy(cur, "sender", callparams={"trans_code":"123sdwe2"})
+    # scoin1=nstablecoin.nusd1()
+    # cur = "x"
+    # scoin1.setup(cur, callparamjson)
+    # scoin1.deploy(cur, "sender", callparams={"trans_code":"123sdwe2"})
 #    loan1=secloanv100.SecLoan1("0xa87cfed9b43a84d621b6ab4e2b928ac9c7e6c5df")
 
 

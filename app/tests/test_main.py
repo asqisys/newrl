@@ -17,8 +17,8 @@ def create_wallet():
     assert response.status_code == 200
     wallet = response.json()
     assert wallet['address']
-    assert wallet['publicKey']
-    assert wallet['privateKey']
+    assert wallet['public']
+    assert wallet['private']
 
     response = client.post('/add-wallet', json={
         "custodian_address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
@@ -31,7 +31,7 @@ def create_wallet():
             }
         ],
         "specific_data": {},
-        "public_key": wallet['publicKey']
+        "public_key": wallet['public']
     })
 
     print(response.text)
@@ -42,8 +42,8 @@ def create_wallet():
 
     custodian_wallet = {
         "address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
-        "publicKey": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
-        "privateKey": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
+        "public": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
+        "private": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
     }
 
     response = client.post('/sign-transaction', json={
@@ -345,8 +345,8 @@ def call_contract(contractaddress, funct, wallet1, params):
 def test_read_main():
     custodian_wallet = {
         "address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
-        "publicKey": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
-        "privateKey": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
+        "public": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
+        "private": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
     }
 
     wallet1 = create_wallet()

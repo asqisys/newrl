@@ -10,6 +10,9 @@ import time
 import sqlite3
 import hashlib
 
+from ..constants import NEWRL_DB
+from .utils import get_person_id_for_wallet_address, get_time_ms
+
 
 def is_wallet_valid(cur, address):
     wallet_cursor = cur.execute(
@@ -63,10 +66,8 @@ def add_wallet_pid(cur, wallet):
             print("No personid linked to the parentwallet.")
             return False
     else:  # not a linked wallet, so create a new pid and update person table
-        hs = hashlib.blake2b(digest_size=20)
-        hs.update((wallet['wallet_address']).encode())
-        pid = 'pi' + hs.hexdigest()
-        query_params = (pid, time.mktime(datetime.datetime.now().timetuple()))
+        pid = get_person_id_for_wallet_address(wallet['wallet_address'])
+        query_params = (pid, get_time_ms())
         cur.execute(f'''INSERT OR IGNORE INTO person
                     (person_id, created_time)
                     VALUES (?, ?)''', query_params)

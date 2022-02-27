@@ -129,6 +129,7 @@ def init_bootstrap_nodes():
 
 
 def register_me_with_them(address):
+    auth_data = get_auth()
     logger.info(f'Registering me with node {address}')
     response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', json=auth_data, timeout=REQUEST_TIMEOUT)
     return response.json()
@@ -175,12 +176,12 @@ def validate_auth(auth):
     data = {
         'person_id': auth['person_id'],
         'wallet_id': auth['wallet_id'],
-        'publicKey': auth['publicKey'],
+        'public': auth['public'],
     }
     signature = auth['signature']
     return validate_signature(
         data=data,
-        public_key=auth['publicKey'],
+        public_key=auth['public'],
         signature=signature
     )
 
