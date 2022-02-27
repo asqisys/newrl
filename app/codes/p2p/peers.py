@@ -29,9 +29,6 @@ logger = logging.getLogger(__name__)
 #         return auth_data
 
 
-auth_data = get_auth()
-
-
 def clear_peer_db():
     con = sqlite3.connect(NEWRL_P2P_DB)
     cur = con.cursor()
@@ -144,6 +141,7 @@ def init_bootstrap_nodes():
 
 
 def register_me_with_them(address):
+    auth_data = get_auth()
     logger.info(f'Registering me with node {address}')
     response = requests.post('http://' + address + f':{NEWRL_PORT}/add-peer', json=auth_data, timeout=REQUEST_TIMEOUT)
     return response.json()
