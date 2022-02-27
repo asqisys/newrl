@@ -7,14 +7,6 @@ from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_stor
 from ...constants import MINIMUM_ACCEPTANCE_RATIO, MINIMUM_ACCEPTANCE_VOTES
 from ..auth.auth import get_wallet
 
-try:
-    wallet_data = get_wallet()
-except:
-    wallet_data = {
-        'wallet': {'public': '', 'private': ''},
-    }
-public_key = wallet_data['public']
-private_key = wallet_data['private']
 
 def generate_block_receipt(block):
     receipt_data = {
@@ -22,6 +14,15 @@ def generate_block_receipt(block):
         'block_hash': calculate_hash(block),
         'vote': 1
     }
+
+    try:
+        wallet_data = get_wallet()
+    except:
+        wallet_data = {
+            'wallet': {'public': '', 'private': ''},
+        }
+    public_key = wallet_data['public']
+    private_key = wallet_data['private']
     return {
         "data": receipt_data,
         "public_key": public_key,
