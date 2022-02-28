@@ -3,9 +3,9 @@ import datetime
 import json
 import os
 import sqlite3
-from nvalues import TREASURY_WALLET_ADDRESS
 import requests
 
+from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
 from .p2p.peers import get_peers
 from .utils import BufferedLog, get_time_ms
