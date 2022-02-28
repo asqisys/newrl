@@ -1,24 +1,28 @@
-from decimal import ROUND_UP
+import math
 import json
 import importlib
 from lib2to3.pgen2 import token
 
+
 from ..constants import NEWRL_DB
 from .db_updater import *
+from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME
 
 
-def update_db_states(cur, newblockindex, transactions, creator=None):
-    last_block_cursor = cur.execute(
-        f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
-    last_block = last_block_cursor.fetchone()
-    if newblockindex != last_block[0]:
-        print("The latest block index does not match given previous index")
-        return False
+def update_db_states(cur, block):
+    newblockindex = block['index']
+    transactions = block['text']['transactions']
+    # last_block_cursor = cur.execute(
+    #     f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
+    # last_block = last_block_cursor.fetchone()
+    # if newblockindex != last_block[0]:
+    #     print("The latest block index does not match given previous index")
+    #     return False
 #    latest_index = cur.execute('SELECT MAX(block_index) FROM blocks')
     add_tx_to_block(cur, newblockindex, transactions)
 
-    if creator:
-        add_block_reward(cur, creator, newblockindex)
+    if 'creator_wallet' in block:
+        add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
         transaction_data = transaction['specific_data']
@@ -83,14 +87,24 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
 
 
 def add_block_reward(cur, creator, blockindex):
+    """Reward the minder by chaning their NWRL balance"""
     reward = 0
     RATIO = 2/3
     STARTING_REWARD = 1000
-    block_step = ROUND_UP(float(blockindex)/1000000.0, 0)
-    reward = STARTING_REWARD * (RATIO ^ (block_step - 1))
-    reward_tx_data = {'tokencode': "newrl",
-                      'first_owner': creator,
-                      'amount_created': reward
-                      }
+    block_step = math.ceil(float(blockindex)/1000000)
+    reward = STARTING_REWARD * pow(RATIO, (block_step - 1))
+    reward_tx_data = {
+        "tokenname": NEWRL_TOKEN_NAME,
+        "tokencode" : NEWRL_TOKEN_CODE,
+        "tokentype": '1',
+        "tokenattributes": {},
+        "first_owner": creator,
+        "custodian": '',
+        "legaldochash": '',
+        "amount_created": reward,
+        "value_created": '',
+        "disallowed": {},
+        "sc_flag": False
+    }
     add_token(cur, reward_tx_data)
     return True

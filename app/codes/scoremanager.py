@@ -1,7 +1,7 @@
 """Code for managing trust scores between two persons"""
 from .transactionmanager import Transactionmanager
 from .utils import get_time_ms
-from ..types import TRANSACTION_TRUST_SCORE_CHANGE
+from ..ntypes import TRANSACTION_TRUST_SCORE_CHANGE
 
 
 def update_score_transaction(personid1, address1, personid2, address2, new_score):

@@ -7,9 +7,11 @@ import json
 import sqlite3
 
 from ..constants import NEWRL_DB
+from .utils import get_time_ms
 from .crypto import calculate_hash
 from .state_updater import update_db_states
 from .utils import get_time_ms
+from .auth.auth import get_node_wallet_address
 
 
 class Blockchain:
@@ -83,7 +85,7 @@ class Blockchain:
 
         return True
 
-    def mine_block(self, cur, text):
+    def mine_block(self, cur, text, fees=0):
         """Mine a new block"""
         print("Starting the mining step 1")
         last_block_cursor = cur.execute(
@@ -97,6 +99,8 @@ class Blockchain:
             'timestamp': get_time_ms(),
             'proof': 0,
             'text': text,
+            'creator_wallet': get_node_wallet_address(),
+            'fees': fees,
             'previous_hash': last_block_hash
         }
 
@@ -143,7 +147,7 @@ def add_block(cur, block, block_hash=None):
         transactions_hash
     )
     cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
-    update_db_states(cur, block_index, block['text']['transactions'])
+    update_db_states(cur, block)
 
 
 def get_last_block_index():
