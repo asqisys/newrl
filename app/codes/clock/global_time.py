@@ -2,7 +2,9 @@ import sys
 import time
 import requests
 import threading
-from ...constants import BLOCK_TIME_INTERVAL_SECONDS, MAX_ALLOWED_TIME_DIFF_SECONDS, NO_RECEIPT_COMMITTEE_TIMEOUT, TIME_DIFF_WITH_GLOBAL
+from ..minermanager import broadcast_miner_update, should_i_mine
+from ...constants import BLOCK_TIME_INTERVAL_SECONDS, MAX_ALLOWED_TIME_DIFF_SECONDS, NO_RECEIPT_COMMITTEE_TIMEOUT, TIME_DIFF_WITH_GLOBAL, TIME_MINER_BROADCAST_INTERVAL
+from ..updater import run_updater
 
 
 def get_global_epoch():
@@ -23,7 +25,9 @@ def no_receipt_timeout():
 
 
 def mine():
-    print('Mining block.')
+    if should_i_mine():
+        print('Mining block.')
+        run_updater()
 
 
 def start_receipt_timeout():
@@ -34,6 +38,13 @@ def start_receipt_timeout():
 def start_mining_clock():
     mine()
     timer = threading.Timer(BLOCK_TIME_INTERVAL_SECONDS, start_mining_clock)
+    timer.start()
+
+
+def start_miner_broadcast_clock():
+    print('Broadcasting miner update')
+    broadcast_miner_update()
+    timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL, start_miner_broadcast_clock)
     timer.start()
 
 

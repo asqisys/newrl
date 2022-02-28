@@ -1,6 +1,9 @@
 import os
 import shutil
-from app.codes.p2p.peers import init_peer_db
+
+from ..migrations.init import init_newrl
+from ..codes.p2p.peers import init_peer_db
+from ..migrations.migrate_db import run_migrations
 import pytest
 
 
@@ -17,7 +20,9 @@ def setup_test_files():
     if os.path.exists('data_test/.auth.json'):
         os.remove('data_test/.auth.json')
     shutil.copyfile('data_test/template/.auth.json', 'data_test/.auth.json')
+    init_newrl()
     init_peer_db()
+    run_migrations()
     os.environ['NEWRL_TEST'] = '1'
 
 

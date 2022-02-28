@@ -269,3 +269,10 @@ def input_to_dict(ipval):
     else:
         callparams = ipval
     return callparams
+
+
+def add_miner(cur, wallet_address, network_address, broadcast_timestamp):
+    cur.execute('''INSERT OR REPLACE INTO miners
+				(id, wallet_address, network_address, last_broadcast_timestamp)
+				 VALUES (?, ?, ?, ?)''', 
+                 (wallet_address, wallet_address, network_address, broadcast_timestamp))

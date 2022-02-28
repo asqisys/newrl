@@ -6,7 +6,7 @@ from lib2to3.pgen2 import token
 
 from ..constants import NEWRL_DB
 from .db_updater import *
-from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME
+from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME, TRANSACTION_MINER_ADDITION, TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TOKEN_CREATION, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION
 
 
 def update_db_states(cur, block):
@@ -42,13 +42,13 @@ def update_db_states(cur, block):
 
 
 def update_state_from_transaction(cur, transaction_type, transaction_data, transaction_code, transaction_timestamp):
-    if transaction_type == 1:  # this is a wallet creation transaction
+    if transaction_type == TRANSACTION_WALLET_CREATION:  # this is a wallet creation transaction
         add_wallet_pid(cur, transaction_data)
 
-    if transaction_type == 2:  # this is a token creation or addition transaction
+    if transaction_type == TRANSACTION_TOKEN_CREATION:  # this is a token creation or addition transaction
         add_token(cur, transaction_data, transaction_code)
 
-    if transaction_type == 4 or transaction_type == 5:  # this is a transfer tx
+    if transaction_type == TRANSACTION_TWO_WAY_TRANSFER or transaction_type == TRANSACTION_ONE_WAY_TRANSFER:  # this is a transfer tx
         sender1 = transaction_data['wallet1']
         sender2 = transaction_data['wallet2']
 
@@ -62,14 +62,14 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         transfer_tokens_and_update_balances(
             cur, sender2, sender1, tokencode2, amount2)
 
-    if transaction_type == 6:  # score update transaction
+    if transaction_type == TRANSACTION_TRUST_SCORE_CHANGE:  # score update transaction
         personid1 = get_pid_from_wallet(cur, transaction_data['address1'])
         personid2 = get_pid_from_wallet(cur, transaction_data['address2'])
         new_score = transaction_data['new_score']
         tstamp = transaction_timestamp
         update_trust_score(cur, personid1, personid2, new_score, tstamp)
 
-    if transaction_type == 3:  # smart contract transaction
+    if transaction_type == TRANSACTION_SMART_CONTRACT:  # smart contract transaction
         funct = transaction_data['function']
         if funct == "setup":  # sc is being set up
             contract = dict(transaction_data['params'])
@@ -84,6 +84,14 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
     #    sc_instance = nusd1(transaction['specific_data']['address'])
         funct = getattr(sc_instance, funct)
         funct(cur, transaction_data['params'])
+    
+    if transaction_type == TRANSACTION_MINER_ADDITION:
+        add_miner(
+            cur,
+            transaction_data['wallet_address'],
+            transaction_data['network_address'],
+            transaction_data['broadcast_timestamp'],
+        )
 
 
 def add_block_reward(cur, creator, blockindex):

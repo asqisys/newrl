@@ -9,6 +9,7 @@ from app.codes.validator import validate_signature
 from app.migrations.init import init_newrl
 from ...constants import BOOTSTRAP_NODES, REQUEST_TIMEOUT, NEWRL_P2P_DB, NEWRL_PORT, MY_ADDRESS
 from ..auth.auth import get_auth
+from .utils import get_my_address
 
 
 logging.basicConfig(level=logging.INFO)
@@ -153,9 +154,6 @@ def update_peers():
         except Exception as e:
             print('Error updating software on peer', str(e))
     return True
-
-def get_my_address():
-    return requests.get('https://api.ipify.org?format=json').json()['ip']
 
 
 def update_my_address():
