@@ -1,6 +1,6 @@
 import time
 import sqlite3
-from codes.db_updater import update_wallet_token_balance
+from ..codes.db_updater import update_wallet_token_balance
 from fastapi.testclient import TestClient
 from ..ntypes import NUSD_TOKEN_CODE
 from ..constants import NEWRL_DB
@@ -64,8 +64,8 @@ def create_wallet_with_fee(fee):
     assert response.status_code == 200
     wallet = response.json()
     assert wallet['address']
-    assert wallet['publicKey']
-    assert wallet['privateKey']
+    assert wallet['public']
+    assert wallet['private']
 
     response = client.post('/add-wallet', json={
         "custodian_address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
@@ -78,7 +78,7 @@ def create_wallet_with_fee(fee):
             }
         ],
         "specific_data": {},
-        "public_key": wallet['publicKey']
+        "public_key": wallet['public']
     })
 
     print(response.text)
@@ -92,8 +92,8 @@ def create_wallet_with_fee(fee):
 
     custodian_wallet = {
         "address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
-        "publicKey": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
-        "privateKey": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
+        "public": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",
+        "private": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="
     }
 
     response = client.post('/sign-transaction', json={
@@ -118,4 +118,5 @@ def set_balance(wallet, token, balance):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     update_wallet_token_balance(cur, wallet, token, balance)
+    con.commit()
     con.close()
