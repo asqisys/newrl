@@ -4,7 +4,7 @@ import random
 
 from .blockchain import get_last_block_hash
 from .p2p.utils import get_my_address
-from ..constants import COMMITTEE_SIZE, NEWRL_DB
+from ..constants import COMMITTEE_SIZE, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL
 from .auth.auth import get_wallet
 from .signmanager import sign_transaction
 from ..ntypes import TRANSACTION_MINER_ADDITION
@@ -70,8 +70,12 @@ def get_miner_list():
     con = sqlite3.connect(NEWRL_DB)
     con.row_factory = sqlite3.Row
     cur = con.cursor()
+    cutfoff_epoch = get_time_ms() - TIME_MINER_BROADCAST_INTERVAL
     miner_cursor = cur.execute(
-        'SELECT wallet_address, network_address, last_broadcast_timestamp FROM miners ORDER BY wallet_address ASC').fetchall()
+        '''SELECT wallet_address, network_address, last_broadcast_timestamp 
+        FROM miners 
+        WHERE last_broadcast_timestamp > ?
+        ORDER BY wallet_address ASC''', (cutfoff_epoch, )).fetchall()
     miners = [dict(m) for m in miner_cursor]
     return miners
 
