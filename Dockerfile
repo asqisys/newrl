@@ -3,4 +3,3 @@ WORKDIR /code
 COPY . /code/
 RUN pip3 install -r requirements.txt
 ENTRYPOINT [ "/code/scripts/start.sh" ]
-CMD [ "python","/code/app/main.py"]
