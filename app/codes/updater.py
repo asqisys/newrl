@@ -3,16 +3,19 @@ import datetime
 import json
 import os
 import sqlite3
+from nvalues import TREASURY_WALLET_ADDRESS
 import requests
 
-from ..constants import IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
+from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
 from .p2p.peers import get_peers
 from .utils import BufferedLog, get_time_ms
 from .blockchain import Blockchain
-from .transactionmanager import Transactionmanager
+from .transactionmanager import Transactionmanager, get_valid_addresses
 from .state_updater import update_db_states
 from .crypto import calculate_hash, sign_object, _private, _public
 from .consensus.consensus import generate_block_receipt
+from .chainscanner import get_wallet_token_balance
+from .db_updater import transfer_tokens_and_update_balances
 
 
 MAX_BLOCK_SIZE = 10
@@ -35,6 +38,8 @@ def run_updater():
     txcodes = []
     tmtemp = Transactionmanager()
 
+    transaction_fees = 0
+
     for filename in transfiles:
         file = MEMPOOL_PATH + filename
         try:
@@ -55,6 +60,10 @@ def run_updater():
                 f"Transaction id {trandata['transaction']['trans_code']} has invalid signatures")
             os.remove(file)
             continue
+        # Pay fee for transaction. If payee doesn't have enough funds, remove transaction
+        if not pay_fee_for_transaction(cur, transaction):
+            os.remove(file)
+            continue
         if not tmtemp.econvalidator():
             logger.log("Economic validation failed for transaction ",
                         trandata['transaction']['trans_code'])
@@ -73,6 +82,8 @@ def run_updater():
             textarray.append(transaction)
             signarray.append(signatures)
             txcodes.append(trandata['transaction']['trans_code'])
+
+            transaction_fees += get_fees_for_transaction(trandata['transaction'])
             try:
                 os.remove(file)
             except:
@@ -101,8 +112,8 @@ def run_updater():
             logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
     print(transactionsdata)
-    block = blockchain.mine_block(cur, transactionsdata)
-    update_db_states(cur, block['index'], transactionsdata['transactions'])
+    block = blockchain.mine_block(cur, transactionsdata, transaction_fees)
+    update_db_states(cur, block)
     con.commit()
     con.close()
 
@@ -142,4 +153,35 @@ def broadcast_block(block):
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
             print(e)
-    return True    
+    return True
+
+
+def get_fees_for_transaction(transaction):
+    return transaction['fee']
+
+
+def pay_fee_for_transaction(cur, transaction):
+    fee = get_fees_for_transaction(transaction)
+
+    # Check for 0 fee transactions and deprioritize accordingly
+    if fee == 0:
+        return True
+
+    currency = transaction['currency']
+    if currency not in ALLOWED_FEE_PAYMENT_TOKENS:
+        return False
+
+    payees = get_valid_addresses(transaction)
+
+    for payee in payees:
+        balance = get_wallet_token_balance(payee, currency)
+        if balance < fee / len(payees):
+            return False
+        transfer_tokens_and_update_balances(
+            cur,
+            payee,
+            TREASURY_WALLET_ADDRESS,
+            transaction['currency'],
+            fee / len(payees)
+        )
+    return True

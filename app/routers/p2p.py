@@ -12,11 +12,17 @@ from app.constants import NEWRL_PORT
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
 from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionsRequest
+from app.codes.auth.auth import get_node_wallet_address
 
 
 router = APIRouter()
 
 p2p_tag = 'p2p'
+
+@router.get("/get-node-wallet-address", tags=[p2p_tag])
+def api_get_node_wallet_address():
+    return {'wallet_address': get_node_wallet_address()}
+
 
 @router.post("/list-mempool-transactions", tags=[p2p_tag])
 def list_mempool_transactions_api():

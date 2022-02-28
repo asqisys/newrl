@@ -120,8 +120,8 @@ def add_token(cur, token, txcode=None):
     if not existingflag:    # new token to be created
         tokendecimal = token['tokendecimal'] if 'tokendecimal' in token else 0
         tokendecimal = int(tokendecimal)
-        token_attributes_json = json.dumps(token['tokenattributes'])
-        disallowedjason = json.dumps(token['disallowed'])
+        token_attributes_json = json.dumps(token['tokenattributes']) if 'tokenattributes' in token else {}
+        disallowed_json = json.dumps(token['disallowed']) if 'disallowed' in token else {}
         query_params = (
             tid,
             token['tokenname'],
@@ -132,7 +132,7 @@ def add_token(cur, token, txcode=None):
             token['amount_created'],
             token['value_created'],
             token['sc_flag'],
-            disallowedjason,
+            disallowed_json,
             txcode,
             tokendecimal,
             token_attributes_json

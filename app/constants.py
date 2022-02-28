@@ -1,6 +1,9 @@
 """Global constants in this file"""
 import os
 
+from .ntypes import NEWRL_TOKEN_CODE, NUSD_TOKEN_CODE
+
+
 IS_TEST = os.environ.get('NEWRL_TEST') is not None
 if IS_TEST:
     print('Using constants for Test')
@@ -25,7 +28,7 @@ TREASURY = "treasury_address"
 COINBASE_SC = "coinbase_sc_address"
 TRANSPORT_SERVER = 'http://localhost:8095'
 
-TIME_BETWEEN_BLOCKS_SECONDS = 30  # The time period between blocks
+TIME_BETWEEN_BLOCKS_SECONDS = 5  # The time period between blocks
 COMMITTEE_SIZE = 6
 MINIMUM_ACCEPTANCE_VOTES = 4
 MINIMUM_ACCEPTANCE_RATIO = 0.6
@@ -37,3 +40,5 @@ TIME_DIFF_WITH_GLOBAL = 0
 MAX_ALLOWED_TIME_DIFF_SECONDS = 10
 BLOCK_TIME_INTERVAL_SECONDS = 30
 MY_ADDRESS = ''
+
+ALLOWED_FEE_PAYMENT_TOKENS = [NEWRL_TOKEN_CODE, NUSD_TOKEN_CODE]

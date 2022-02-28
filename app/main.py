@@ -53,8 +53,8 @@ def app_startup():
             if not args.disablebootstrap:
                 init_bootstrap_nodes()
             sync_chain_from_peers()
-        update_time_difference()
-        update_my_address()
+            update_time_difference()
+            update_my_address()
         # start_mining_clock()
     except Exception as e:
         print('Bootstrap failed')
