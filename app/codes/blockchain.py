@@ -167,7 +167,7 @@ def get_last_block_hash():
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     last_block_cursor = cur.execute(
-        'SELECT block_index, hash FROM blocks ORDER BY block_index DESC LIMIT 1'
+        'SELECT block_index, hash, timestamp FROM blocks ORDER BY block_index DESC LIMIT 1'
     )
     last_block = last_block_cursor.fetchone()
     con.close()
@@ -175,7 +175,8 @@ def get_last_block_hash():
     if last_block is not None:
         return {
             'index': last_block[0],
-            'hash': last_block[1]
+            'hash': last_block[1],
+            'timestamp': last_block[2]
         }
     else:
         return None

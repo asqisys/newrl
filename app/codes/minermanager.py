@@ -66,33 +66,30 @@ def broadcast_miner_update():
     validate(transaction)
 
 
-def get_miner_list():
+def get_committee_list():
+    last_block = get_last_block_hash()
+    if last_block:
+        cutfoff_epoch = last_block['timestamp'] - TIME_MINER_BROADCAST_INTERVAL
+    else:
+        cutfoff_epoch = 0
+
     con = sqlite3.connect(NEWRL_DB)
     con.row_factory = sqlite3.Row
     cur = con.cursor()
-    cutfoff_epoch = get_time_ms() - TIME_MINER_BROADCAST_INTERVAL
     miner_cursor = cur.execute(
         '''SELECT wallet_address, network_address, last_broadcast_timestamp 
         FROM miners 
         WHERE last_broadcast_timestamp > ?
         ORDER BY wallet_address ASC''', (cutfoff_epoch, )).fetchall()
     miners = [dict(m) for m in miner_cursor]
+    con.close()
     return miners
 
 
 def get_miner_for_current_block():
-    last_block = get_last_block_hash()
+    committee_list = get_committee_list()
 
-    if not last_block:
-        return
-
-    # TODO - Use hash instead of index
-    # random.seed takes integer arguments; hash need to convert to int
-    random.seed(last_block['index'])
-
-    miners = get_miner_list()
-    miner = random.choice(miners)
-    return miner
+    return committee_list[0]
 
 
 def get_committee_for_current_block():
@@ -103,8 +100,8 @@ def get_committee_for_current_block():
 
     random.seed(last_block['index'])
 
-    miners = get_miner_list()
-    committee = random.choices(miners, k=COMMITTEE_SIZE)
+    miners = get_committee_list()
+    committee = random.sample(miners, k=COMMITTEE_SIZE)
     return committee
 
 
