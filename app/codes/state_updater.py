@@ -10,7 +10,7 @@ from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME
 
 
 def update_db_states(cur, block):
-    newblockindex = block['index']
+    newblockindex = block['index'] if 'index' in block else block['block_index']
     transactions = block['text']['transactions']
     # last_block_cursor = cur.execute(
     #     f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
