@@ -9,7 +9,7 @@ def propogate_transaction_to_peers(transaction):
     peers = get_peers()
         
     for peer in peers:
-        if is_my_address(peer):
+        if is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting transaction to peer', url)
