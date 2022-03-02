@@ -19,11 +19,11 @@ from .routers import transport
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument("--disablenetwork", help="run the node local only with no network connection", action="store_true")
-# parser.add_argument("--disableupdate", help="run the node without updating software", action="store_true")
-# parser.add_argument("--disablebootstrap", help="run the node without bootstrapping", action="store_true")
-# args = parser.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("--disablenetwork", help="run the node local only with no network connection", action="store_true")
+parser.add_argument("--disableupdate", help="run the node without updating software", action="store_true")
+parser.add_argument("--disablebootstrap", help="run the node without bootstrapping", action="store_true")
+args = parser.parse_args()
 
 app = FastAPI(
     title="The Newrl APIs",
