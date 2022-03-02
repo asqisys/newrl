@@ -8,6 +8,7 @@ import requests
 from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
 from .p2p.peers import get_peers
+from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
 from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager, get_valid_addresses
@@ -146,6 +147,8 @@ def broadcast_block(block):
 
     # TODO - Do not send to self
     for peer in peers:
+        if is_my_address(peer):
+            continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting to peer', url)
         try:

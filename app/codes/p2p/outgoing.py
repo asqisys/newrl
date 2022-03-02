@@ -2,12 +2,15 @@ import requests
 from threading import Thread
 from ...constants import NEWRL_PORT, REQUEST_TIMEOUT, TRANSPORT_SERVER
 from ..p2p.utils import get_peers
+from ..p2p.utils import is_my_address
 
 
 def propogate_transaction_to_peers(transaction):
     peers = get_peers()
         
     for peer in peers:
+        if is_my_address(peer):
+            continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting transaction to peer', url)
         try:
