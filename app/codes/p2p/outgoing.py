@@ -20,6 +20,10 @@ def propogate_transaction_to_peers(transaction):
             print(f'Error broadcasting block to peer: {url}')
             print(e)
 
+def send_request_in_thread(url, data):
+    thread = Thread(target=send_request, args = (url, data))
+    thread.start()
+
 def send_request(url, data):
     requests.post(url, json=data, timeout=REQUEST_TIMEOUT)
 
