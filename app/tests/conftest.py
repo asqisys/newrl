@@ -1,6 +1,6 @@
 import os
 import shutil
-from app.codes.p2p.peers import init_peer_db
+from ..migrations.init_db import init_peer_db
 import pytest
 
 
