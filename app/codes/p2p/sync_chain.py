@@ -1,6 +1,7 @@
 import logging
 import requests
 import sqlite3
+import time
 
 from app.codes import blockchain
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
@@ -55,31 +56,35 @@ def receive_block(block):
     return True
 
 
-def sync_chain_from_node(url):
+def sync_chain_from_node(url, block_index=None):
     """Update local chain and state from remote node"""
-    response = requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT)
-    their_last_block_index = int(response.text)
+    if block_index is None:
+        response = requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT)
+        their_last_block_index = int(response.text)
+    else:
+        their_last_block_index = block_index
     my_last_block = get_last_block_index()
     print(f'I have {my_last_block} blocks. Node {url} has {their_last_block_index} blocks.')
 
     block_idx = my_last_block + 1
-    block_batch_size = 10  # Fetch blocks in batches
+    block_batch_size = 50  # Fetch blocks in batches
     while block_idx <= their_last_block_index:
         failed_for_invalid_block = False
         blocks_to_request = list(range(block_idx, min(their_last_block_index, block_idx + block_batch_size)))
         blocks_request = {'block_indexes': blocks_to_request}
         print(f'Asking block node {url} for blocks {blocks_request}')
-        try:
-            response = requests.post(
-                    url + '/get-blocks',
-                    json=blocks_request,
-                    timeout=REQUEST_TIMEOUT
-                )
-            blocks_data = response.json()
-        except Exception as err:
-            print('Could not get block', str(err))
-            failed_for_invalid_block = True
-            break
+        blocks_data = get_block_from_url_retry(url, blocks_request)
+        # try:
+        #     response = requests.post(
+        #             url + '/get-blocks',
+        #             json=blocks_request,
+        #             timeout=REQUEST_TIMEOUT
+        #         )
+        #     blocks_data = response.json()
+        # except Exception as err:
+        #     print('Could not get block', str(err))
+        #     failed_for_invalid_block = True
+        #     time.sleep(5)
         for block in blocks_data:
             if not validate_block_data(block):
                 print('Invalid block')
@@ -101,11 +106,11 @@ def sync_chain_from_node(url):
 
 def sync_chain_from_peers():
     peers = get_peers()
-    url = get_best_peer_to_sync(peers)
+    url, block_index = get_best_peer_to_sync(peers)
 
     if url:
         print('Syncing from peer', url)
-        sync_chain_from_node(url)
+        sync_chain_from_node(url, block_index)
     else:
         print('No node available to sync')
 
@@ -127,7 +132,7 @@ def get_best_peer_to_sync(peers):
                 best_peer_value = their_last_block_index
         except Exception as e:
             print('Error getting block index from peer at', url)
-    return best_peer
+    return best_peer, best_peer_value
 
 
 def ask_peer_for_block(peer_url, block_index):
@@ -185,3 +190,20 @@ def receive_receipt(receipt):
 
 
     return True
+
+
+def get_block_from_url_retry(url, blocks_request):
+    response = None
+    while response is None or response.status_code != 200:
+        try:
+            response = requests.post(
+                    url + '/get-blocks',
+                    json=blocks_request,
+                    timeout=REQUEST_TIMEOUT
+                )
+        except Exception as err:
+            print('Retrying block get', str(err))
+            failed_for_invalid_block = True
+            time.sleep(5)
+    blocks_data = response.json()
+    return blocks_data
