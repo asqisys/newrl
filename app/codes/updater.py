@@ -3,11 +3,12 @@ import datetime
 import json
 import os
 import sqlite3
-from nvalues import TREASURY_WALLET_ADDRESS
 import requests
 
+from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
 from .p2p.peers import get_peers
+from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
 from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager, get_valid_addresses
@@ -16,6 +17,7 @@ from .crypto import calculate_hash, sign_object, _private, _public
 from .consensus.consensus import generate_block_receipt
 from .chainscanner import get_wallet_token_balance
 from .db_updater import transfer_tokens_and_update_balances
+from .p2p.outgoing import send_request_in_thread
 
 
 MAX_BLOCK_SIZE = 10
@@ -146,10 +148,13 @@ def broadcast_block(block):
 
     # TODO - Do not send to self
     for peer in peers:
+        if is_my_address(peer['address']):
+            continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting to peer', url)
         try:
-            requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
+            send_request_in_thread(url + '/receive-block', {'block': block_payload})
+            # requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
             print(e)

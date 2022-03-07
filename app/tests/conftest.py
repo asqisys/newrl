@@ -4,6 +4,8 @@ import shutil
 from ..migrations.init import init_newrl
 from ..codes.p2p.peers import init_peer_db
 from ..migrations.migrate_db import run_migrations
+from ..migrations.init_db import init_peer_db
+
 import pytest
 
 

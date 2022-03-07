@@ -8,6 +8,7 @@ import logging
 import ecdsa
 import os
 
+from app.codes.fs.mempool_manager import get_mempool_transaction
 from app.codes.p2p.transport import send
 from .blockchain import get_last_block_hash
 from .transactionmanager import Transactionmanager
@@ -20,6 +21,10 @@ logger = logging.getLogger(__name__)
 
 
 def validate(transaction):
+    existing_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
+    if existing_transaction is not None:
+        return True
+
     transaction_manager = Transactionmanager()
     transaction_manager.set_transaction_data(transaction)
     economics_valid = transaction_manager.econvalidator()

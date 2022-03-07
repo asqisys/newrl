@@ -2,7 +2,7 @@ import sqlite3
 import json
 
 from ..codes.state_updater import update_state_from_transaction
-from ..constants import NEWRL_DB
+from ..constants import NEWRL_DB, NEWRL_P2P_DB
 
 db_path = NEWRL_DB
 
@@ -192,6 +192,21 @@ def revert_chain(block_index):
     con.commit()
     con.close()
     return {'status': 'SUCCESS'}
+
+
+def init_peer_db():
+    con = sqlite3.connect(NEWRL_P2P_DB)
+    cur = con.cursor()
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS peers
+                    (id text NOT NULL PRIMARY KEY,
+                    address text NOT NULL 
+                    )
+                    ''')
+    # Todo - link node to a person and add record in the node db
+    con.commit()
+    con.close()
+
 
 if __name__ == '__main__':
     db_path = '../' + db_path
