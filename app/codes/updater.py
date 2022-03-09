@@ -18,6 +18,7 @@ from .consensus.consensus import generate_block_receipt
 from .chainscanner import get_wallet_token_balance
 from .db_updater import transfer_tokens_and_update_balances
 from .p2p.outgoing import send_request_in_thread
+from .auth.auth import get_wallet
 
 
 MAX_BLOCK_SIZE = 10
@@ -131,9 +132,12 @@ def run_updater():
 def broadcast_block(block):
     peers = get_peers()
 
-    private_key = _private
-    public_key = _public
+    my_wallet = get_wallet()
+    private_key = my_wallet['private']
+    public_key = my_wallet['public']
+    address = my_wallet['address']
     signature = {
+        'address': address,
         'public': public_key,
         'msgsign': sign_object(private_key, block)
     } 
@@ -190,3 +194,18 @@ def pay_fee_for_transaction(cur, transaction):
             fee / len(payees)
         )
     return True
+
+
+def mine_empty_block():
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+
+    blockchain = Blockchain()
+
+    block = blockchain.mine_empty_block(cur, {'transactions': []})
+    # update_db_states(cur, block)
+
+    con.commit()
+    con.close()
+
+    return block

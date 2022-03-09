@@ -10,7 +10,8 @@ from app.codes.p2p.sync_chain import sync_chain_from_peers
 
 from .constants import NEWRL_PORT
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
-from .codes.clock.global_time import start_mining_clock, update_time_difference, start_miner_broadcast_clock
+from .codes.clock.global_time import update_time_difference
+from .codes.clock.timers import start_mining_clock, start_miner_broadcast_clock
 
 from .routers import blockchain
 from .routers import p2p

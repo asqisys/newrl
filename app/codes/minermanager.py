@@ -3,8 +3,9 @@ import sqlite3
 import random
 
 from .blockchain import get_last_block_hash
+# from .p2p.outgoing import propogate_transaction_to_peers
 from .p2p.utils import get_my_address
-from ..constants import COMMITTEE_SIZE, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL
+from ..constants import COMMITTEE_SIZE, IS_TEST, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL
 from .auth.auth import get_wallet
 from .signmanager import sign_transaction
 from ..ntypes import TRANSACTION_MINER_ADDITION
@@ -13,9 +14,11 @@ from .transactionmanager import Transactionmanager
 from .validator import validate
 
 
-def miner_addition_transaction():
-    wallet = get_wallet()
-    my_address = get_my_address()
+def miner_addition_transaction(wallet=None, my_address=None):
+    if wallet is None:
+        wallet = get_wallet()
+    if my_address is None:
+        my_address = get_my_address()
     timestamp = get_time_ms()
     transaction_data = {
         'timestamp': timestamp,
@@ -68,8 +71,14 @@ def broadcast_miner_update():
 
 def get_committee_list():
     last_block = get_last_block_hash()
+    last_block_epoch = 0
+    try:
+        # Need try catch to support older block timestamps
+        last_block_epoch = int(last_block['timestamp'])
+    except:
+        pass
     if last_block:
-        cutfoff_epoch = last_block['timestamp'] - TIME_MINER_BROADCAST_INTERVAL
+        cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL
     else:
         cutfoff_epoch = 0
 
@@ -87,9 +96,18 @@ def get_committee_list():
 
 
 def get_miner_for_current_block():
+    last_block = get_last_block_hash()
+
+    if not last_block:
+        return
+
+    random.seed(last_block['index'])
+
     committee_list = get_committee_list()
 
-    return committee_list[0]
+    return random.choice(committee_list)
+
+    # return committee_list[0]
 
 
 def get_committee_for_current_block():
@@ -101,7 +119,8 @@ def get_committee_for_current_block():
     random.seed(last_block['index'])
 
     miners = get_committee_list()
-    committee = random.sample(miners, k=COMMITTEE_SIZE)
+    committee_size = min(COMMITTEE_SIZE, len(miners))
+    committee = random.sample(miners, k=committee_size)
     return committee
 
 
