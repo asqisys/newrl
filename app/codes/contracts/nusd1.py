@@ -30,6 +30,7 @@ class nusd1(ContractMaster):
                    "sc_flag": True
                    }
         add_token(cur, tokendata, self.contractparams['parent'])
+        return True
 
     def send_nusd_token(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
