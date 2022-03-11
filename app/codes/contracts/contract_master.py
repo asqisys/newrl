@@ -129,11 +129,15 @@ class ContractMaster():
             return False
         else:
             if self.sendervalid(callparams['sender'], self.deploy.__name__):
-                self.contractparams['status'] = 2     # changed from 1 (setup done) to 2 (deployed and live)
-                cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (self.contractparams['status'], self.address))
-                print("Deployed smart contract - ",self.template,"with address ",self.address)
-                self.updateondeploy(cur)
-                return True
+                status = self.updateondeploy(cur)
+                if status:
+                    self.contractparams['status'] = 2     # changed from 1 (setup done) to 2 (deployed and live)
+                    cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (self.contractparams['status'], self.address))
+                    print("Deployed smart contract - ",self.template,"with address ",self.address)
+                    return True
+                else:
+                    print("Could not deploy smart contract - ",self.template,"with address ",self.address)
+                    return False
             else:
                 print("Sender not valid or not allowed this function call.")
                 return False
@@ -148,3 +152,13 @@ class ContractMaster():
                 if appr_sender['allowed'] == 'all' or function in appr_sender['allowed']:
                     sendervalidity = True
         return sendervalidity
+
+    def terminate(self, cur):
+        if self.contractparams['status']==3:
+            print("Contract expired. Terminating.")
+            self.contractparams['status']=-1
+            cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (self.contractparams['status'], self.address))
+            return True
+        else:
+            print("Not an expired contract. Not closing.")
+            return False
