@@ -2,8 +2,9 @@ import os
 import time
 import sqlite3
 
+from .test_p2p import _receive_block
 from .test_miner_committee import _add_test_miner
-from ..codes.clock.timers import start_mining_clock
+from ..codes.updater import start_mining_clock
 from ..codes.blockchain import get_last_block_hash
 from ..codes.utils import get_time_ms
 from ..codes.auth.auth import get_wallet
@@ -20,7 +21,7 @@ from ..main import app
 client = TestClient(app)
 
 
-def test_mining_reward():
+def test_mining_clock():
     broadcast_miner_update()
     response = client.post('/run-updater')
     assert response.status_code == 200
@@ -39,7 +40,22 @@ def test_mining_reward():
 
     assert block_index == previous_block_index + 1
 
-    for i in range(1, 20):
+    for i in range(1, 3):
         _add_test_miner(i)
     # time.sleep(BLOCK_TIME_INTERVAL_SECONDS * 4)
     # os._exit(1)
+
+
+def test_all_timers():
+    broadcast_miner_update()
+    response = client.post('/run-updater')
+    assert response.status_code == 200
+
+    broadcast_miner_update()
+    response = client.post('/run-updater')
+    
+    response = client.get('/get-last-block-index')
+    assert response.status_code == 200
+    
+    previous_block_index = int(response.text)
+    _receive_block(previous_block_index + 1)

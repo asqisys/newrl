@@ -2,7 +2,6 @@
 import sqlite3
 
 from ..constants import NEWRL_DB
-from .blockchain import Blockchain
 
 
 class Chainscanner():

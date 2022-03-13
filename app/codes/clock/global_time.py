@@ -2,9 +2,7 @@ import sys
 import time
 import requests
 import threading
-from ..minermanager import should_i_mine
-from ...constants import BLOCK_TIME_INTERVAL_SECONDS, MAX_ALLOWED_TIME_DIFF_SECONDS, NO_RECEIPT_COMMITTEE_TIMEOUT, TIME_DIFF_WITH_GLOBAL, TIME_MINER_BROADCAST_INTERVAL
-from ..updater import run_updater
+from ...constants import BLOCK_TIME_INTERVAL_SECONDS, MAX_ALLOWED_TIME_DIFF_SECONDS, NO_RECEIPT_COMMITTEE_TIMEOUT, TIME_DIFF_WITH_GLOBAL, TIME_DIFF_WITH_GLOBAL_FILE, TIME_MINER_BROADCAST_INTERVAL
 
 
 def get_global_epoch():
@@ -22,18 +20,25 @@ def get_local_epoch():
 
 def get_time_difference():
     """Return the time difference between local and global in seconds"""
+    try:
+        with open(TIME_DIFF_WITH_GLOBAL_FILE, 'r') as f:
+            return int(f.read())
+    except:
+        global_epoch = get_global_epoch()
+        local_epoch = get_local_epoch()
+        diff = global_epoch - local_epoch
+        with open(TIME_DIFF_WITH_GLOBAL_FILE, 'w') as f:
+            f.write(str(diff))
+        return diff
+
+
+def sync_timer_clock_with_global():
     global_epoch = get_global_epoch()
     local_epoch = get_local_epoch()
-    return global_epoch - local_epoch
-
-
-def update_time_difference():
-    TIME_DIFF_WITH_GLOBAL = get_time_difference()
-    print('Time difference with global is ', TIME_DIFF_WITH_GLOBAL)
-    if TIME_DIFF_WITH_GLOBAL > MAX_ALLOWED_TIME_DIFF_SECONDS:
-        print('System time is not syncronised. Time difference in seconds: ', TIME_DIFF_WITH_GLOBAL)
-        quit()
-    return True
+    diff = global_epoch - local_epoch
+    with open(TIME_DIFF_WITH_GLOBAL_FILE, 'w') as f:
+        f.write(str(diff))
+    print('Synced clock. Time difference is', diff)
 
 
 if __name__ == '__main__':

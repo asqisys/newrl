@@ -10,7 +10,7 @@ import os
 
 from app.codes.fs.mempool_manager import get_mempool_transaction
 from app.codes.p2p.transport import send
-from .blockchain import get_last_block_hash
+from .utils import get_last_block_hash
 from .transactionmanager import Transactionmanager
 from ..constants import IS_TEST, MEMPOOL_PATH
 from .p2p.outgoing import propogate_transaction_to_peers

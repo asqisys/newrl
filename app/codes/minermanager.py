@@ -2,7 +2,7 @@
 import sqlite3
 import random
 
-from .blockchain import get_last_block_hash
+from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers
 from .p2p.utils import get_my_address
 from ..constants import COMMITTEE_SIZE, IS_TEST, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL
@@ -130,3 +130,13 @@ def should_i_mine():
     if miner['wallet_address'] == my_wallet['address']:
         return True
     return False
+
+
+def am_i_in_current_committee():
+    my_wallet_address = get_wallet()['address']
+    committee = get_committee_for_current_block()
+
+    found = list(filter(lambda w: w['wallet_address'] == my_wallet_address, committee))
+    if len(found) == 0:
+        return False
+    return True

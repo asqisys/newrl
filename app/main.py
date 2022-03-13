@@ -10,8 +10,8 @@ from app.codes.p2p.sync_chain import sync_chain_from_peers
 
 from .constants import NEWRL_PORT
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
-from .codes.clock.global_time import update_time_difference
-from .codes.clock.timers import start_mining_clock, start_miner_broadcast_clock
+from .codes.clock.global_time import sync_timer_clock_with_global
+from .codes.updater import start_miner_broadcast_clock
 
 from .routers import blockchain
 from .routers import p2p
@@ -51,12 +51,12 @@ args = {
 def app_startup():
     try:
         if not args['disablenetwork']:
+            sync_timer_clock_with_global()
             if not args['disableupdate']:
                 update_software(propogate=False)
             if not args['disablebootstrap']:
                 init_bootstrap_nodes()
             sync_chain_from_peers()
-            update_time_difference()
             update_my_address()
         start_miner_broadcast_clock()
     except Exception as e:
