@@ -69,13 +69,10 @@ class ContractMaster():
         contractparams['status']=1
         #status convention: 0 or None is not setup yet, 1 is setup but not deployed, 2 is setup and deployed, 3 is expired and -1 is terminated
         
-        # now we need to update the contract parameters in SC database; for now we are appending to the allcontracts.json
+        # now updating the contract parameters in SC database
         contractparams['ts_init'] = time.mktime(datetime.datetime.now().timetuple())
-        #contractparams['ts_init']=str(datetime.datetime.now()
         contractparams['address']= self.address
         self.contractparams=contractparams
-        #########
-        #code to append contractdata into allcontracts db
         sdestr=0 if not contractparams['selfdestruct'] else int(contractparams['selfdestruct'])
         cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
         cspecs=json.dumps(contractparams['contractspecs'])

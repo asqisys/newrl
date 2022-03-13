@@ -1,7 +1,6 @@
 # class to create smart contract for loan with bullet repayment
 from .contract_master import ContractMaster
 from ..db_updater import *
-from ...constants import ZERO_ADDRESS
 
 class SecLoan1v100(ContractMaster):
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
@@ -25,8 +24,8 @@ class SecLoan1v100(ContractMaster):
             return False
 
     def create_loan_token(self, cur):
-        name="Secloantoken"+self.address[:5]
-        tokencode="ln"+self.address[1:]
+        name="secloantoken"+self.address[:5]
+        tokencode="ln"+self.address[2:]
         contractspecs=json.loads(self.contractparams['contractspecs'])
         tokendata={"tokencode": tokencode,
                    "tokenname": name,
@@ -49,8 +48,8 @@ class SecLoan1v100(ContractMaster):
         if self.contractparams['status']==2:
             print("This is a deployed contract, cannot reverse it. Exiting.")
             return False
-        if self.contractparams['status']==0:
-            print("This contract is yet to be setup, nothing is expected to be in its wallet. Exiting.")
+        if self.contractparams['status']==0 or self.contractparams['status']==-1:
+            print("This contract is yet to be setup or already terminated, nothing is expected to be in its wallet. Exiting.")
             return False
         sc_money_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['tokencode'])
         sc_sectoken_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['sec_token_code'])
@@ -64,16 +63,6 @@ class SecLoan1v100(ContractMaster):
         else:
             print("Could not terminate contract. Investigate! Contact address: ",self.address)
         return True
-
-    def check_default(self, cur, checktime, loantokencode):
-        if not self.check_duedate(checktime):
-            return False
-        sc_money_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['tokencode'])
-        sc_mbal_expected = (get_tokens_outstanding(cur, loantokencode) / self.contractparams['contractspecs']['loanamount']) * self.contractparams['contractspecs']['repayment']
-        if sc_money_balance >= sc_mbal_expected:
-            return False;   #i.e. not a default
-        else:
-            return True;    # default
 
     def check_duedate(self, checktime):
         if time.mktime(datetime.datetime.now().timetuple()) < checktime: #need to replace .now with global time
@@ -92,17 +81,14 @@ class SecLoan1v100(ContractMaster):
         else:
             return False
 
-    def run(self, cur, callparams):
-        '''called by lenders with their loan tokens to get money or security tokens in return or by borrower to close things'''
+    def conclude(self, cur, callparams):
+        '''called by borrower to close things or internally upon repayment'''
         if self.contractparams['status']==3:
             print("Expired contract, terminating.")
             terminate_status = self.close_balances_and_terminate(cur)
             return terminate_status
         if self.contractparams['status']!=2:
             print("Not a live contract. Exiting.")
-            return False
-        if not self.check_duedate(callparams['checktime']):
-            print("Not due date yet. Exiting")
             return False
         outstanding_loan_tokens = get_tokens_outstanding(cur, callparams['loantokencode'])
         sc_sectoken_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['sec_token_code'])
@@ -113,7 +99,52 @@ class SecLoan1v100(ContractMaster):
             cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (self.contractparams['status'], self.address))
             terminate_status = self.close_balances_and_terminate(cur)
             return terminate_status
+        else:
+            print("Outstanding loan tokens, cannot conclude.")
+            return False
 
+    def make_repayment(self, cur, callparams):
+        '''called by borrower to make repayment and conclude'''
+        if self.contractparams['status']!=2:
+            print("Not a live contract. Exiting.")
+            return False
+        outstanding_loan_tokens = get_tokens_outstanding(cur, callparams['loantokencode'])
+        if not outstanding_loan_tokens:
+            print("No outstanding loan tokens. Exiting.")
+            return True
+        repayment_due_total = outstanding_loan_tokens / self.contractparams['contractspecs']['loanamount'] * self.contractparams['contractspecs']['repayment']
+        lenders_balances = get_all_token_balances(cur, callparams['loantokencode'])
+        repayment_amount = callparams['amount']
+        if repayment_amount >= repayment_due_total:
+            repayment_ratio = 1.0
+        else:
+            repayment_ratio = repayment_amount / repayment_due_total
+    #    actual_repayment = 0
+        for lender_bal in lenders_balances:
+            amount_due_to_lender = int(int(lender_bal[1]) / outstanding_loan_tokens * repayment_amount)
+            if amount_due_to_lender:
+                transfer_tokens_and_update_balances(cur, self.address, lender_bal[0],self.contractparams['contractspecs']['tokencode'],amount_due_to_lender)
+                burn_tokens(cur,lender_bal[0],callparams['loantokencode'], int(repayment_ratio*lender_bal[1]))
+    #            actual_repayment += amount_due_to_lender
+                if repayment_ratio >= 1.0:
+                    self.scorechange(False, lender_bal[0], self.contractparams['contractspecs']['borrowerwallet'])
+        outstanding_loan_tokens = get_tokens_outstanding(cur, callparams['loantokencode'])
+        sc_sectoken_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['sec_token_code'])
+        sec_token_amount_to_return = max(0,sc_sectoken_balance - int(outstanding_loan_tokens / self.contractparams['contractspecs']['loanamount'] * self.contractparams['contractspecs']['sec_token_amount'])))
+        transfer_tokens_and_update_balances(cur, self.address, self.contractparams['contractspecs']['secproviderwallet'],self.contractparams['contractspecs']['sec_token_code'],sec_token_amount_to_return)
+        if not outstanding_loan_tokens:
+            self.conclude(cur,callparams)
+
+    def seek_repayment(self, cur, callparams)
+        '''called by lenders with their loan tokens to get money or security tokens in return'''
+        if self.contractparams['status']!=2:
+            print("Not a live contract. Exiting.")
+            return False
+        if not self.check_duedate(callparams['checktime']):
+            print("Not due date yet. Exiting")
+            return False
+        outstanding_loan_tokens = get_tokens_outstanding(cur, callparams['loantokencode'])
+        sc_sectoken_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['sec_token_code'])
         senderbalance = get_wallet_token_balance(cur, callparams['callerwallet'],callparams['loantokencode'])
         if not self.runsendervalid(callparams['callerwallet'], senderbalance, callparams['amount']):
             print("Invalid caller for the run function.")
@@ -133,8 +164,7 @@ class SecLoan1v100(ContractMaster):
 
         transfer_tokens_and_update_balances(cur, self.address, callparams['callerwallet'],self.contractparams['contractspecs']['tokencode'],money_tokens_due_to_caller)
         transfer_tokens_and_update_balances(cur, self.address, callparams['callerwallet'],self.contractparams['contractspecs']['sec_token_code'],sec_tokens_due_to_caller)
-        transfer_tokens_and_update_balances(cur, callparams['callerwallet'], ZERO_ADDRESS , callparams['loantokencode'], callparams['amount'])
-
+        burn_tokens(cur,callparams['callerwallet'],callparams['loantokencode'], callparams['amount'])
         self.scorechange(default_status, callparams['callerwallet'], self.contractparams['contractspecs']['borrowerwallet'])
 
     def scorechange(self, defstatus, wallet_lender, wallet_borrower):

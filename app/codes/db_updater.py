@@ -10,7 +10,7 @@ import time
 import sqlite3
 import hashlib
 
-from ..constants import NEWRL_DB
+from ..constants import NEWRL_DB, ZERO_ADDRESS
 from .utils import get_person_id_for_wallet_address, get_time_ms
 
 
@@ -176,12 +176,23 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
     balance = balance_row[0] if balance_row is not None else 0
     return balance
 
+def get_all_token_balances(cur, token_code):
+    balance_cursor = cur.execute('SELECT wallet_address, balance FROM balances WHERE tokencode = :tokencode', {
+        'tokencode': token_code})
+    balances = balance_cursor.fetchall()
+    return balances
+
 def get_tokens_outstanding(cur, token_code):
     balance_cursor = cur.execute('SELECT amount_created FROM tokens WHERE tokencode = :tokencode', {
         'tokencode': token_code})
     balance_row = balance_cursor.fetchone()
     balance = balance_row[0] if balance_row is not None else 0
     return balance
+
+def burn_tokens(cur, senderwallet, token_code, amount):
+    transfer_tokens_and_update_balances(cur, senderwallet, ZERO_ADDRESS, token_code, amount)
+    update_token_amount(cur,token_code,-1*amount)
+    return True
 
 def add_tx_to_block(cur, block_index, transactions):
     print(block_index, transactions)
@@ -223,6 +234,7 @@ def update_token_amount(cur, tid, amt):
     else:
         cumul_amt = int(0)
     cumul_amt = cumul_amt + amt
+    cumul_amt = max(cumul_amt, 0)
 #    cur.execute(f'''INSERT OR REPLACE INTO tokens
 #				(tokencode, amount_created)
 #				 VALUES (?, ?)''', (tid, cumul_amt))
