@@ -176,6 +176,12 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
     balance = balance_row[0] if balance_row is not None else 0
     return balance
 
+def get_tokens_outstanding(cur, token_code):
+    balance_cursor = cur.execute('SELECT amount_created FROM tokens WHERE tokencode = :tokencode', {
+        'tokencode': token_code})
+    balance_row = balance_cursor.fetchone()
+    balance = balance_row[0] if balance_row is not None else 0
+    return balance
 
 def add_tx_to_block(cur, block_index, transactions):
     print(block_index, transactions)
