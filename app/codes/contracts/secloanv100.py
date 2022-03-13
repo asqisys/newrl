@@ -17,7 +17,7 @@ class SecLoan1v100(ContractMaster):
         security_amount=get_wallet_token_balance(cur, self.address,self.contractparams['contractspecs']['sec_token_code'])
         if lent_amount>= self.contractparams['contractspecs']['loanamount'] and security_amount >= self.contractparams['contractspecs']['sec_token_amount']:
             self.create_loan_token(cur)
-            self.contractparams['next_act_ts'] = self.contractparams['contractspecs']['due_date']   #this is so only for bullet repayment, else this will be emi date
+            self.contractparams['next_act_ts'] = self.contractparams['contractspecs']['due_date']
             cur.execute(f'''UPDATE contracts SET next_act_ts=? WHERE address=?''', (self.contractparams['next_act_ts'], self.address))
             return True
         else:
