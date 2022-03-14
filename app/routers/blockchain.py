@@ -288,10 +288,10 @@ def sign_transaction(wallet_data: dict, transaction_data: dict):
 
 @router.post("/validate-transaction", tags=[v2_tag])
 def validate_transaction(transaction_data: dict):
-    """Validate a given transaction file if it's included in chain"""
+    """Validate a signed transaction and adds it to the chain"""
     try:
         print('Received transaction: ', transaction_data)
-        response = validator.validate(transaction_data)
+        response = validator.validate(transaction_data, propagate=True)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))

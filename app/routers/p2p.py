@@ -11,9 +11,9 @@ from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_tr
 from app.constants import NEWRL_PORT
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
-from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionsRequest
+from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionAdditionRequest, TransactionsRequest
 from app.codes.auth.auth import get_node_wallet_address
-
+from app.codes.validator import validate as validate_transaction
 
 router = APIRouter()
 
@@ -35,6 +35,10 @@ def get_mempool_transactions_api(req: TransactionsRequest):
 @router.post("/get-blocks", tags=[p2p_tag])
 def get_mempool_transactions_api(req: BlockRequest):
     return get_blocks(req.block_indexes)
+
+@router.post("/receive-transaction", tags=[p2p_tag])
+def receive_transaction_api(req: TransactionAdditionRequest):
+    return validate_transaction(req.signed_transaction, propagate=False)
 
 @router.post("/receive-block", tags=[p2p_tag])
 def receive_block_api(req: BlockAdditionRequest):

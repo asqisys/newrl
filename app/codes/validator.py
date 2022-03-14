@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def validate(transaction):
+def validate(transaction, propagate=False):
     existing_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
     if existing_transaction is not None:
         return True
@@ -43,7 +43,7 @@ def validate(transaction):
         transaction_file = f"{MEMPOOL_PATH}transaction-{transaction_manager.transaction['type']}-{transaction_manager.transaction['trans_code']}.json"
         transaction_manager.save_transaction_to_mempool(transaction_file)
 
-        if not IS_TEST:
+        if propagate and not IS_TEST:
             # Broadcast transaction to peers via HTTP
             propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
 

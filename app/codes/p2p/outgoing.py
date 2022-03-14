@@ -15,8 +15,9 @@ def propogate_transaction_to_peers(transaction):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Broadcasting transaction to peer', url)
+        payload = {'signed_transaction': transaction}
         try:
-            thread = Thread(target=send_request, args = (url + '/validate-transaction', transaction))
+            thread = Thread(target=send_request, args = (url + '/receive-transaction', payload))
             thread.start()
         except Exception as e:
             print(f'Error broadcasting block to peer: {url}')
