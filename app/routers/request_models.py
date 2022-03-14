@@ -105,3 +105,7 @@ class BlockAdditionRequest(BaseModel):
 
 class ReceiptAdditionRequest(BaseModel):
     receipt: dict
+
+
+class TransactionAdditionRequest(BaseModel):
+    signed_transaction: dict
