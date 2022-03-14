@@ -11,14 +11,14 @@
 ## Installation
 
 ```bash
-$ scripts/install.sh
+scripts/install.sh
 ```
 
 ## Running the app
 
 ```bash
 # with network sync
-$ scripts/start.sh
+scripts/start.sh
 ```
 
 ## Test
