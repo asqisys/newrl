@@ -11,6 +11,7 @@
 ## Installation
 
 ```bash
+git clone https://github.com/asqisys/newrl.git
 scripts/install.sh
 ```
 
