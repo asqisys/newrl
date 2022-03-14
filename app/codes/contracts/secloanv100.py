@@ -112,9 +112,16 @@ class SecLoan1v100(ContractMaster):
         if not outstanding_loan_tokens:
             print("No outstanding loan tokens. Exiting.")
             return True
+        sc_money_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['tokencode'])
+        if not sc_money_balance:
+            print("No moneybalance to repay. Exiting.")
+            return False
         repayment_due_total = outstanding_loan_tokens / self.contractparams['contractspecs']['loanamount'] * self.contractparams['contractspecs']['repayment']
         lenders_balances = get_all_token_balances(cur, callparams['loantokencode'])
         repayment_amount = callparams['amount']
+        if repayment_amount > sc_money_balance:
+            print("Reseting the repayment amount to money balance.")
+            repayment_amount = sc_money_balance
         if repayment_amount >= repayment_due_total:
             repayment_ratio = 1.0
         else:
@@ -130,12 +137,12 @@ class SecLoan1v100(ContractMaster):
                     self.scorechange(False, lender_bal[0], self.contractparams['contractspecs']['borrowerwallet'])
         outstanding_loan_tokens = get_tokens_outstanding(cur, callparams['loantokencode'])
         sc_sectoken_balance = get_wallet_token_balance(cur,self.address,self.contractparams['contractspecs']['sec_token_code'])
-        sec_token_amount_to_return = max(0,sc_sectoken_balance - int(outstanding_loan_tokens / self.contractparams['contractspecs']['loanamount'] * self.contractparams['contractspecs']['sec_token_amount'])))
+        sec_token_amount_to_return = max(0,sc_sectoken_balance - int(outstanding_loan_tokens / self.contractparams['contractspecs']['loanamount'] * self.contractparams['contractspecs']['sec_token_amount']))
         transfer_tokens_and_update_balances(cur, self.address, self.contractparams['contractspecs']['secproviderwallet'],self.contractparams['contractspecs']['sec_token_code'],sec_token_amount_to_return)
         if not outstanding_loan_tokens:
             self.conclude(cur,callparams)
 
-    def seek_repayment(self, cur, callparams)
+    def seek_repayment(self, cur, callparams):
         '''called by lenders with their loan tokens to get money or security tokens in return'''
         if self.contractparams['status']!=2:
             print("Not a live contract. Exiting.")
