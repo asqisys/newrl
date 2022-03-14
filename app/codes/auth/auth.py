@@ -36,7 +36,6 @@ def get_auth():
                 'public': wallet['public'],
             }
             auth_data['signature'] = sign_object(private_key, auth_data)
-            print('auth', auth_data)
             return auth_data
     except:
         auth_data = {}

@@ -8,7 +8,9 @@ import datetime
 import base64
 import sqlite3
 
-from ..ntypes import TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSCATION_TOKEN_CREATION
+
+from ..ntypes import TRANSACTION_MINER_ADDITION, TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSACTION_TOKEN_CREATION
+
 from .chainscanner import get_wallet_token_balance
 from ..constants import ALLOWED_CUSTODIANS_FILE, MEMPOOL_PATH, NEWRL_DB
 from .utils import get_time_ms
@@ -199,7 +201,7 @@ class Transactionmanager:
         # from mempool only include transactions that reduce balance and not those that increase
         # check if the sender has enough balance to spend
         self.validity = 0
-        if self.transaction['type'] == 1:
+        if self.transaction['type'] == TRANSACTION_WALLET_CREATION:
             custodian = self.transaction['specific_data']['custodian_wallet']
             walletaddress = self.transaction['specific_data']['wallet_address']
             if not is_wallet_valid(custodian):
@@ -244,7 +246,7 @@ class Transactionmanager:
                                 self.validity = 0
 
     #	self.validity=0
-        if self.transaction['type'] == 2:  # token addition transaction
+        if self.transaction['type'] == TRANSACTION_TOKEN_CREATION:  # token addition transaction
             firstowner = self.transaction['specific_data']['first_owner']
             custodian = self.transaction['specific_data']['custodian']
             fovalidity = False
@@ -298,7 +300,7 @@ class Transactionmanager:
                             "Tokencode provided does not exist. Will append as new one.")
                         self.validity = 1  # tokencode is provided by user
 
-        if self.transaction['type'] == 3:
+        if self.transaction['type'] == TRANSACTION_SMART_CONTRACT:
             self.validity = 1
             for wallet in self.transaction['specific_data']['signers']:
                 if not is_wallet_valid(wallet):
@@ -309,7 +311,7 @@ class Transactionmanager:
                         self.validity = 0
 
     #	self.validity=0
-        if self.transaction['type'] == 4 or self.transaction['type'] == 5:
+        if self.transaction['type'] == TRANSACTION_TWO_WAY_TRANSFER or self.transaction['type'] == TRANSACTION_ONE_WAY_TRANSFER:
             ttype = self.transaction['type']
             startingbalance1 = 0
             startingbalance2 = 0
@@ -400,7 +402,7 @@ class Transactionmanager:
                 #	self.transaction['valid']=1;
                     self.validity = 1
 
-        if self.transaction['type'] == 6:  # score change transaction
+        if self.transaction['type'] == TRANSACTION_TRUST_SCORE_CHANGE:  # score change transaction
             ttype = self.transaction['type']
         #    personid1 = self.transaction['specific_data']['personid1']
         #    personid2 = self.transaction['specific_data']['personid2']
@@ -426,6 +428,14 @@ class Transactionmanager:
                         self.validity = 0
                     else:
                         self.validity = 1
+        
+        if self.transaction['type'] == TRANSACTION_MINER_ADDITION:
+            # No checks for fee in the beginning
+            if not is_wallet_valid(self.transaction['specific_data']['wallet_address']):
+                print("Miner wallet not in chain")
+                self.validity = 0
+            else:
+                self.validity = 1
 
         if self.validity == 1:
             return True
@@ -540,7 +550,7 @@ def get_valid_addresses(transaction):
     if transaction_type == TRANSACTION_WALLET_CREATION:  # Custodian needs to sign
         valid_addresses.append(
             transaction['specific_data']['custodian_wallet'])
-    if transaction_type == TRANSCATION_TOKEN_CREATION:    # Custodian needs to sign
+    if transaction_type == TRANSACTION_TOKEN_CREATION:    # Custodian needs to sign
         valid_addresses.append(transaction['specific_data']['custodian'])
     if transaction_type == TRANSACTION_SMART_CONTRACT:
         valid_addresses = get_sc_validadds(transaction)
@@ -552,4 +562,6 @@ def get_valid_addresses(transaction):
     if transaction_type == TRANSACTION_TRUST_SCORE_CHANGE:
         # Only address1 is added, not address2
         valid_addresses.append(transaction['specific_data']['address1'])
+    if transaction_type == TRANSACTION_MINER_ADDITION:
+        valid_addresses.append(transaction['specific_data']['wallet_address'])
     return valid_addresses

@@ -1,5 +1,8 @@
 from fastapi.testclient import TestClient
+import pytest
+from .test_miner_committee import _add_test_miner, clear_miner_db
 from ..migrations.init import init_newrl
+from ..codes.minermanager import broadcast_miner_update
 
 from ..main import app
 
@@ -53,6 +56,7 @@ def _receive_block(block_index):
         "previous_hash": "0000ae69c361c65f088b52af8f5372f94f5f62d84f0980ea4c2cd71551206024"
     },
     "signature": {
+        "address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6",
         "public": "4trPBhDwdxWat2I8tE4Mj+7R6tiTJ+44GWtTdf5QpXnh/Ia1i5x4ETDufrCn3mjYN8gJs/w3iiMlDEmAAs7kvg==",
         "msgsign": "8odtLy4zlyXNn7GFK4lpDtubGOS3bLFijmxXR1T8+TlLOl39+mA9Ajw8S4Sw3enJlGiWGorJr+0ULKdmeqf4Hw=="
     }
@@ -72,6 +76,11 @@ def _receive_block(block_index):
     
 
 def test_block_receive():
+    clear_miner_db()
+    
+    broadcast_miner_update()
+    response = client.post('/run-updater')
+    
     response = client.get('/get-last-block-index')
     assert response.status_code == 200
     
@@ -83,3 +92,23 @@ def test_block_receive():
     
     # Block index should've increased by 1
     assert current_block_index == (previous_block_index + 1)
+
+
+def test_block_reject():
+    """Expect block rejection from unexpected minors"""
+    clear_miner_db()
+
+    _add_test_miner(1)
+
+    response = client.get('/get-last-block-index')
+    assert response.status_code == 200
+    
+    previous_block_index = int(response.text)
+    with pytest.raises(Exception) as e_info:
+        _receive_block(previous_block_index + 1)
+
+    response = client.get('/get-last-block-index')
+    current_block_index = int(response.text)
+    
+    # Block index should not increase
+    assert current_block_index == previous_block_index

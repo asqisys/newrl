@@ -6,6 +6,7 @@ from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
 from ...constants import MINIMUM_ACCEPTANCE_RATIO, MINIMUM_ACCEPTANCE_VOTES
 from ..auth.auth import get_wallet
+from ..minermanager import get_miner_for_current_block
 
 
 try:
@@ -65,3 +66,12 @@ def check_community_consensus(block):
     # if receipt_counts['postitive_receipt_count'] >= MINIMUM_ACCEPTANCE_VOTES and receipt_counts['total_receipt_count']:
     #     return True
     return False
+
+
+def validate_block_miner(block):
+    miner_address = block['signature']['address']
+
+    expected_miner = get_miner_for_current_block()['wallet_address']
+
+    if miner_address != expected_miner:
+        raise Exception(f"Invalid miner {miner_address} for block {block['block_index']}. Expected {expected_miner}")

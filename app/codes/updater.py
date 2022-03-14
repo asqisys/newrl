@@ -3,10 +3,13 @@ import datetime
 import json
 import os
 import sqlite3
+import threading
 import requests
 
+from .clock.global_time import get_time_difference
+from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
-from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, IS_TEST, NEWRL_DB, NEWRL_PORT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS
+from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
@@ -18,6 +21,7 @@ from .consensus.consensus import generate_block_receipt
 from .chainscanner import get_wallet_token_balance
 from .db_updater import transfer_tokens_and_update_balances
 from .p2p.outgoing import send_request_in_thread
+from .auth.auth import get_wallet
 
 
 MAX_BLOCK_SIZE = 10
@@ -131,9 +135,12 @@ def run_updater():
 def broadcast_block(block):
     peers = get_peers()
 
-    private_key = _private
-    public_key = _public
+    my_wallet = get_wallet()
+    private_key = my_wallet['private']
+    public_key = my_wallet['public']
+    address = my_wallet['address']
     signature = {
+        'address': address,
         'public': public_key,
         'msgsign': sign_object(private_key, block)
     } 
@@ -190,3 +197,89 @@ def pay_fee_for_transaction(cur, transaction):
             fee / len(payees)
         )
     return True
+
+
+def mine_empty_block():
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+
+    blockchain = Blockchain()
+
+    block = blockchain.mine_empty_block(cur, {'transactions': []})
+    # update_db_states(cur, block)
+
+    con.commit()
+    con.close()
+
+    return block
+
+
+def no_receipt_timeout():
+    print('Inadequate receipts. Timing out and sending empty block.')
+
+
+def mine():
+    if should_i_mine():
+        print('I am the miner for this block.')
+        run_updater()
+    else:
+        miner = get_miner_for_current_block()
+        print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
+        start_block_receive_timeout_clock()
+
+def start_receipt_timeout():
+    timer = threading.Timer(NO_RECEIPT_COMMITTEE_TIMEOUT, no_receipt_timeout)
+    timer.start()
+
+
+def start_mining_clock():
+    mine()
+    timer = threading.Timer(BLOCK_TIME_INTERVAL_SECONDS, start_mining_clock)
+    timer.start()
+
+
+def block_receive_timeout():
+    miner = get_miner_for_current_block()
+    print(f"Block receive timed out from miner {miner['wallet_address']}")
+    block_index = mine_empty_block()['index']
+    print(f"Mined new block {block_index}")
+
+
+def start_block_receive_timeout_clock():
+    timer = threading.Timer(BLOCK_RECEIVE_TIMEOUT_SECONDS, block_receive_timeout)
+    timer.start()
+
+
+def start_miner_broadcast_clock():
+    print('Broadcasting miner update')
+    broadcast_miner_update()
+    timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL, start_miner_broadcast_clock)
+    timer.start()
+
+
+def block_receive_timeout():
+    miner = get_miner_for_current_block()
+    print(f"Block receive timed out from miner {miner['wallet_address']}")
+    block_index = mine_empty_block()['index']
+    print(f"Mined new block {block_index}")
+
+
+def start_timers(block_timestamp):
+    print('Starting timer with timestamp ', block_timestamp)
+
+    my_global_timestamp = get_time_ms() - get_time_difference()
+    propogation_delay = my_global_timestamp - block_timestamp
+
+    # If I'm miner, start mining clock
+    if should_i_mine():
+        wait_time =  BLOCK_TIME_INTERVAL_SECONDS - propogation_delay
+        timer = threading.Timer(wait_time, mine)
+        timer.start()
+    elif am_i_in_current_committee():
+        wait_time = NO_RECEIPT_COMMITTEE_TIMEOUT - propogation_delay
+        timer = threading.Timer(wait_time, block_receive_timeout)
+        timer.start()
+    else:
+        pass
+        # Not a miner and part of committee. No action to be performed
+        # Hoping the sentinel node will trigger an empty block start stagnant network
