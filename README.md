@@ -19,9 +19,6 @@ $ scripts/install.sh
 ```bash
 # with network sync
 $ scripts/start.sh
-
-# local only
-$ python -m app.main --disablenetwork
 ```
 
 ## Test
