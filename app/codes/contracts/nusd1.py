@@ -60,5 +60,10 @@ class nusd1(ContractMaster):
                    }
         add_token(cur, tokendata)
         
-    def burn_nusd_token(self,sender_address, value):
-        pass
+    def burn_nusd_token(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
+        recipient_address = callparams['recipient_address']
+        sender = callparams['sender']
+        value = callparams['value']
+        print("Burning nUSD tokens to unlock for address: ",recipient_address)
+        burn_tokens(cur, sender, self.contractparams['contractspecs']['tokencode'], value)
