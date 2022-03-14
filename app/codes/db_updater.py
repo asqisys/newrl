@@ -10,9 +10,9 @@ import time
 import sqlite3
 import hashlib
 
-from ..constants import NEWRL_DB, ZERO_ADDRESS
+from ..constants import NEWRL_DB
+from ..nvalues import ZERO_ADDRESS
 from .utils import get_person_id_for_wallet_address, get_time_ms
-
 
 def is_wallet_valid(cur, address):
     wallet_cursor = cur.execute(
