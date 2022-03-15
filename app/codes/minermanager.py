@@ -69,18 +69,20 @@ def broadcast_miner_update():
     validate(transaction)
 
 
-def get_committee_list():
+def get_eligible_miners():
     last_block = get_last_block_hash()
-    last_block_epoch = 0
-    try:
-        # Need try catch to support older block timestamps
-        last_block_epoch = int(last_block['timestamp'])
-    except:
-        pass
-    if last_block:
-        cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL
-    else:
-        cutfoff_epoch = 0
+    # last_block_epoch = 0
+    # try:
+    #     # Need try catch to support older block timestamps
+    #     last_block_epoch = int(last_block['timestamp'])
+    # except:
+    #     pass
+    # if last_block:
+    #     cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL
+    # else:
+    #     cutfoff_epoch = 0
+    last_block_epoch = int(last_block['timestamp'])
+    cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL
 
     con = sqlite3.connect(NEWRL_DB)
     con.row_factory = sqlite3.Row
@@ -103,7 +105,7 @@ def get_miner_for_current_block():
 
     random.seed(last_block['index'])
 
-    committee_list = get_committee_list()
+    committee_list = get_committee_for_current_block()
 
     return random.choice(committee_list)
 
@@ -118,7 +120,7 @@ def get_committee_for_current_block():
 
     random.seed(last_block['index'])
 
-    miners = get_committee_list()
+    miners = get_eligible_miners()
     committee_size = min(COMMITTEE_SIZE, len(miners))
     committee = random.sample(miners, k=committee_size)
     return committee

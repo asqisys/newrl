@@ -122,11 +122,7 @@ class Blockchain:
 
         EMPTY_BLOCK_NONCE = 42
 
-        try:
-            new_block_timestamp = int(last_block_timestamp) + 1
-        except:
-            # For backward compatibility. Might need to refine.
-            new_block_timestamp = get_time_ms()
+        new_block_timestamp = int(last_block_timestamp) + 1
 
         block = {
             'index': last_block_index + 1,

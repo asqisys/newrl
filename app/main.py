@@ -58,10 +58,15 @@ def app_startup():
                 init_bootstrap_nodes()
             sync_chain_from_peers()
             update_my_address()
-        start_miner_broadcast_clock()
     except Exception as e:
         print('Bootstrap failed')
         logging.critical(e, exc_info=True)
+    
+    try:
+        start_miner_broadcast_clock()
+    except Exception as e:
+        print('Miner broadcast failed')
+        logging.warning(e, exc_info=True)
 
 @app.on_event("shutdown")
 def shutdown_event():
