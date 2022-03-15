@@ -33,12 +33,14 @@ v2_tag = 'V2 For Machines'
 @router.post("/run-updater", tags=[v2_tag], response_class=HTMLResponse)
 def run_updater():
     try:
-        log = updater.run_updater()
+        # log = updater.run_updater()
+        updater.mine()
+        return {'status': 'SUCCESS'}
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
-    HTMLResponse(content=log, status_code=200)
-    return log
+    # HTMLResponse(content=log, status_code=200)
+    # return log
 
 
 @router.get("/get-transaction", tags=[v2_tag])
