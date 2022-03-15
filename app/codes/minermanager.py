@@ -66,7 +66,7 @@ def get_my_miner_status():
 
 def broadcast_miner_update():
     transaction = miner_addition_transaction()
-    validate(transaction)
+    validate(transaction, propagate=True)
 
 
 def get_eligible_miners():
