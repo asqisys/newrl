@@ -257,13 +257,6 @@ def start_miner_broadcast_clock():
     timer.start()
 
 
-def block_receive_timeout():
-    miner = get_miner_for_current_block()
-    print(f"Block receive timed out from miner {miner['wallet_address']}")
-    block_index = mine_empty_block()['index']
-    print(f"Mined new block {block_index}")
-
-
 def start_timers(block_timestamp):
     print('Starting timer with timestamp ', block_timestamp)
 

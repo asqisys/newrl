@@ -4,13 +4,10 @@ import sqlite3
 from ..codes.blockchain import get_last_block_hash
 from ..codes.utils import get_time_ms
 from ..codes.auth.auth import get_wallet
-from ..codes.minermanager import broadcast_miner_update, get_committee_for_current_block, get_committee_list, get_miner_for_current_block, get_my_miner_status
-from ..codes.db_updater import add_miner, update_wallet_token_balance
+from ..codes.minermanager import broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, get_my_miner_status
+from ..codes.db_updater import add_miner
 from fastapi.testclient import TestClient
-from ..ntypes import NUSD_TOKEN_CODE
 from ..constants import NEWRL_DB
-from ..nvalues import TREASURY_WALLET_ADDRESS
-from ..migrations.init import init_newrl
 
 from ..main import app
 
