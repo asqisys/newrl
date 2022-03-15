@@ -2,6 +2,7 @@
 import sqlite3
 import random
 
+from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers
 from .p2p.utils import get_my_address
@@ -107,6 +108,9 @@ def get_miner_for_current_block():
 
     committee_list = get_committee_for_current_block()
 
+    if len(committee_list) == 0:
+        return {'wallet_address': ASQI_WALLET}
+
     return random.choice(committee_list)
 
     # return committee_list[0]
@@ -121,6 +125,10 @@ def get_committee_for_current_block():
     random.seed(last_block['index'])
 
     miners = get_eligible_miners()
+
+    if len(miners) == 0:
+        return []
+
     committee_size = min(COMMITTEE_SIZE, len(miners))
     committee = random.sample(miners, k=committee_size)
     return committee
@@ -142,3 +150,11 @@ def am_i_in_current_committee():
     if len(found) == 0:
         return False
     return True
+
+
+def get_miner_info():
+    return {
+        'current_block_miner': get_miner_for_current_block(),
+        'current_block_committee': get_committee_for_current_block(),
+        'eligible_miners': get_eligible_miners(),
+    }

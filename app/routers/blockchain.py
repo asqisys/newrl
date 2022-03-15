@@ -30,7 +30,7 @@ router = APIRouter()
 v2_tag = 'V2 For Machines'
 
 
-@router.post("/run-updater", tags=[v2_tag], response_class=HTMLResponse)
+@router.post("/run-updater", tags=[v2_tag])
 def run_updater():
     try:
         # log = updater.run_updater()

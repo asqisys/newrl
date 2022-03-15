@@ -73,5 +73,8 @@ def validate_block_miner(block):
 
     expected_miner = get_miner_for_current_block()['wallet_address']
 
+    if expected_miner is None:
+        return True
+
     if miner_address != expected_miner:
         raise Exception(f"Invalid miner {miner_address} for block {block['block_index']}. Expected {expected_miner}")

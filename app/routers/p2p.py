@@ -14,6 +14,7 @@ from app.codes.p2p.peers import call_api_on_peers
 from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionAdditionRequest, TransactionsRequest
 from app.codes.auth.auth import get_node_wallet_address
 from app.codes.validator import validate as validate_transaction
+from app.codes.minermanager import get_miner_info
 
 router = APIRouter()
 
@@ -100,6 +101,10 @@ def clear_db_api():
 @router.get("/get-peers", tags=[p2p_tag])
 def get_peers_api():
     return get_peers()
+
+@router.get("/get-miners", tags=[p2p_tag])
+def get_miners_api():
+    return get_miner_info()
 
 @router.post("/add-peer", tags=[p2p_tag])
 def add_peer_api(req: Request):

@@ -112,7 +112,7 @@ def init_db():
                     contractspecs TEXT,
                     legalparams TEXT)
                     ''')
-    cur.execute('DROP TABLE IF EXISTS miners')
+    # cur.execute('DROP TABLE IF EXISTS miners')
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS miners
                     (id text NOT NULL PRIMARY KEY,
