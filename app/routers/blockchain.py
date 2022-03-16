@@ -11,8 +11,10 @@ from starlette.responses import FileResponse
 
 from app.codes.transactionmanager import Transactionmanager
 
-from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
-from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
+from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, \
+    CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest, \
+    TrustScore, GraphType, SearchPerson, LevelData, GraphData
+from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction,get_wallet_id_from_pid,get_pid_from_wallet
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
 from app.codes.transfermanager import Transfermanager
@@ -21,6 +23,8 @@ from app.codes import validator
 from app.codes import signmanager
 from app.codes import updater
 from app.codes.contracts.contract_master import create_contract_address
+from  ..codes.Neo4jConnection import *;
+from ..codes.graphDB import getTrustScorePath, getLevelConnectedData, get_graph_data
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -296,3 +300,32 @@ def validate_transaction(transaction_data: dict):
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
     return {"status": "SUCCESS", "response": response}
+
+
+@router.post("/get-trustscore", tags=[v2_tag])
+def get_trustscore(req: TrustScore):
+    print(GraphType(req.path_type))
+    response=getTrustScorePath(conn,req.person_id_current,req.person_id,GraphType(req.path_type))
+    return {'response': response}
+@router.post("/get-level-connected", tags=[v2_tag])
+def get_trustscore(req: LevelData):
+    response=getLevelConnectedData(conn,req.person_id,req.level)
+    return {'response': response}
+
+@router.post("/get-walletId-personId", tags=[v2_tag])
+def get_wid(req: SearchPerson):
+    print(req.wallet_id)
+    if(req.person_id is not None and req.person_id!=""):
+        response=get_wallet_id_from_pid(req.person_id)
+        print(response)
+    else:
+        print(req.wallet_id)
+        response = get_pid_from_wallet(req.wallet_id)
+        print(response)
+    return {'response': response}
+@router.post("/get-inbound-outbound", tags=[v2_tag])
+def getGraphData(req: GraphData):
+    if(req.person_id is not None or req.person_id!=""):
+        response=get_graph_data(conn,req.person_id)
+        print(response)
+    return {'response': response}

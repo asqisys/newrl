@@ -9,10 +9,10 @@ import datetime
 import time
 import sqlite3
 import hashlib
-
+from .graphDB import *
 from ..constants import NEWRL_DB
 from .utils import get_person_id_for_wallet_address, get_time_ms
-
+from .Neo4jConnection import *;
 
 def is_wallet_valid(cur, address):
     wallet_cursor = cur.execute(
@@ -51,6 +51,10 @@ def update_trust_score(cur, personid1, personid2, new_score, tstamp):
     cur.execute(f'''INSERT OR REPLACE INTO trust_scores
 				(src_person_id, dest_person_id, score, last_time)
 				 VALUES (?, ?, ?, ?)''', (personid1, personid2, new_score, tstamp))
+    createRelationBetweenNodes(conn,personid1,personid2,new_score)
+
+
+
 
 
 def add_wallet_pid(cur, wallet):
@@ -91,6 +95,8 @@ def add_wallet_pid(cur, wallet):
     cur.execute(f'''INSERT OR IGNORE INTO person_wallet
                 (person_id, wallet_id)
                 VALUES (?, ?)''', query_params)
+    createPersonIdNode(conn,pid)
+
 
 
 def add_token(cur, token, txcode=None):

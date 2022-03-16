@@ -105,3 +105,23 @@ class BlockAdditionRequest(BaseModel):
 
 class ReceiptAdditionRequest(BaseModel):
     receipt: dict
+class GraphType(int,Enum):
+    ShortestPath =1
+    AllPath=2
+    PageRank=3
+class TrustScore(BaseModel):
+    person_id: str
+    person_id_current: str
+    path_type:GraphType=GraphType.ShortestPath
+
+class LevelData(BaseModel):
+    person_id: str
+    level: int
+
+class SearchPerson(BaseModel):
+    person_id:Optional[str]
+    wallet_id:Optional[str]
+
+class GraphData(BaseModel):
+    person_id:str
+

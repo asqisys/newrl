@@ -109,3 +109,33 @@ def download_chain():
 
     chain = blocks
     return chain
+
+
+def get_pid_from_wallet(walletaddinput):
+    con = sqlite3.connect(NEWRL_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    pid_cursor = cur.execute(
+        'SELECT person_id FROM person_wallet WHERE wallet_id=?', (walletaddinput,))
+    pid = pid_cursor.fetchone()
+    if pid is None:
+        return False
+    return pid[0]
+
+
+def get_wallet_id_from_pid(personIdInput):
+    con = sqlite3.connect(NEWRL_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    wallet_Id_cur = cur.execute(
+        'SELECT  * FROM wallets  '
+        'INNER JOIN  person_wallet  on wallets.WALLET_ADDRESS=person_wallet.WALLET_ID WHERE person_id=? LIMIT 1', (personIdInput,))
+    wid = dict(wallet_Id_cur.fetchone())
+    if wid is None:
+        return False
+    linkedstatus = wid['specific_data']['linked_wallet'] if 'linked_wallet' in wid['specific_data'] else False
+
+    if linkedstatus:
+        return wid['specific_data']['linked_wallet']
+    else:
+        return wid['wallet_address'];
