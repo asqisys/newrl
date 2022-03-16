@@ -225,7 +225,7 @@ def mine():
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
-        start_block_receive_timeout_clock()
+        # start_block_receive_timeout_clock()
 
 def start_receipt_timeout():
     timer = threading.Timer(NO_RECEIPT_COMMITTEE_TIMEOUT, no_receipt_timeout)
