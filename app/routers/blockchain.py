@@ -141,7 +141,8 @@ def add_transfer(transfer_request: TransferRequest):
         "wallet1": transfer_request.wallet1_address,
         "wallet2": transfer_request.wallet2_address,
         "asset1_number": int(transfer_request.asset1_qty),
-        "asset2_number": int(transfer_request.asset2_qty)
+        "asset2_number": int(transfer_request.asset2_qty),
+        "additional_data": transfer_request.additional_data
     }
     type = transfer_request.transfer_type
     fulltrandata = {
@@ -151,7 +152,7 @@ def add_transfer(transfer_request: TransferRequest):
             "type": type,
             "currency": "INR",
             "fee": 0.0,
-            "descr": "",
+            "descr": transfer_request.description,
             "valid": 1,
             "block_index": 0,
             "specific_data": trandata
