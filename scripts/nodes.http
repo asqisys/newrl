@@ -1,0 +1,44 @@
+
+GET http://testnet.newrl.net:8182/get-last-block-index
+GET http://testnet.newrl.net:8182/get-node-wallet-address
+GET http://testnet.newrl.net:8182/get-miners
+GET http://testnet.newrl.net:8182/get-peers
+GET http://testnet.newrl.net:8182/download-chain
+GET http://testnet.newrl.net:8182/download-state
+POST http://testnet.newrl.net:8182/run-updater
+POST http://testnet.newrl.net:8182/revert-chain?block_index=10&propogate=false
+
+GET http://makemyfund.in:8182/get-last-block-index
+GET http://makemyfund.in:8182/get-node-wallet-address
+GET http://makemyfund.in:8182/get-miners
+GET http://makemyfund.in:8182/get-peers
+POST http://makemyfund.in:8182/run-updater
+POST http://makemyfund.in:8182/revert-chain?block_index=10&propogate=false
+
+GET http://asqisys.com:8182/get-last-block-index
+GET http://asqisys.com:8182/get-node-wallet-address
+GET http://asqisys.com:8182/get-miners
+GET http://asqisys.com:8182/get-peers
+POST http://asqisys.com:8182/run-updater
+GET http://asqisys.com:8182/download-chain
+POST http://asqisys.com:8182/revert-chain?block_index=10&propogate=false
+
+GET http://159.223.163.198:8182/get-last-block-index
+GET http://159.223.163.198:8182/get-node-wallet-address
+GET http://159.223.163.198:8182/get-miners
+GET http://159.223.163.198:8182/get-peers
+POST http://159.223.163.198:8182/run-updater
+POST http://159.223.163.198:8182/revert-chain?block_index=10&propogate=false
+POST http://159.223.163.198:8182/run-updater
+
+GET http://localhost:8182/get-last-block-index
+GET http://localhost:8182/get-node-wallet-address
+GET http://localhost:8182/get-miners
+GET http://localhost:8182/get-peers
+GET http://localhost:8182/download-chain
+
+
+POST http://testnet.newrl.net:8182/update-software?propogate=true
+
+POST http://159.223.163.198:8182/sync-chain-from-peers
+POST http://159.223.163.198:8182/revert-chain?block_index=10&propogate=false
