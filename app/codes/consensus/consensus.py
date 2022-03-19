@@ -18,10 +18,19 @@ except:
 public_key = wallet_data['public']
 private_key = wallet_data['private']
 
+
 def generate_block_receipt(block):
+    block_data = {
+        block['index'],
+        block['timestamp'],
+        block['proof'],
+        block['text'],
+        block['creator_wallet'],
+        block['previous_hash'],
+    }
     receipt_data = {
         'block_index': block['index'],
-        'block_hash': calculate_hash(block),
+        'block_hash': calculate_hash(block_data),
         'vote': 1
     }
     return {
@@ -30,6 +39,15 @@ def generate_block_receipt(block):
         "signature": sign_object(private_key, receipt_data)
     }
 
+
+def add_my_receipt_to_block(block):
+    my_receipt = generate_block_receipt(block)
+    my_receipt_already_added = False
+    for receipt in block['receipts']:
+        if receipt['public_key'] == my_receipt['public_key']:
+            my_receipt_already_added = True
+    if not my_receipt_already_added:
+        block['receipts'].append(my_receipt)
 
 def get_node_trust_score(public_key):
     # TODO - Return the actual trust score of the node by lookup on public_key

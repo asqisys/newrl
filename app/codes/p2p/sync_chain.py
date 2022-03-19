@@ -10,8 +10,8 @@ from app.codes.p2p.peers import get_peers
 from app.codes.validator import validate_block, validate_block_data, validate_receipt_signature
 from app.codes.updater import broadcast_block
 from app.codes.fs.temp_manager import append_receipt_to_block, append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
-from app.codes.consensus.consensus import check_community_consensus, validate_block_miner
-
+from app.codes.consensus.consensus import check_community_consensus, validate_block_miner, generate_block_receipt, \
+    add_my_receipt_to_block
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,14 +44,16 @@ def receive_block(block):
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
     
-    validate_block_miner(block)
+    validate_block_miner(block['data'])
 
-    validate_block(block, validate_receipts=False)
+    validate_block(block['data'], validate_receipts=False)
 
-    if check_community_consensus(block):
+    if check_community_consensus(block['data']):
         accept_block(block)
     else:
+        add_my_receipt_to_block(block)
         store_block_to_temp(block)
+        broadcast_block(block)
 
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()

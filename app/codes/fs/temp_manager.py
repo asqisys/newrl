@@ -27,7 +27,7 @@ def get_receipts_from_storage(block_index, folder=MEMPOOL_PATH):
 
 
 def store_block_to_temp(block, folder=TMP_PATH):
-    block_index = block['index']
+    block_index = block['index'] if 'index' in block else 'block_index'
     existing_files_for_block = glob.glob(f'{folder}/block_{block_index}_*.json')
     new_file_name = f'{folder}/block_{block_index}_{len(existing_files_for_block)}.json'
     with open(new_file_name, 'w') as _file:

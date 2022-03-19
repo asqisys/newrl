@@ -147,16 +147,16 @@ def broadcast_block(block):
     private_key = my_wallet['private']
     public_key = my_wallet['public']
     address = my_wallet['address']
-    signature = {
-        'address': address,
-        'public': public_key,
-        'msgsign': sign_object(private_key, block)
-    } 
+    # signature = {
+    #     'address': address,
+    #     'public': public_key,
+    #     'msgsign': sign_object(private_key, block)
+    # }
     block_payload = {
         'block_index': block['index'],
         'hash': calculate_hash(block),
         'data': block,
-        'signature': signature
+        # 'signature': signature
     }
 
     print(json.dumps(block_payload))

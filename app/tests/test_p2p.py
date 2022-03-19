@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 import pytest
 from .test_miner_committee import _add_test_miner, clear_miner_db
 from ..codes import updater
+from ..codes.auth.auth import get_wallet
 from ..migrations.init import init_newrl
 from ..codes.minermanager import broadcast_miner_update
 
@@ -59,13 +60,10 @@ def _receive_block(block_index):
                 ]
             ]
         },
-        "previous_hash": "0000ae69c361c65f088b52af8f5372f94f5f62d84f0980ea4c2cd71551206024"
+        "previous_hash": "0000ae69c361c65f088b52af8f5372f94f5f62d84f0980ea4c2cd71551206024",
+        "receipts": [],
+        'creator_wallet': get_wallet()['address']
     },
-    "signature": {
-        "address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6",
-        "public": "4trPBhDwdxWat2I8tE4Mj+7R6tiTJ+44GWtTdf5QpXnh/Ia1i5x4ETDufrCn3mjYN8gJs/w3iiMlDEmAAs7kvg==",
-        "msgsign": "8odtLy4zlyXNn7GFK4lpDtubGOS3bLFijmxXR1T8+TlLOl39+mA9Ajw8S4Sw3enJlGiWGorJr+0ULKdmeqf4Hw=="
-    }
     }
 
     response = client.post('/receive-block', json={'block': block_payload})
