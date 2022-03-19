@@ -33,6 +33,7 @@ def generate_block_receipt(block):
 
 
 def add_my_receipt_to_block(block):
+    """Add node's receipt to the block. Return receipt if receipt added. None if receipt already present."""
     my_receipt = generate_block_receipt(block)
     my_receipt_already_added = False
     for receipt in block['receipts']:
@@ -40,6 +41,9 @@ def add_my_receipt_to_block(block):
             my_receipt_already_added = True
     if not my_receipt_already_added:
         block['receipts'].append(my_receipt)
+        return my_receipt
+    return None
+
 
 def get_node_trust_score(public_key):
     # TODO - Return the actual trust score of the node by lookup on public_key

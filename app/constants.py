@@ -22,7 +22,7 @@ AUTH_FILE_PATH = DATA_PATH + '.auth.json'
 
 BOOTSTRAP_NODES = ['testnet.newrl.net']
 REQUEST_TIMEOUT = 1
-NEWRL_PORT = 8090  # Devnet
+NEWRL_PORT = 8182  # Devnet
 NEWRL_TOKEN = "newrl_token"
 TREASURY = "treasury_address"
 COINBASE_SC = "coinbase_sc_address"

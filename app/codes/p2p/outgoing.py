@@ -37,3 +37,23 @@ def send(payload):
     if response.status_code != 200:
         print('Error sending')
     return response.text
+
+
+def broadcast_receipt(receipt):
+    if IS_TEST:
+        return
+    peers = get_peers()
+
+    for peer in peers:
+        if is_my_address(peer['address']):
+            continue
+        url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
+        print('Broadcasting transaction to peer', url)
+        payload = {'receipt': receipt}
+        try:
+            thread = Thread(target=send_request, args=(url + '/receive-receipt', payload))
+            thread.start()
+        except Exception as e:
+            print(f'Error broadcasting receipt to peer: {url}')
+            print(e)
+

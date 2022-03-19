@@ -4,6 +4,7 @@ import sqlite3
 import time
 
 from app.codes import blockchain
+from app.codes.p2p.outgoing import broadcast_receipt
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 
@@ -38,7 +39,7 @@ def get_last_block_index():
 
 
 def receive_block(block):
-    print('Recieved block', block)
+    print('Received block', block)
 
     block_index = block['index']
     if block_index > get_last_block_index() + 1:
@@ -48,12 +49,13 @@ def receive_block(block):
 
     validate_block(block, validate_receipts=False)
 
+    my_receipt = add_my_receipt_to_block(block)
+    if my_receipt:
+        broadcast_receipt(my_receipt)
     if check_community_consensus(block):
         accept_block(block)
     else:
-        add_my_receipt_to_block(block)
         store_block_to_temp(block)
-        broadcast_block(block)
 
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
