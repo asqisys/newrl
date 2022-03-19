@@ -114,22 +114,19 @@ def validate_block_receipts(block):
 
 
 def validate_block(block, validate_receipts=True, should_validate_signature=True):
-    if block['hash'][:4] != '0000':
+    if not validate_block_data(block):
         return False
 
-    if not validate_block_data(block['data']):
-        return False
-
-    if should_validate_signature:
-        sign_valid = validate_signature(
-            data=block['data'],
-            public_key=block['signature']['public'],
-            signature=block['signature']['msgsign']
-        )
-
-        if not sign_valid:
-            logger.info('Invalid block signature')
-            return False
+    # if should_validate_signature:
+    #     sign_valid = validate_signature(
+    #         data=block,
+    #         public_key=block['signature']['public'],
+    #         signature=block['signature']['msgsign']
+    #     )
+    #
+    #     if not sign_valid:
+    #         logger.info('Invalid block signature')
+    #         return False
 
     if validate_receipts:
         receipts_valid = validate_block_receipts(block)

@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 import pytest
 from .test_miner_committee import _add_test_miner, clear_miner_db
+from ..codes import updater
 from ..migrations.init import init_newrl
 from ..codes.minermanager import broadcast_miner_update
 
@@ -11,17 +12,22 @@ client = TestClient(app)
 init_newrl()
 
 def _receive_block(block_index):
+    response = client.post('/get-blocks', json={'block_indexes': [block_index]})
+    assert response.status_code == 200
+    blocks = response.json()
+    assert len(blocks) == 0
+    
     block_payload = {
     "block_index": block_index,
     "hash": "0000be5942ea740bdfc244ca59aee40029d32e1bbc32cd5dc6fa2cd4012ba38c",
     "data": {
         "index": block_index,
-        "timestamp": "2022-02-17 13:29:00.746425",
+        "timestamp": "1645095917000",
         "proof": 27359,
         "text": {
             "transactions": [
                 {
-                    "timestamp": "2022-02-17 13:27:25.023580",
+                    "timestamp": "1645095917000",
                     "trans_code": "a529a6c63c4b5480d88cd0b12e108e5340aaa25a",
                     "type": 1,
                     "currency": "INR",
@@ -79,7 +85,7 @@ def test_block_receive():
     clear_miner_db()
     
     broadcast_miner_update()
-    response = client.post('/run-updater')
+    updater.mine(True)
     
     response = client.get('/get-last-block-index')
     assert response.status_code == 200

@@ -69,12 +69,13 @@ def check_community_consensus(block):
 
 
 def validate_block_miner(block):
-    miner_address = block['signature']['address']
+    miner_address = block['creator_wallet']
 
     expected_miner = get_miner_for_current_block()['wallet_address']
 
     if expected_miner is None:
         return True
 
+    print(block)
     if miner_address != expected_miner:
-        raise Exception(f"Invalid miner {miner_address} for block {block['block_index']}. Expected {expected_miner}")
+        raise Exception(f"Invalid miner {miner_address} for block. Expected {expected_miner}")

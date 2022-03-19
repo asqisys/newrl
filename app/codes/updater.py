@@ -7,6 +7,7 @@ import threading
 import requests
 
 from .clock.global_time import get_time_difference
+from .fs.temp_manager import store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL
@@ -26,7 +27,8 @@ from .auth.auth import get_wallet
 
 MAX_BLOCK_SIZE = 10
 
-def run_updater():
+
+def run_updater(add_to_chain=False):
     logger = BufferedLog()
     blockchain = Blockchain()
 
@@ -118,19 +120,25 @@ def run_updater():
             logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
     print(transactionsdata)
-    block = blockchain.mine_block(cur, transactionsdata, transaction_fees)
-    update_db_states(cur, block)
-    con.commit()
-    con.close()
+    if add_to_chain:
+        block = blockchain.mine_block(cur, transactionsdata)
+        update_db_states(cur, block)
+        con.commit()
+        con.close()
+    else:
+        block = blockchain.propose_block(cur, transactionsdata)
+        block_receipt = generate_block_receipt(block)
+        block['receipts'] = [block_receipt]
+        store_block_to_temp(block)
+        if not IS_TEST:
+            broadcast_block(block)
 
     # Generate and add a single receipt to the block of mining node
     # block_receipt = generate_block_receipt(block)
     # block['receipts'] = [block_receipt]
 
-    if not IS_TEST:
-        broadcast_block(block)
+    return block
 
-    return logger.get_logs()
 
 def broadcast_block(block):
     peers = get_peers()
@@ -218,10 +226,10 @@ def no_receipt_timeout():
     print('Inadequate receipts. Timing out and sending empty block.')
 
 
-def mine():
+def mine(add_to_chain=False):
     if should_i_mine():
         print('I am the miner for this block.')
-        run_updater()
+        return run_updater(add_to_chain)
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")

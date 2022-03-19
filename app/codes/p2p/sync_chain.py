@@ -20,7 +20,11 @@ logger = logging.getLogger(__name__)
 def get_blocks(block_indexes):
     blocks = []
     for block_index in block_indexes:
-        blocks.append(get_block(block_index))
+        block = get_block(block_index)
+        if block:
+            blocks.append(get_block(block_index))
+        else:
+            break
     return blocks
 
 
@@ -44,10 +48,10 @@ def receive_block(block):
 
     validate_block(block, validate_receipts=False)
 
-    # if check_community_consensus(block):
-    #     accept_block(block)
-    # else:
-    #     store_block_to_temp(block)
+    if check_community_consensus(block):
+        accept_block(block)
+    else:
+        store_block_to_temp(block)
 
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
@@ -101,7 +105,7 @@ def sync_chain_from_node(url, block_index=None):
         if failed_for_invalid_block:
             break
 
-        block_idx += block_batch_size
+        block_idx += block_batch_size + 1
 
     return their_last_block_index
 

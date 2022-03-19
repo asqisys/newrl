@@ -2,6 +2,8 @@ from audioop import add
 from random import random
 import token
 from fastapi.testclient import TestClient
+
+from ..codes import updater
 from ..migrations.init import init_newrl
 import random
 
@@ -60,8 +62,7 @@ def create_wallet():
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater', json=signed_transaction)
-    assert response.status_code == 200
+    updater.mine(True)
 
     response = client.get('/download-state')
     assert response.status_code == 200
@@ -125,8 +126,7 @@ def create_token(wallet, custodian_wallet):
     assert response.status_code == 200
 
     print("running updater")
-    response = client.post('/run-updater', json=signed_transaction)
-    assert response.status_code == 200
+    updater.mine(True)
 
     response = client.get('/download-state')
     assert response.status_code == 200
@@ -188,8 +188,7 @@ def create_transfer(wallet1, wallet2, token1, token2):
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater')
-    assert response.status_code == 200
+    updater.mine(True)
 
 
     response = client.post('/get-balance', json={
@@ -252,8 +251,7 @@ def add_trust_score(wallet1, wallet2, tscore):
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater')
-    assert response.status_code == 200
+    updater.mine(True)
 
 def get_token_from_tx(txcode):
     response = client.get('/download-state')
@@ -305,8 +303,7 @@ def create_contract(wallet1, tokencode, tokenname):
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater')
-    assert response.status_code == 200
+    updater.mine(True)
 
     return address
 
@@ -336,8 +333,7 @@ def call_contract(contractaddress, funct, wallet1, params):
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater')
-    assert response.status_code == 200
+    updater.mine(True)
 
     return tcode
 #    return signed_transaction['transaction']['trans_code']

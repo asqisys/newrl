@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from ..codes.fs.temp_manager import get_blocks_for_index_from_storage
 from ..main import app
 from ..codes.validator import validate_block, validate_receipt_signature
 from ..codes.signmanager import sign_object
@@ -107,3 +108,75 @@ def test_block_validation_success():
     }
 
     # assert validate_block(block) is True
+
+
+def test_block_receive_without_signatures():
+    response = client.get('/get-last-block-index')
+    assert response.status_code == 200
+
+    previous_block_index = int(response.text)
+    block_index = previous_block_index + 1
+
+    block_payload = {
+      "creator_wallet": "0x20513a419d5b11cd510ae518dc04ac1690afbed6",
+      "index": 7228,
+      "previous_hash": "00007736868ba1a325c3ad8eba9bc02bba06fc315b0018f193d494dba67de542",
+      "proof": 21054,
+      "receipts": [
+        {
+          "data": {
+            "block_hash": "000006ed34bcf9b0aec4176faf127dfd53fe2651684007940e7702e1dd7cdc3b",
+            "block_index": 7239,
+            "vote": 1
+          },
+          "public_key": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==",
+          "signature": "b/VqyTKMtNj87Gmi2a3XFV9uqjja/3LYo4eAjlIsp/BG0w9zNo1GAPjz91Xp3h+JRuqcOF9JXj57gRguzj4MDw=="
+        }
+      ],
+      "text": {
+        "signatures": [
+          [
+            {
+              "msgsign": "C680g6RST4PtC7OoIKjTJSm+5mfVSCwM73SxEIOWfyYBzWpUA0as1qpRaDxKdfzx8xCuQn7mrOdyemT7M/e9PA==",
+              "wallet_address": "0xc29193dbab0fe018d878e258c93064f01210ec1a"
+            }
+          ]
+        ],
+        "transactions": [
+          {
+            "currency": "NUSD",
+            "descr": "New wallet",
+            "fee": 2,
+            "specific_data": {
+              "custodian_wallet": "0xc29193dbab0fe018d878e258c93064f01210ec1a",
+              "jurisd": "910",
+              "kyc_docs": [
+                {
+                  "hash": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
+                  "type": 1
+                }
+              ],
+              "ownertype": "1",
+              "specific_data": {},
+              "wallet_address": "0xa64c2d51965e1bc9a7925c9b4e0e817d7b6bfd62",
+              "wallet_public": "T3v/sATHQtKY/kRnEU2ruKVekpAnAF/hCB4LqesSelQUCS13mXBvvri6WD58Q1jxeGbQc0pjl68JjIr86AHGiQ=="
+            },
+            "timestamp": 1647608631118,
+            "trans_code": "ebc2838c215c92d874dcb387b2a9ca6d85e3daf7",
+            "type": 1,
+            "valid": 1
+          }
+        ]
+      },
+      "timestamp": 1647608631136
+    }
+
+    client.post('/receive-block', json={'block': block_payload})
+
+    response = client.post('/get-blocks', json={'block_indexes': [block_index]})
+    blocks = response.json()
+    assert len(blocks) == 1
+    block = blocks[0]
+
+    blocks_from_storage = get_blocks_for_index_from_storage(block['block_index'])
+    assert len(blocks_from_storage) == 1

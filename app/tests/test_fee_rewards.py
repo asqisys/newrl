@@ -1,5 +1,7 @@
 import time
 import sqlite3
+
+from app.codes import updater
 from ..codes.db_updater import update_wallet_token_balance
 from fastapi.testclient import TestClient
 from ..ntypes import NUSD_TOKEN_CODE
@@ -34,17 +36,17 @@ def test_mining_reward():
 
     check_newrl_wallet_balance(wallet_address, 1500000000.0)
 
-    response = client.post('/run-updater')
+    updater.mine(True)
     assert response.status_code == 200
     check_newrl_wallet_balance(wallet_address, 1500001000.0)
     
     time.sleep(2)
-    response = client.post('/run-updater')
+    updater.mine(True)
     assert response.status_code == 200
     check_newrl_wallet_balance(wallet_address, 1500001000.0)
     
     time.sleep(5)
-    response = client.post('/run-updater')
+    updater.mine(True)
     assert response.status_code == 200
     check_newrl_wallet_balance(wallet_address, 1500002000.0)
 
@@ -110,7 +112,7 @@ def create_wallet_with_fee(fee):
     response = client.post('/validate-transaction', json=signed_transaction)
     assert response.status_code == 200
 
-    response = client.post('/run-updater', json=signed_transaction)
+    updater.mine(True)
     assert response.status_code == 200
 
 
