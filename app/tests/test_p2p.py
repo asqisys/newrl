@@ -19,8 +19,19 @@ def _receive_block(block_index):
     assert len(blocks) == 0
     
     block_payload = {
-    "block_index": block_index,
+    "index": block_index,
     "hash": "0000be5942ea740bdfc244ca59aee40029d32e1bbc32cd5dc6fa2cd4012ba38c",
+    "receipts": [
+        {
+            "data": {
+                "block_hash": "000006ed34bcf9b0aec4176faf127dfd53fe2651684007940e7702e1dd7cdc3b",
+                "block_index": 7239,
+                "vote": 1
+            },
+            "public_key": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==",
+            "signature": "b/VqyTKMtNj87Gmi2a3XFV9uqjja/3LYo4eAjlIsp/BG0w9zNo1GAPjz91Xp3h+JRuqcOF9JXj57gRguzj4MDw=="
+        }
+    ],
     "data": {
         "index": block_index,
         "timestamp": "1645095917000",

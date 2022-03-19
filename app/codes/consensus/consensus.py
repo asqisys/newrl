@@ -20,17 +20,9 @@ private_key = wallet_data['private']
 
 
 def generate_block_receipt(block):
-    block_data = {
-        block['index'],
-        block['timestamp'],
-        block['proof'],
-        block['text'],
-        block['creator_wallet'],
-        block['previous_hash'],
-    }
     receipt_data = {
         'block_index': block['index'],
-        'block_hash': calculate_hash(block_data),
+        'block_hash': calculate_hash(block),
         'vote': 1
     }
     return {
@@ -71,18 +63,17 @@ def get_node_trust_score(public_key):
     
 #     return True
 
+
 def check_community_consensus(block):
-    receipt_counts = validate_block_receipts(block)
     receipts_in_temp = get_receipts_from_storage(block['index'])
-    
+
     for receipt in receipts_in_temp:
         append_receipt_to_block(block, receipt)
-    
-    if receipt_counts['postitive_receipt_count'] / receipt_counts['total_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO:
+
+    receipt_counts = validate_block_receipts(block)
+    if receipt_counts['positive_receipt_count'] / receipt_counts['total_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO:
         return True
-    
-    # if receipt_counts['postitive_receipt_count'] >= MINIMUM_ACCEPTANCE_VOTES and receipt_counts['total_receipt_count']:
-    #     return True
+
     return False
 
 

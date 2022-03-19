@@ -128,36 +128,21 @@ def run_updater(add_to_chain=False):
     else:
         block = blockchain.propose_block(cur, transactionsdata)
         block_receipt = generate_block_receipt(block)
-        block['receipts'] = [block_receipt]
-        store_block_to_temp(block)
+        block_payload = {
+            'index': block['index'],
+            'hash': calculate_hash(block),
+            'data': block,
+            'receipts': [block_receipt]
+        }
+        store_block_to_temp(block_payload)
         if not IS_TEST:
-            broadcast_block(block)
-
-    # Generate and add a single receipt to the block of mining node
-    # block_receipt = generate_block_receipt(block)
-    # block['receipts'] = [block_receipt]
+            broadcast_block(block_payload)
 
     return block
 
 
-def broadcast_block(block):
+def broadcast_block(block_payload):
     peers = get_peers()
-
-    my_wallet = get_wallet()
-    private_key = my_wallet['private']
-    public_key = my_wallet['public']
-    address = my_wallet['address']
-    # signature = {
-    #     'address': address,
-    #     'public': public_key,
-    #     'msgsign': sign_object(private_key, block)
-    # }
-    block_payload = {
-        'block_index': block['index'],
-        'hash': calculate_hash(block),
-        'data': block,
-        # 'signature': signature
-    }
 
     print(json.dumps(block_payload))
 

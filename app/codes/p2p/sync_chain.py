@@ -40,15 +40,15 @@ def get_last_block_index():
 def receive_block(block):
     print('Recieved block', block)
 
-    block_index = block['block_index'] if 'block_index' in block else block['index']
+    block_index = block['index']
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
     
     validate_block_miner(block['data'])
 
-    validate_block(block['data'], validate_receipts=False)
+    validate_block(block, validate_receipts=False)
 
-    if check_community_consensus(block['data']):
+    if check_community_consensus(block):
         accept_block(block)
     else:
         add_my_receipt_to_block(block)
@@ -185,17 +185,15 @@ def receive_receipt(receipt):
     blocks = get_blocks_for_index_from_storage(block_index)
     if len(blocks) == 0:
         store_receipt_to_temp(receipt)
-        block = ask_peers_for_block(block_index)
-        if block is not None:
-            append_receipt_to_block(block, receipt)
-            store_block_to_temp(block)
+        # block = ask_peers_for_block(block_index)
+        # if block is not None:
+        #     append_receipt_to_block(block, receipt)
+        #     store_block_to_temp(block)
     else:
         blocks_appended = append_receipt_to_block_in_storage(receipt)
         for block in blocks_appended:
             if check_community_consensus(block):
                 accept_block(block)
-                
-
 
     return True
 
