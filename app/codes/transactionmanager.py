@@ -1,4 +1,5 @@
 """Transaction management functions"""
+from asyncio import constants
 import time
 import ecdsa
 import os
@@ -9,7 +10,7 @@ import base64
 import sqlite3
 
 
-from ..ntypes import TRANSACTION_MINER_ADDITION, TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSACTION_TOKEN_CREATION
+from ..ntypes import TRANSACTION_AUDIT, TRANSACTION_MINER_ADDITION, TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSACTION_TOKEN_CREATION
 
 from .chainscanner import get_wallet_token_balance
 from ..constants import ALLOWED_CUSTODIANS_FILE, MEMPOOL_PATH, NEWRL_DB
@@ -22,7 +23,7 @@ class Transactionmanager:
             'timestamp': get_time_ms(),
             'trans_code': "0000",
             'type': 0,
-            'currency': "INR",
+            'currency': "NWRL",
             'fee': 0.0,
             'descr': None,
             'valid': 1,
@@ -437,6 +438,15 @@ class Transactionmanager:
             else:
                 self.validity = 1
 
+        if self.transaction['type'] == TRANSACTION_AUDIT:
+            # No checks for fee in the beginning
+            if not is_wallet_valid(self.transaction['specific_data']['auditor_address']):
+                print("Auditor wallet not in chain")
+                self.validity = 0
+            else:
+            ### TODO: add checks for audited_entity being valid based on the audit_type
+                self.validity = 1
+
         if self.validity == 1:
             return True
         else:
@@ -564,4 +574,6 @@ def get_valid_addresses(transaction):
         valid_addresses.append(transaction['specific_data']['address1'])
     if transaction_type == TRANSACTION_MINER_ADDITION:
         valid_addresses.append(transaction['specific_data']['wallet_address'])
+    if transaction_type == TRANSACTION_AUDIT:
+        valid_addresses.append(transaction['specific_data']['auditor_address'])
     return valid_addresses
