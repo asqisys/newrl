@@ -17,16 +17,8 @@ git clone https://github.com/asqisys/newrl.git
 scripts/install.sh
 ```
 
-## Running the app
+## Start the node
 
 ```bash
-# with network sync
 scripts/start.sh
-```
-
-## Test
-
-```bash
-# unit and integration tests
-$ scripts/test.sh
 ```
