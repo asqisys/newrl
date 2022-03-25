@@ -131,7 +131,7 @@ class Blockchain:
             'previous_hash': last_block_hash
         }
 
-        block_hash = self.proof_of_work(block)
+        block_hash = self.calculate_hash(block)
         print("New block hash is ", block_hash)
 
         return block
