@@ -127,16 +127,16 @@ def run_updater(add_to_chain=False):
         con.close()
     else:
         block = blockchain.propose_block(cur, transactionsdata)
-        block_receipt = generate_block_receipt(block)
-        block_payload = {
-            'index': block['index'],
-            'hash': calculate_hash(block),
-            'data': block,
-            'receipts': [block_receipt]
-        }
-        store_block_to_temp(block_payload)
-        if not IS_TEST:
-            broadcast_block(block_payload)
+    block_receipt = generate_block_receipt(block)
+    block_payload = {
+        'index': block['index'],
+        'hash': calculate_hash(block),
+        'data': block,
+        'receipts': [block_receipt]
+    }
+    store_block_to_temp(block_payload)
+    if not IS_TEST:
+        broadcast_block(block_payload)
 
     return block
 
