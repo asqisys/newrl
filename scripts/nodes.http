@@ -35,8 +35,10 @@ GET http://localhost:8182/get-last-block-index
 GET http://localhost:8182/get-node-wallet-address
 GET http://localhost:8182/get-miners
 GET http://localhost:8182/get-peers
+POST http://localhost:8182/run-updater
 GET http://localhost:8182/download-chain
 POST http://localhost:8182/revert-chain?block_index=1&propogate=false
+POST http://localhost:8182/sync-chain-from-peers
 POST http://localhost:8182/receive-receipt
 
 {"receipt": {

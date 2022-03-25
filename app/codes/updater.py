@@ -151,12 +151,12 @@ def broadcast_block(block_payload):
         if is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
-        print('Broadcasting to peer', url)
+        print('Sending block to peer', url)
         try:
             send_request_in_thread(url + '/receive-block', {'block': block_payload})
             # requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
         except Exception as e:
-            print(f'Error broadcasting block to peer: {url}')
+            print(f'Error sending block to peer: {url}')
             print(e)
     return True
 
