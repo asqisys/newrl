@@ -98,7 +98,7 @@ def validate_block_receipts(block):
         if receipt['data']['block_index'] != block['index'] or receipt['data']['vote'] < 1:
             continue
 
-        trust_score = get_node_trust_score(receipt['public'])
+        trust_score = get_node_trust_score(receipt['public_key'])
         valid_probability = 0 if trust_score < 0 else (trust_score + 2) / 5
 
         if receipt['data']['vote'] == 1:
