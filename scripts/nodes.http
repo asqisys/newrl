@@ -23,6 +23,18 @@ POST http://asqisys.com:8182/run-updater
 GET http://asqisys.com:8182/download-chain
 POST http://asqisys.com:8182/revert-chain?block_index=1&propogate=false
 
+GET http://localhost:8182/get-last-block-index
+GET http://localhost:8182/get-node-wallet-address
+GET http://localhost:8182/get-miners
+GET http://localhost:8182/get-peers
+POST http://localhost:8182/sync-chain-from-peers
+POST http://localhost:8182/run-updater
+GET http://localhost:8182/download-chain
+POST http://localhost:8182/revert-chain?block_index=1&propogate=false
+POST http://localhost:8182/receive-transaction
+
+{"transaction": {"timestamp": 1648185985420, "trans_code": "8d9817b183d61710c82323c082e9652727931ede", "type": 7, "currency": "NWRL", "fee": 0.0, "descr": "Miner addition", "valid": 1, "specific_data": {"wallet_address": "0x76d5ac405f6885c90c407202c474faff93389605", "network_address": "3.6.169.47", "broadcast_timestamp": 1648185985420}}, "signatures": [{"wallet_address": "0x76d5ac405f6885c90c407202c474faff93389605", "msgsign": "peAZ3HOcQDKDS7EVPEmjMqKMkWJcKLKbK3T1wuphelv7vjQvsYHWUEXOu2quk9O7TJKK/kK+yt6/bYbEAW733g=="}]}
+
 GET http://159.223.163.198:8182/get-last-block-index
 GET http://159.223.163.198:8182/get-node-wallet-address
 GET http://159.223.163.198:8182/get-miners
@@ -30,26 +42,6 @@ GET http://159.223.163.198:8182/get-peers
 POST http://159.223.163.198:8182/run-updater
 POST http://159.223.163.198:8182/revert-chain?block_index=10&propogate=false
 POST http://159.223.163.198:8182/run-updater
-
-GET http://localhost:8182/get-last-block-index
-GET http://localhost:8182/get-node-wallet-address
-GET http://localhost:8182/get-miners
-GET http://localhost:8182/get-peers
-POST http://localhost:8182/run-updater
-GET http://localhost:8182/download-chain
-POST http://localhost:8182/revert-chain?block_index=1&propogate=false
-POST http://localhost:8182/sync-chain-from-peers
-POST http://localhost:8182/receive-receipt
-
-{"receipt": {
-    "data": {
-        "block_index": 11,
-        "block_hash": "f31d89bd40e32b9c78f0a55b8772c0773a95e1fa27cc5d72c5de8e2e505ddd38",
-        "vote": 1
-    },
-    "public_key": "pGVqHZ8AhE4r7ddXa05dowU9HSMWrv7gnT/zfVEq3TtkMC7bLhuXMYf40m0u91qdMT9vqpEdBRBqq6xHw7AX2w==",
-    "signature": "ujvehs42Ob1pviaJd/yqbhsr+s4n0V0ucH8duY+mWGWJtYrZigxubaKiRvXQMiHluMh25zasHxGcIP1DVli6pg=="
-}}
 
 POST http://testnet.newrl.net:8182/update-software?propogate=true
 POST http://159.223.163.198:8182/update-software?propogate=true

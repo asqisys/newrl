@@ -1,8 +1,6 @@
-import sys
 import time
 import requests
-import threading
-from ...constants import BLOCK_TIME_INTERVAL_SECONDS, MAX_ALLOWED_TIME_DIFF_SECONDS, NO_RECEIPT_COMMITTEE_TIMEOUT, TIME_DIFF_WITH_GLOBAL, TIME_DIFF_WITH_GLOBAL_FILE, TIME_MINER_BROADCAST_INTERVAL
+from ...constants import TIME_DIFF_WITH_GLOBAL_FILE
 
 
 def get_global_epoch():
