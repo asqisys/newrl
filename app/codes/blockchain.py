@@ -236,3 +236,18 @@ def get_last_block_hash():
         }
     else:
         return None
+
+
+def block_exists(block_index):
+        con = sqlite3.connect(NEWRL_DB)
+        cur = con.cursor()
+        block_cursor = cur.execute(
+            'SELECT * FROM blocks where block_index=?', (block_index,)).fetchone()
+        
+        if block_cursor is not None:
+            block_exists = True
+        else:
+            block_exists = False
+        
+        con.close()
+        return block_exists
