@@ -24,7 +24,7 @@ from .p2p.outgoing import send_request_in_thread
 from .auth.auth import get_wallet
 
 
-MAX_BLOCK_SIZE = 10
+MAX_BLOCK_SIZE = 1000
 
 
 def run_updater(add_to_chain=False):
