@@ -5,6 +5,7 @@ import time
 
 from app.codes import blockchain
 from app.codes.crypto import calculate_hash
+from app.codes.minermanager import get_committee_for_current_block
 from app.codes.p2p.outgoing import broadcast_receipt
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
@@ -61,7 +62,8 @@ def receive_block(block):
         broadcast_block(block)
     else:
         if my_receipt:
-            broadcast_receipt(my_receipt)
+            committee = get_committee_for_current_block()
+            broadcast_receipt(my_receipt, committee)
         store_block_to_temp(block)
     
     return True

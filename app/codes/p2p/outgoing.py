@@ -1,7 +1,6 @@
 import requests
 from threading import Thread
 
-from ..minermanager import get_committee_for_current_block
 from ...constants import IS_TEST, NEWRL_PORT, REQUEST_TIMEOUT, TRANSPORT_SERVER
 from ..p2p.utils import get_peers
 from ..p2p.utils import is_my_address
@@ -44,21 +43,19 @@ def send(payload):
     return response.text
 
 
-def broadcast_receipt(receipt):
+def broadcast_receipt(receipt, nodes):
     if IS_TEST:
         return
-    committee = get_committee_for_current_block()
 
-    for peer in committee:
-        if is_my_address(peer['network_address']):
+    for node in nodes:
+        if is_my_address(node['network_address']):
             continue
-        url = 'http://' + peer['network_address'] + ':' + str(NEWRL_PORT)
-        print('Broadcasting transaction to peer', url)
+        url = 'http://' + node['network_address'] + ':' + str(NEWRL_PORT)
+        print('Sending receipt to node', url)
         payload = {'receipt': receipt}
         try:
             thread = Thread(target=send_request, args=(url + '/receive-receipt', payload))
             thread.start()
         except Exception as e:
-            print(f'Error broadcasting receipt to peer: {url}')
-            print(e)
+            print(f'Could not send receipt to node: {url}')
 
