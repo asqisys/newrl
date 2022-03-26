@@ -24,7 +24,7 @@ def test_validate_block_receipt():
 
     receipt = {
         "data": receipt_data,
-        "public": test_wallet["public"],
+        "public_key": test_wallet["public"],
         "signature": sign_object(test_wallet["private"], receipt_data)
     }
 
@@ -117,23 +117,27 @@ def test_block_receive_without_signatures():
     previous_block_index = int(response.text)
     block_index = previous_block_index + 1
 
+    receipt_data = {
+        "block_index": block_index,
+        "block_hash": "0000fd83acfc2f42f07493b8711d4f7fffa75333e3eece24c0d3b55c4df7b7e2",
+        "vote": 1
+    }
+
+    receipt = {
+        "data": receipt_data,
+        "public_key": test_wallet["public"],
+        "signature": sign_object(test_wallet["private"], receipt_data)
+    }
+
     block_payload = {
-        'index': 7228,
+        'index': block_index,
         'hash': 'dd',
         "receipts": [
-            {
-                "data": {
-                    "block_hash": "000006ed34bcf9b0aec4176faf127dfd53fe2651684007940e7702e1dd7cdc3b",
-                    "block_index": 7239,
-                    "vote": 1
-                },
-                "public_key": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==",
-                "signature": "b/VqyTKMtNj87Gmi2a3XFV9uqjja/3LYo4eAjlIsp/BG0w9zNo1GAPjz91Xp3h+JRuqcOF9JXj57gRguzj4MDw=="
-            }
+            receipt
         ],
         'data': {
           "creator_wallet": "0x20513a419d5b11cd510ae518dc04ac1690afbed6",
-          "index": 7228,
+          "index": block_index,
           "previous_hash": "00007736868ba1a325c3ad8eba9bc02bba06fc315b0018f193d494dba67de542",
           "proof": 21054,
           "text": {

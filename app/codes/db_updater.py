@@ -272,6 +272,11 @@ def input_to_dict(ipval):
 
 
 def add_miner(cur, wallet_address, network_address, broadcast_timestamp):
+    miner_cursor = cur.execute('SELECT last_broadcast_timestamp FROM miners where wallet_address = ?', (wallet_address, )).fetchone()
+    if miner_cursor is not None:
+        last_broadcast_timestamp = int(miner_cursor[0])
+        if last_broadcast_timestamp > broadcast_timestamp:
+            return
     cur.execute('''INSERT OR REPLACE INTO miners
 				(id, wallet_address, network_address, last_broadcast_timestamp)
 				 VALUES (?, ?, ?, ?)''', 

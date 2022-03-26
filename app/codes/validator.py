@@ -77,7 +77,7 @@ def validate_receipt_signature(receipt):
     try:
         return validate_signature(receipt['data'], receipt['public_key'], receipt['signature'])
     except Exception as e:
-        logger.error('Error validating receipt signature', str(e))
+        logger.error('Error validating receipt signature')
         return False
 
 

@@ -2,6 +2,7 @@
 import sqlite3
 import random
 
+from .clock.global_time import get_time_difference
 from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers
@@ -20,7 +21,7 @@ def miner_addition_transaction(wallet=None, my_address=None):
         wallet = get_wallet()
     if my_address is None:
         my_address = get_my_address()
-    timestamp = get_time_ms()
+    timestamp = get_time_ms() - get_time_difference()
     transaction_data = {
         'timestamp': timestamp,
         'type': TRANSACTION_MINER_ADDITION,

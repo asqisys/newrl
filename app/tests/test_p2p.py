@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 import pytest
+
+from app.codes.crypto import sign_object
 from .test_miner_committee import _add_test_miner, clear_miner_db
 from ..codes import updater
 from ..codes.auth.auth import get_wallet
@@ -12,25 +14,36 @@ client = TestClient(app)
 
 init_newrl()
 
+test_wallet = {
+    "public": "wTxCEIm7oaKrYmmWIaeEcd4B49DsHb+D4VilmzhQZJCEmhT1XMFa/WmWoyBK3SRDuNGc9iOYdRBBCfeE0esH6A==",
+    "private": "erMsIsopb9N6MYnDxvWtC+iaNb4PmQTY72D3jM5+lFE=",
+    "address": "0x08a04d6f6a90248df7c392083c8eb52bba929597"
+}
+
+
 def _receive_block(block_index):
     response = client.post('/get-blocks', json={'block_indexes': [block_index]})
     assert response.status_code == 200
     blocks = response.json()
     assert len(blocks) == 0
+
+    receipt_data = {
+        "block_index": block_index,
+        "block_hash": "0000fd83acfc2f42f07493b8711d4f7fffa75333e3eece24c0d3b55c4df7b7e2",
+        "vote": 1
+    }
+
+    receipt = {
+        "data": receipt_data,
+        "public_key": test_wallet["public"],
+        "signature": sign_object(test_wallet["private"], receipt_data)
+    }
     
     block_payload = {
     "index": block_index,
     "hash": "0000be5942ea740bdfc244ca59aee40029d32e1bbc32cd5dc6fa2cd4012ba38c",
     "receipts": [
-        {
-            "data": {
-                "block_hash": "000006ed34bcf9b0aec4176faf127dfd53fe2651684007940e7702e1dd7cdc3b",
-                "block_index": 7239,
-                "vote": 1
-            },
-            "public_key": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==",
-            "signature": "b/VqyTKMtNj87Gmi2a3XFV9uqjja/3LYo4eAjlIsp/BG0w9zNo1GAPjz91Xp3h+JRuqcOF9JXj57gRguzj4MDw=="
-        }
+       receipt
     ],
     "data": {
         "index": block_index,

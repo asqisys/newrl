@@ -141,6 +141,8 @@ def run_updater(add_to_chain=False):
 
 
 def broadcast_block(block_payload):
+    if IS_TEST:
+        return
     peers = get_peers()
 
     print(json.dumps(block_payload))
