@@ -4,14 +4,17 @@ import sqlite3
 import time
 
 from app.codes import blockchain
+from app.codes.crypto import calculate_hash
+from app.codes.minermanager import get_committee_for_current_block
+from app.codes.p2p.outgoing import broadcast_receipt
 from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 
 from app.codes.validator import validate_block, validate_block_data, validate_receipt_signature
 from app.codes.updater import broadcast_block
 from app.codes.fs.temp_manager import append_receipt_to_block, append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
-from app.codes.consensus.consensus import check_community_consensus, validate_block_miner
-
+from app.codes.consensus.consensus import check_community_consensus, validate_block_miner, generate_block_receipt, \
+    add_my_receipt_to_block
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,7 +23,11 @@ logger = logging.getLogger(__name__)
 def get_blocks(block_indexes):
     blocks = []
     for block_index in block_indexes:
-        blocks.append(get_block(block_index))
+        block = get_block(block_index)
+        if block:
+            blocks.append(get_block(block_index))
+        else:
+            break
     return blocks
 
 
@@ -34,26 +41,30 @@ def get_last_block_index():
 
 
 def receive_block(block):
-    print('Recieved block', block)
+    print('Received block', block)
 
-    block_index = block['block_index'] if 'block_index' in block else block['index']
+    block_index = block['index']
+
+    if blockchain.block_exists(block_index):
+        print('Block alredy exist in chain. Ignoring.')
+        return
+
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
     
-    validate_block_miner(block)
+    validate_block_miner(block['data'])
 
     validate_block(block, validate_receipts=False)
 
-    # if check_community_consensus(block):
-    #     accept_block(block)
-    # else:
-    #     store_block_to_temp(block)
-
-    con = sqlite3.connect(NEWRL_DB)
-    cur = con.cursor()
-    blockchain.add_block(cur, block['data'], block['hash'])
-    con.commit()
-    con.close()
+    my_receipt = add_my_receipt_to_block(block)
+    if check_community_consensus(block):
+        accept_block(block, block['hash'])
+        broadcast_block(block)
+    else:
+        if my_receipt:
+            committee = get_committee_for_current_block()
+            broadcast_receipt(my_receipt, committee)
+        store_block_to_temp(block)
     
     return True
 
@@ -101,7 +112,7 @@ def sync_chain_from_node(url, block_index=None):
         if failed_for_invalid_block:
             break
 
-        block_idx += block_batch_size
+        block_idx += block_batch_size + 1
 
     return their_last_block_index
 
@@ -159,13 +170,14 @@ def ask_peers_for_block(block_index):
     return None
 
 
-def accept_block(block, broadcast=True):
+def accept_block(block, hash=None):
+    if hash is None:
+        hash = calculate_hash(block)
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
-    blockchain.add_block(cur, block)
+    blockchain.add_block(cur, block['data'], hash)
+    con.commit()
     con.close()
-
-    broadcast_block(block)
 
 
 def receive_receipt(receipt):
@@ -179,17 +191,16 @@ def receive_receipt(receipt):
     blocks = get_blocks_for_index_from_storage(block_index)
     if len(blocks) == 0:
         store_receipt_to_temp(receipt)
-        block = ask_peers_for_block(block_index)
-        if block is not None:
-            append_receipt_to_block(block, receipt)
-            store_block_to_temp(block)
+        # block = ask_peers_for_block(block_index)
+        # if block is not None:
+        #     append_receipt_to_block(block, receipt)
+        #     store_block_to_temp(block)
     else:
         blocks_appended = append_receipt_to_block_in_storage(receipt)
         for block in blocks_appended:
             if check_community_consensus(block):
                 accept_block(block)
-                
-
+                broadcast_block(block)
 
     return True
 

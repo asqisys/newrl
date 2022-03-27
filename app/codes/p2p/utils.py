@@ -2,7 +2,7 @@ import sqlite3
 import requests
 import socket
 
-from ...constants import NEWRL_P2P_DB
+from ...constants import MY_ADDRESS_FILE, NEWRL_P2P_DB
 
 
 def get_peers():
@@ -16,7 +16,14 @@ def get_peers():
 
 
 def get_my_address():
-    return requests.get('https://api.ipify.org?format=json').json()['ip']
+    try:
+        with open(MY_ADDRESS_FILE, 'r') as f:
+            return f.read()
+    except:
+        ip = requests.get('https://api.ipify.org?format=json').json()['ip']
+        with open(MY_ADDRESS_FILE, 'w') as f:
+            f.write(str(ip))
+        return ip
 
 
 def is_my_address(address):

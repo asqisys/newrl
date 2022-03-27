@@ -1,9 +1,13 @@
 import time
 import sqlite3
 
+from ..codes import updater
+from ..codes.auth.auth import get_wallet
 from ..codes.fs.mempool_manager import get_mempool_transaction
 from ..codes.db_updater import update_wallet_token_balance
 from fastapi.testclient import TestClient
+
+from ..codes.fs.temp_manager import get_blocks_for_index_from_storage
 from ..ntypes import NUSD_TOKEN_CODE
 from ..constants import NEWRL_DB
 from ..nvalues import TREASURY_WALLET_ADDRESS
@@ -77,3 +81,16 @@ def create_transaction(fee):
     assert response.status_code == 200
 
     return signed_transaction
+
+
+def test_block_receipt_getting_stored():
+    block = updater.mine()
+    blocks_from_storage = get_blocks_for_index_from_storage(block['index'])
+    assert len(blocks_from_storage) != 0
+
+    block_from_storage = blocks_from_storage[0]
+    assert len(block_from_storage['receipts']) == 1
+    receipt = block_from_storage['receipts'][0]
+
+    assert receipt['data']['block_index'] == block['index']
+    assert receipt['public_key'] == get_wallet()['public']

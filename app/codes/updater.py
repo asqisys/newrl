@@ -4,12 +4,12 @@ import json
 import os
 import sqlite3
 import threading
-import requests
 
 from .clock.global_time import get_time_difference
+from .fs.temp_manager import store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
-from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL
+from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
@@ -24,9 +24,10 @@ from .p2p.outgoing import send_request_in_thread
 from .auth.auth import get_wallet
 
 
-MAX_BLOCK_SIZE = 10
+MAX_BLOCK_SIZE = 1000
 
-def run_updater():
+
+def run_updater(add_to_chain=False):
     logger = BufferedLog()
     blockchain = Blockchain()
 
@@ -118,38 +119,31 @@ def run_updater():
             logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
     print(transactionsdata)
-    block = blockchain.mine_block(cur, transactionsdata, transaction_fees)
-    update_db_states(cur, block)
-    con.commit()
-    con.close()
-
-    # Generate and add a single receipt to the block of mining node
-    # block_receipt = generate_block_receipt(block)
-    # block['receipts'] = [block_receipt]
-
-    if not IS_TEST:
-        broadcast_block(block)
-
-    return logger.get_logs()
-
-def broadcast_block(block):
-    peers = get_peers()
-
-    my_wallet = get_wallet()
-    private_key = my_wallet['private']
-    public_key = my_wallet['public']
-    address = my_wallet['address']
-    signature = {
-        'address': address,
-        'public': public_key,
-        'msgsign': sign_object(private_key, block)
-    } 
+    if add_to_chain:
+        block = blockchain.mine_block(cur, transactionsdata)
+        update_db_states(cur, block)
+        con.commit()
+        con.close()
+    else:
+        block = blockchain.propose_block(cur, transactionsdata)
+    block_receipt = generate_block_receipt(block)
     block_payload = {
-        'block_index': block['index'],
+        'index': block['index'],
         'hash': calculate_hash(block),
         'data': block,
-        'signature': signature
+        'receipts': [block_receipt]
     }
+    store_block_to_temp(block_payload)
+    if not IS_TEST:
+        broadcast_block(block_payload)
+
+    return block
+
+
+def broadcast_block(block_payload):
+    if IS_TEST:
+        return
+    peers = get_peers()
 
     print(json.dumps(block_payload))
 
@@ -158,12 +152,12 @@ def broadcast_block(block):
         if is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
-        print('Broadcasting to peer', url)
+        print('Sending block to peer', url)
         try:
             send_request_in_thread(url + '/receive-block', {'block': block_payload})
             # requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
         except Exception as e:
-            print(f'Error broadcasting block to peer: {url}')
+            print(f'Error sending block to peer: {url}')
             print(e)
     return True
 
@@ -218,10 +212,10 @@ def no_receipt_timeout():
     print('Inadequate receipts. Timing out and sending empty block.')
 
 
-def mine():
+def mine(add_to_chain=False):
     if should_i_mine():
         print('I am the miner for this block.')
-        run_updater()
+        return run_updater(add_to_chain)
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
@@ -253,7 +247,7 @@ def start_block_receive_timeout_clock():
 def start_miner_broadcast_clock():
     print('Broadcasting miner update')
     broadcast_miner_update()
-    timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL, start_miner_broadcast_clock)
+    timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL_SECONDS, start_miner_broadcast_clock)
     timer.start()
 
 

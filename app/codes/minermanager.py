@@ -2,11 +2,12 @@
 import sqlite3
 import random
 
+from .clock.global_time import get_time_difference
 from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers
 from .p2p.utils import get_my_address
-from ..constants import COMMITTEE_SIZE, IS_TEST, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL
+from ..constants import COMMITTEE_SIZE, IS_TEST, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .auth.auth import get_wallet
 from .signmanager import sign_transaction
 from ..ntypes import TRANSACTION_MINER_ADDITION
@@ -20,7 +21,7 @@ def miner_addition_transaction(wallet=None, my_address=None):
         wallet = get_wallet()
     if my_address is None:
         my_address = get_my_address()
-    timestamp = get_time_ms()
+    timestamp = get_time_ms() - get_time_difference()
     transaction_data = {
         'timestamp': timestamp,
         'type': TRANSACTION_MINER_ADDITION,
@@ -83,7 +84,7 @@ def get_eligible_miners():
     # else:
     #     cutfoff_epoch = 0
     last_block_epoch = int(last_block['timestamp'])
-    cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL
+    cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 1000
 
     con = sqlite3.connect(NEWRL_DB)
     con.row_factory = sqlite3.Row

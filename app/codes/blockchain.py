@@ -40,6 +40,9 @@ class Blockchain:
         cur = con.cursor()
         block_cursor = cur.execute(
             'SELECT * FROM blocks where block_index=?', (block_index,)).fetchone()
+        
+        if block_cursor is None:
+            return None
         block = dict(block_cursor)
 
         transactions_cursor = cur.execute(
@@ -109,7 +112,30 @@ class Blockchain:
 
         block = self.create_block(cur, block, block_hash)
         return block
-    
+
+    def propose_block(self, cur, text):
+        """Propose a new block and not add to chain"""
+        print("Starting the mining step 1")
+        last_block_cursor = cur.execute(
+            'SELECT block_index, hash FROM blocks ORDER BY block_index DESC LIMIT 1')
+        last_block = last_block_cursor.fetchone()
+        last_block_index = last_block[0] if last_block is not None else 0
+        last_block_hash = last_block[1] if last_block is not None else 0
+
+        block = {
+            'index': last_block_index + 1,
+            'timestamp': get_time_ms(),
+            'proof': 0,
+            'text': text,
+            'creator_wallet': get_node_wallet_address(),
+            'previous_hash': last_block_hash
+        }
+
+        block_hash = self.calculate_hash(block)
+        print("New block hash is ", block_hash)
+
+        return block
+
     def mine_empty_block(self, cur, text):
         """Mine an empty block"""
         print("Mining empty block")
@@ -210,3 +236,18 @@ def get_last_block_hash():
         }
     else:
         return None
+
+
+def block_exists(block_index):
+        con = sqlite3.connect(NEWRL_DB)
+        cur = con.cursor()
+        block_cursor = cur.execute(
+            'SELECT * FROM blocks where block_index=?', (block_index,)).fetchone()
+        
+        if block_cursor is not None:
+            block_exists = True
+        else:
+            block_exists = False
+        
+        con.close()
+        return block_exists

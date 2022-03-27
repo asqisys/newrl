@@ -31,10 +31,10 @@ v2_tag = 'V2 For Machines'
 
 
 @router.post("/run-updater", tags=[v2_tag])
-def run_updater():
+def run_updater(add_to_chain_before_consensus: bool = False):
     try:
         # log = updater.run_updater()
-        updater.mine()
+        updater.mine(add_to_chain_before_consensus)
         return {'status': 'SUCCESS'}
     except Exception as e:
         logger.exception(e)
