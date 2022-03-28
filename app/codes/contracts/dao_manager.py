@@ -14,27 +14,62 @@ class Dao_Manager(ContractMaster):
         pass
   
     def create(self, cur, callparams):
+        dao_params= input_to_dict(callparams)
+        
         #create wallet and pid for contract or dao_sc_main
-        contractaddress = create_contract_address();
-        #cur?
-        pid = add_wallet_pid(cur, contractaddress);
+        dao_sc_address = create_contract_address();
+        dao_personid = add_wallet_pid(cur, dao_sc_address);
+        
         #update dao db
-            # create a row in doa membership with doa_personid, doa_name and founder_personid and dao_sc_address (ex : membersip_doa )
-        self.create_dao_details(self,cur,callparams);
+        dao_name=dao_params['dao_name']
+        founders_personid=json.dumps(dao_params['founders'])
+        self.__create_dao_details(self,cur,dao_personid, dao_name, founders_personid, dao_sc_address);
+        
         #create contract instance for this new dao with params of doa sc main (contract table)
-        pass
+        contractparams = {}
+        contractparams['status']=1
+        contractparams['ts_init'] = time.mktime(datetime.datetime.now().timetuple())
+        contractparams['address']= dao_sc_address
+        #?
+        contractparams['version'] = 1.0
+        #sdestr?
+        sdestr=0 if not contractparams['selfdestruct'] else int(contractparams['selfdestruct'])
+        cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
+        cspecs=json.dumps(dao_params['contractspecs'])
+        legpars=json.dumps(contractparams['legalparams'])
+        #signatories? voraclestr ?
+        signstr=json.dumps(contractparams['signatories'])
+        oraclestr = json.dumps(contractparams['oracleids'])
+        qparams=(dao_sc_address,
+                founders_personid,
+                contractparams['ts_init'],
+                dao_params['dao_name'],
+                contractparams['version'],
+                #actmode?
+                contractparams['actmode'],
+                cstatus,
+                #next_act_ts?
+                contractparams['next_act_ts'],
+                signstr,
+                #parent?
+                contractparams['parent'],
+                oraclestr,
+                sdestr,
+                cspecs,
+                legpars
+                )
 
+        cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (contractparams['status'], dao_sc_address))
+        
+        pass
+ 
     def alter(self,cur,callParamsip):
         pass
 
     def terminate(self,cur,callParamsip):
         pass                
 
-    def create_dao_details(self,cur, callParams):
-        dao_personid=callParams['dao_personId']
-        dao_name=callParams['dao_name']
-        founder_personid=callParams['founder_personid']
-        dao_sc_addres=callParams['dao_sc_addres']
+    def __create_dao_details(self,cur,dao_personid, dao_name, founder_personid, dao_sc_address ):
         cur.execute(f'''INSERT OR REPLACE INTO doa
                     (doa_personid, doa_name, founder_personid, dao_sc_addres)
-                    VALUES (?, ?, ?)''', (dao_personid, dao_name, founder_personid, dao_sc_addres))
+                    VALUES (?, ?, ?)''', (dao_personid, dao_name, founder_personid, dao_sc_address))
