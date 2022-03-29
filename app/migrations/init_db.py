@@ -17,6 +17,8 @@ def clear_db():
     cur.execute('DROP TABLE IF EXISTS transfers')
     cur.execute('DROP TABLE IF EXISTS contracts')
     cur.execute('DROP TABLE IF EXISTS miners')
+    cur.execute('DROP TABLE IF EXISTS dao_main')
+    cur.execute('DROP TABLE IF EXISTS dao_membership')
     con.commit()
     con.close()
 
@@ -157,6 +159,18 @@ def init_trust_db():
                     dest_person_id text NOT NULL,
                     score real,
                     last_time integer)
+                    ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS dao_main
+                    (dao_personid text NOT NULL, 
+                    dest_person_id text NOT NULL,
+                    founder_personid text NOT NULL,
+                    dao_sc_addres text NOT NULL)
+                    ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS dao_membership
+                    (dao_person_id text NOT NULL, 
+                    member_person_id text NOT NULL)
                     ''')
 
     con.commit()
