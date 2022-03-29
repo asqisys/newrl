@@ -152,7 +152,7 @@ def ask_peer_for_block(peer_url, block_index):
     blocks_request = {'block_indexes': [block_index]}
     print(f'Asking block node {peer_url} for block {block_index}')
     try:
-        blocks_data = requests.post(peer_url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT).json()
+        blocks_data = requests.post(peer_url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT * 5).json()
         return blocks_data
     except Exception as e:
         print('Could not get block', str(e))
@@ -212,7 +212,7 @@ def get_block_from_url_retry(url, blocks_request):
             response = requests.post(
                     url + '/get-blocks',
                     json=blocks_request,
-                    timeout=REQUEST_TIMEOUT
+                    # timeout=REQUEST_TIMEOUT
                 )
         except Exception as err:
             print('Retrying block get', str(err))
