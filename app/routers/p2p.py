@@ -14,7 +14,7 @@ from app.constants import NEWRL_PORT
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
 from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionAdditionRequest, TransactionsRequest
-from app.codes.auth.auth import get_node_wallet_address
+from app.codes.auth.auth import get_node_wallet_address, get_node_wallet_public
 from app.codes.validator import validate as validate_transaction
 from app.codes.minermanager import get_miner_info
 
@@ -134,3 +134,17 @@ def update_software_api(propogate: bool = False):
     timer = threading.Timer(randint(5, 10), update_software, [propogate])
     timer.start()
     return {'status': 'SUCCESS'}
+
+
+@router.get("/get-node-info", tags=[p2p_tag])
+def get_miners_api():
+    last_block = get_last_block_index()
+    node_info = {
+        'wallet': get_node_wallet_public(),
+        'miners': get_miner_info(),
+        'peers': get_peers(),
+        'last_block': last_block,
+        'recent_blocks': get_blocks(list(range(last_block - 10, last_block))),
+        'mempool_transactions': list_mempool_transactions()
+    }
+    return node_info
