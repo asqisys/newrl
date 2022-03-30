@@ -2,7 +2,7 @@
 import sqlite3
 import random
 
-from .clock.global_time import get_time_difference
+from .clock.global_time import get_corrected_time_ms, get_local_epoch, get_time_difference
 from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers
@@ -72,7 +72,7 @@ def broadcast_miner_update():
 
 
 def get_eligible_miners():
-    last_block = get_last_block_hash()
+    # last_block = get_last_block_hash()
     # last_block_epoch = 0
     # try:
     #     # Need try catch to support older block timestamps
@@ -83,8 +83,8 @@ def get_eligible_miners():
     #     cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL
     # else:
     #     cutfoff_epoch = 0
-    last_block_epoch = int(last_block['timestamp'])
-    cutfoff_epoch = last_block_epoch - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 1000
+    # last_block_epoch = int(last_block['timestamp'])
+    cutfoff_epoch = get_corrected_time_ms() - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 1000
 
     con = sqlite3.connect(NEWRL_DB)
     con.row_factory = sqlite3.Row
