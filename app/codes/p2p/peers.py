@@ -60,7 +60,7 @@ def add_peer(peer_address):
     try:
         logger.info('Adding peer %s', peer_address)
         # await register_me_with_them(peer_address)
-        cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
+        cur.execute('INSERT OR REPLACE INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
         con.commit()
     except Exception as e:
         logger.info('Did not add peer %s', peer_address)

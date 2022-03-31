@@ -246,7 +246,10 @@ def start_block_receive_timeout_clock():
 
 def start_miner_broadcast_clock():
     print('Broadcasting miner update')
-    broadcast_miner_update()
+    try:
+        broadcast_miner_update()
+    except Exception as e:
+        print('Could not broadcast miner update', str(e))
     timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL_SECONDS, start_miner_broadcast_clock)
     timer.start()
 
