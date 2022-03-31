@@ -2,7 +2,7 @@
 import sqlite3
 import random
 
-from .clock.global_time import get_corrected_time_ms, get_local_epoch, get_time_difference
+from .clock.global_time import get_corrected_time_ms, get_time_difference
 from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers

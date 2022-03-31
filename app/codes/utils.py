@@ -3,6 +3,7 @@ import sqlite3
 import time
 
 from ..constants import NEWRL_DB
+from .clock.global_time import get_corrected_time_ms
 
 
 def save_file_and_get_path(upload_file):
@@ -28,7 +29,8 @@ class BufferedLog():
 
 def get_time_ms():
     """Return time in milliseconds"""
-    return round(time.time() * 1000)
+    # return round(time.time() * 1000)
+    return get_corrected_time_ms()
 
 
 def get_person_id_for_wallet_address(wallet_address):

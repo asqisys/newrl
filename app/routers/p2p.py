@@ -7,6 +7,7 @@ from fastapi.exceptions import HTTPException
 from starlette.requests import Request
 
 from app.codes.chainscanner import download_chain, download_state, get_transaction
+from app.codes.clock.global_time import get_time_stats
 from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, receive_receipt, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
@@ -141,10 +142,11 @@ def get_miners_api():
     last_block = get_last_block_index()
     node_info = {
         'wallet': get_node_wallet_public(),
+        'time': get_time_stats(),
         'miners': get_miner_info(),
         'peers': get_peers(),
         'last_block': last_block,
         'recent_blocks': get_blocks(list(range(last_block - 10, last_block))),
-        'mempool_transactions': list_mempool_transactions()
+        'mempool_transactions': list_mempool_transactions(),
     }
     return node_info

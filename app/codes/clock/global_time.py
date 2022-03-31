@@ -16,6 +16,12 @@ def get_local_epoch():
     return epoch_time
 
 
+def get_time_stats():
+    return {
+        'local_time_ms': get_local_epoch() * 1000,
+        'corrected_time_ms': get_corrected_time_ms(),
+    }
+
 def get_corrected_time_ms():
     return 1000 * (get_local_epoch() - get_time_difference())
 

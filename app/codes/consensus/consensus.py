@@ -4,7 +4,7 @@ from ..signmanager import sign_object
 from ..blockchain import calculate_hash
 from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
-from ...constants import MINIMUM_ACCEPTANCE_RATIO, MINIMUM_ACCEPTANCE_VOTES
+from ...constants import MINIMUM_ACCEPTANCE_RATIO
 from ..auth.auth import get_wallet
 from ..minermanager import get_miner_for_current_block
 
