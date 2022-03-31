@@ -12,7 +12,7 @@ from starlette.responses import FileResponse
 from app.codes.transactionmanager import Transactionmanager
 
 from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
-from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
+from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_block, get_token, get_transaction, get_wallet
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
 from app.codes.transfermanager import Transfermanager
@@ -27,29 +27,55 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-v2_tag = 'V2 For Machines'
+v2_tag = 'Blockchain'
+legacy = 'Legacy'
+system = "System"
 
 
-@router.post("/run-updater", tags=[v2_tag])
-def run_updater(add_to_chain_before_consensus: bool = False):
-    try:
-        # log = updater.run_updater()
-        updater.mine(add_to_chain_before_consensus)
-        return {'status': 'SUCCESS'}
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(status_code=500, detail=str(e))
-    # HTMLResponse(content=log, status_code=200)
-    # return log
-
+@router.get("/get-block", tags=[v2_tag])
+def get_block_api(block_index: str):
+    """Get a block from the chain"""
+    block = get_block(block_index)
+    if block is None:
+        raise HTTPException(status_code=400, detail="Block not found")
+    return block
 
 @router.get("/get-transaction", tags=[v2_tag])
 def get_transaction_api(transaction_code: str):
-    try:
-        return get_transaction(transaction_code)
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(status_code=500, detail=str(e))
+    """Get a transaction from the chain"""
+    transaction = get_transaction(transaction_code)
+    if transaction is None:
+        raise HTTPException(status_code=400, detail="Transaction not found")
+    return transaction
+
+@router.get("/get-wallet", tags=[v2_tag])
+def get_wallet_api(wallet_address: str):
+    """Get a wallet details from the chain"""
+    wallet = get_wallet(wallet_address)
+    if wallet is None:
+        raise HTTPException(status_code=400, detail="Wallet not found")
+    return wallet
+
+@router.get("/get-token", tags=[v2_tag])
+def get_token_api(token_code: str):
+    """Get a token details from the chain"""
+    wallet = get_token(token_code)
+    if wallet is None:
+        raise HTTPException(status_code=400, detail="Token not found")
+    return wallet
+
+@router.get("/get-balances", tags=[v2_tag])
+def get_balances_api(balance_type: BalanceType, token_code: str = "", wallet_address: str = ""):
+    chain_scanner = Chainscanner()
+    if balance_type == BalanceType.TOKEN_IN_WALLET:
+        balance = chain_scanner.getbaladdtoken(
+            wallet_address, str(token_code))
+    elif balance_type == BalanceType.ALL_TOKENS_IN_WALLET:
+        balance = chain_scanner.getbalancesbyaddress(wallet_address)
+    elif balance_type == BalanceType.ALL_WALLETS_FOR_TOKEN:
+        balance = chain_scanner.getbalancesbytoken(str(token_code))
+    return {'balance': balance}
+
 
 @router.get("/download-chain", tags=[v2_tag])
 def download_chain_api():
@@ -61,7 +87,7 @@ def download_state_api():
     return download_state()
 
 
-@router.post("/get-balance", tags=[v2_tag])
+@router.post("/get-balance", tags=[legacy])
 def get_balance(req: BalanceRequest):
     chain_scanner = Chainscanner()
     if req.balance_type == BalanceType.TOKEN_IN_WALLET:
@@ -298,3 +324,17 @@ def validate_transaction(transaction_data: dict):
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
     return {"status": "SUCCESS", "response": response}
+
+
+
+@router.post("/run-updater", tags=[system])
+def run_updater(add_to_chain_before_consensus: bool = False):
+    try:
+        # log = updater.run_updater()
+        updater.mine(add_to_chain_before_consensus)
+        return {'status': 'SUCCESS'}
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    # HTMLResponse(content=log, status_code=200)
+    # return log

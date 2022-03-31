@@ -6,16 +6,13 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.codes.p2p.sync_chain import sync_chain_from_peers
-
+from .codes.p2p.sync_chain import sync_chain_from_peers
 from .constants import NEWRL_PORT
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
 from .codes.clock.global_time import sync_timer_clock_with_global
 from .codes.updater import start_miner_broadcast_clock
 
-from .routers import blockchain
-from .routers import p2p
-from .routers import transport
+from .routers import blockchain, system, p2p, transport
 
 
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +36,7 @@ app.add_middleware(
 
 app.include_router(blockchain.router)
 app.include_router(p2p.router)
+app.include_router(system.router)
 app.include_router(transport.router)
 
 args = {
