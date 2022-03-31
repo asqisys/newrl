@@ -66,7 +66,7 @@ def add_wallet_pid(cur, wallet):
             print("No personid linked to the parentwallet.")
             return False
     else:  # not a linked wallet, so create a new pid and update person table
-        pid = get_person_id_for_wallet_address(wallet['wallet_address'])
+        pid = get_person_id_for_wallet_address(wallet['wallet'])
         query_params = (pid, get_time_ms())
         cur.execute(f'''INSERT OR IGNORE INTO person
                     (person_id, created_time)
@@ -281,3 +281,15 @@ def add_miner(cur, wallet_address, network_address, broadcast_timestamp):
 				(id, wallet_address, network_address, last_broadcast_timestamp)
 				 VALUES (?, ?, ?, ?)''', 
                  (wallet_address, wallet_address, network_address, broadcast_timestamp))
+
+def add_pid_contract_add(cur,ct_add):
+    pid = get_person_id_for_wallet_address(ct_add)
+    query_params = (pid, get_time_ms())
+    cur.execute(f'''INSERT OR IGNORE INTO person
+                        (person_id, created_time)
+                        VALUES (?, ?)''', query_params)
+    query_params = (pid, ct_add)
+    cur.execute(f'''INSERT OR IGNORE INTO person_wallet
+                    (person_id, wallet_id)
+                    VALUES (?, ?)''', query_params)
+    return pid

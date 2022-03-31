@@ -32,11 +32,12 @@ class DaoMainTemplate(ContractMaster):
 
     def execute(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
-        if (self.check_status):
+        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        if self.check_status():
             module = importlib.import_module(
-                ".codes.contracts." + callparams['name'], package="app")
-            sc_class = getattr(module, callparams['name'])
-            sc_instance = sc_class(callparams['address'])
+                ".codes.contracts." + cspecs['name'], package="app")
+            sc_class = getattr(module, cspecs['name'])
+            sc_instance = sc_class(cspecs['address'])
             #    sc_instance = nusd1(transaction['specific_data']['address'])
             funct = getattr(sc_instance, callparams['function'])
             funct(cur, callparams['params'])
@@ -44,16 +45,16 @@ class DaoMainTemplate(ContractMaster):
 
     def add_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
-        dao_pid = get_pid_from_wallet(cur, self.contractaddress)
+        dao_pid = get_pid_from_wallet(cur, self.address)
         # Sql code to update Membership table
         cur.execute('''INSERT OR REPLACE INTO dao_membership
-                    (doa_personid, member_person_id)
+                    (dao_person_id, member_person_id)
                     VALUES (?, ?)''', (dao_pid, callparams['member_person_id']))
         pass
 
     def delete_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
-        dao_pid = get_pid_from_wallet(cur, self.contractaddress)
+        dao_pid = get_pid_from_wallet(cur, self.address)
         # Sql code to update Membership table
         cur.execute('''DELETE FROM dao_membership
                     WHERE doa_personid= ? 

@@ -1,13 +1,14 @@
 # class to create smart contract for creating stablecoins on Newrl
 from .contract_master import ContractMaster
 from ..db_updater import *
+from ..kycwallet import generate_wallet_address
 
 
-class Dao_Manager(ContractMaster):
+class dao_manager(ContractMaster):
     codehash = ""  # this is the hash of the entire document excluding this line, it is same for all instances of this class
 
     def __init__(self, contractaddress=None):
-        self.template = "Dao_Manager"
+        self.template = "dao_manager"
         self.version = ""
         ContractMaster.__init__(self, self.template, self.version, contractaddress)
 
@@ -18,14 +19,14 @@ class Dao_Manager(ContractMaster):
         dao_params = input_to_dict(callparams)
 
         # create wallet and pid for contract or dao_sc_main
-        dao_sc_address = create_contract_address();
-        dao_person_id = add_wallet_pid(cur, dao_sc_address);
+        dao_sc_address = create_contract_address()
+        dao_person_id = add_pid_contract_add(cur, dao_sc_address)
 
 
         # update dao db
         dao_name = dao_params['dao_name']
         founders_personid = json.dumps(dao_params['founders'])
-        self.__create_dao_details(self, cur, dao_person_id, dao_name, founders_personid, dao_sc_address);
+        self.__create_dao_details(cur, dao_person_id, dao_name, founders_personid, dao_sc_address)
 
         # create contract instance for this new dao with params of dao sc main (contract table)
         contractparams = {}
@@ -34,22 +35,35 @@ class Dao_Manager(ContractMaster):
         contractparams['address'] = dao_sc_address
         # ?
         contractparams['version'] = 1.0
-        # sdestr?
-        sdestr = 0 if not contractparams['selfdestruct'] else int(contractparams['selfdestruct'])
+        sdestr = 0
+        # sdestr? TODO
+        # sdestr = 0 if not contractparams['selfdestruct'] else int(contractparams['selfdestruct'])
         cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
         cspecs = json.dumps(dao_params['contractspecs'])
-        legpars = json.dumps(contractparams['legalparams'])
+        legpars = json.dumps(dao_params['legalparams'])
         # signatories? voraclestr ?
-        signstr = json.dumps(contractparams['signatories'])
-        oraclestr = json.dumps(contractparams['oracleids'])
+        signstr = {}
+        oraclestr = {}
         qparams = (
-        dao_sc_address, founders_personid, contractparams['ts_init'], dao_params['dao_name'], contractparams['version'],
+        dao_sc_address, founders_personid, contractparams['ts_init'], dao_params['dao_main_sc'], dao_params['dao_main_sc_version'],
         # actmode?
-        contractparams['actmode'], cstatus,  # next_act_ts?
-        contractparams['next_act_ts'], signstr,  # parent?
-        contractparams['parent'], oraclestr, sdestr, cspecs, legpars)
+        # contractparams['actmode']
+            0
+        , cstatus,  # next_act_ts?
+        # contractparams['next_act_ts'],
+        0,
+        json.dumps(signstr),  # parent?
+        # contractparams['parent']
+            0
+        , json.dumps(oraclestr), sdestr, cspecs, legpars)
+        cur.execute(f'''INSERT INTO contracts
+                        (address, creator, ts_init, name, version, actmode, status, next_act_ts, signatories, parent, oracleids, selfdestruct, contractspecs, legalparams)
+                        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', qparams)
+        cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (
+            # contractparams['status']
+            2
+            , dao_sc_address))
 
-        cur.execute(f'''UPDATE contracts SET status=? WHERE address=?''', (contractparams['status'], dao_sc_address))
 
         pass
 
@@ -61,5 +75,5 @@ class Dao_Manager(ContractMaster):
 
     def __create_dao_details(self, cur, dao_personid, dao_name, founder_personid, dao_sc_address):
         cur.execute(f'''INSERT OR REPLACE INTO dao_main
-                    (dao_personid, dao_name, founder_personid, dao_sc_addres)
-                    VALUES (?, ?, ?)''', (dao_personid, dao_name, founder_personid, dao_sc_address))
+                    (dao_personid, dao_name, founder_personid, dao_sc_address)
+                    VALUES (?, ?, ?,?)''', (dao_personid, dao_name, founder_personid, dao_sc_address))

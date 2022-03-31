@@ -163,9 +163,9 @@ def init_trust_db():
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS dao_main
                     (dao_personid text NOT NULL, 
-                    dest_person_id text NOT NULL,
+                    dao_name text NOT NULL,
                     founder_personid text NOT NULL,
-                    dao_sc_addres text NOT NULL)
+                    dao_sc_address text NOT NULL)
                     ''')
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS dao_membership
