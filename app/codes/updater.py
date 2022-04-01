@@ -91,10 +91,11 @@ def run_updater(add_to_chain=False):
             txcodes.append(trandata['transaction']['trans_code'])
 
             transaction_fees += get_fees_for_transaction(trandata['transaction'])
-            try:
-                os.remove(file)
-            except:
-                logger.log("Couldn't delete:",file)
+            # Delete the transaction from mempool at the stage of accepting
+            # try:
+            #     os.remove(file)
+            # except:
+            #     logger.log("Couldn't delete:",file)
         block_height += 1
         if block_height >= MAX_BLOCK_SIZE:
             logger.log(

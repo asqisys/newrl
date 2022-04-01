@@ -48,7 +48,7 @@ def test_mining_reward():
     time.sleep(5)
     updater.mine(True)
     assert response.status_code == 200
-    check_newrl_wallet_balance(wallet_address, 1500003000.0)
+    check_newrl_wallet_balance(wallet_address, 1500002000.0)
 
 
 def test_transaction_fee_payment():

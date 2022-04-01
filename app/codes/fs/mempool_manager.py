@@ -2,6 +2,7 @@
 
 import glob
 import json
+import os
 
 from ...constants import MEMPOOL_PATH, TMP_PATH
 
@@ -62,3 +63,17 @@ def get_mempool_transaction(transaction_code):
     with open(existing_files_for_block[0], 'r') as _file:
         transaction = json.load(_file)
         return transaction
+
+
+def remove_transaction_from_mempool(transaction_code):
+    transaction_files = glob.glob(f'{MEMPOOL_PATH}transaction-*-{transaction_code}*.json')
+    for f in transaction_files:
+        os.remove(f)
+
+
+def clear_mempool():
+    filenames = os.listdir(MEMPOOL_PATH)
+    
+    for filename in filenames:
+        file = MEMPOOL_PATH + filename
+        os.remove(file)

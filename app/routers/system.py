@@ -8,6 +8,7 @@ from starlette.requests import Request
 
 from app.codes.chainscanner import download_chain, download_state
 from app.codes.clock.global_time import get_time_stats
+from app.codes.fs.mempool_manager import clear_mempool
 from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import list_mempool_transactions, sync_mempool_transactions
@@ -83,6 +84,10 @@ def clear_db_api():
 @router.post("/clear-peers", tags=[p2p_tag])
 def clear_peer_api(req: Request):
     return clear_peers()
+
+@router.post("/clear-mempool", tags=[p2p_tag])
+def clear_mempool_api(req: Request):
+    return clear_mempool()
 
 
 @router.post("/initiate-peer-connection", tags=[p2p_tag])

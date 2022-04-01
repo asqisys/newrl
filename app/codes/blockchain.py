@@ -12,6 +12,7 @@ from .crypto import calculate_hash
 from .state_updater import update_db_states
 from .utils import get_time_ms
 from .auth.auth import get_node_wallet_address
+from .fs.mempool_manager import remove_transaction_from_mempool
 
 
 class Blockchain:
@@ -204,6 +205,10 @@ def add_block(cur, block, block_hash=None):
     )
     cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
     update_db_states(cur, block)
+
+    for transaction in block['text']['transactions']:
+        transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
+        remove_transaction_from_mempool(transaction_code)
 
 
 def get_last_block_index():

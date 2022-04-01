@@ -9,7 +9,7 @@ from ..codes.auth.auth import get_wallet
 from ..codes.minermanager import broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, get_my_miner_status
 from ..codes.db_updater import add_miner
 from fastapi.testclient import TestClient
-from ..constants import NEWRL_DB
+from ..constants import NEWRL_DB, COMMITTEE_SIZE
 
 from ..main import app
 
@@ -32,7 +32,7 @@ def test_miner_selection():
     
     last_block1 = get_last_block_hash()
     committee = get_committee_for_current_block()
-    assert len(committee) == 6
+    assert len(committee) == COMMITTEE_SIZE
     
     miner1 = get_miner_for_current_block()
     # Check if pseudo-random with block index as seed returns the same miner
