@@ -128,7 +128,7 @@ def get_committee_for_current_block():
     miners = get_eligible_miners()
 
     if len(miners) == 0:
-        return []
+        return [{'wallet_address': ASQI_WALLET}]
 
     committee_size = min(COMMITTEE_SIZE, len(miners))
     committee = random.sample(miners, k=committee_size)

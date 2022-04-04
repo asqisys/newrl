@@ -6,7 +6,7 @@ from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
 from ...constants import COMMITTEE_SIZE, MINIMUM_ACCEPTANCE_RATIO
 from ..auth.auth import get_wallet
-from ..minermanager import get_miner_for_current_block
+from ..minermanager import get_committee_for_current_block, get_miner_for_current_block
 
 
 try:
@@ -76,7 +76,13 @@ def check_community_consensus(block):
 
     receipt_counts = validate_block_receipts(block)
 
-    if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * COMMITTEE_SIZE:
+    committee = get_committee_for_current_block()
+
+    if len(committee) < 3:
+       if receipt_counts['positive_receipt_count'] > 0:
+           return True 
+
+    if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * len(committee):
         return True
     return False
 

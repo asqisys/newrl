@@ -2,6 +2,7 @@
 
 import glob
 import json
+import os
 
 from ...constants import MEMPOOL_PATH, TMP_PATH
 
@@ -66,9 +67,19 @@ def append_receipt_to_block_in_storage(receipt):
     block_index = receipt['data']['block_index']
     blocks = []
     for block_file in glob.glob(f'{block_folder}/block_{block_index}_*.json'):
-        with open(block_file, 'r+') as _file:
-            block = json.load(_file)
-            if append_receipt_to_block(block):
-                json.dump(block, _file)
-                blocks.append(block)
+        with open(block_file, 'r') as _rfile:
+            block = json.load(_rfile)
+        if append_receipt_to_block(block, receipt):
+            with open(block_file, 'w') as _rfile:
+                json.dump(block, _rfile)
+            blocks.append(block)
     return blocks
+
+
+def remove_block_from_temp(block_index):
+    block_folder=TMP_PATH
+    try:
+        for block_file in glob.glob(f'{block_folder}/block_{block_index}_*.json'):
+            os.remove(block_file)
+    except Exception as e:
+        print('Could not remove block from tmp with index', block_index)

@@ -6,6 +6,7 @@ import json
 
 import sqlite3
 
+from .fs.temp_manager import remove_block_from_temp
 from ..constants import NEWRL_DB
 from .utils import get_time_ms
 from .crypto import calculate_hash
@@ -209,6 +210,7 @@ def add_block(cur, block, block_hash=None):
     for transaction in block['text']['transactions']:
         transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
         remove_transaction_from_mempool(transaction_code)
+    remove_block_from_temp(block_index)
 
 
 def get_last_block_index():
