@@ -47,12 +47,13 @@ def receive_block(block):
 
     if blockchain.block_exists(block_index):
         print('Block alredy exist in chain. Ignoring.')
-        return
+        return False
 
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
     
-    validate_block_miner(block['data'])
+    if not validate_block_miner(block['data']):
+        return False
 
     validate_block(block, validate_receipts=False)
 
@@ -191,6 +192,10 @@ def receive_receipt(receipt):
 
     receipt_data = receipt['data']
     block_index = receipt_data['block_index']
+
+    if blockchain.block_exists(block_index):
+        return False
+
     blocks = get_blocks_for_index_from_storage(block_index)
     if len(blocks) == 0:
         store_receipt_to_temp(receipt)

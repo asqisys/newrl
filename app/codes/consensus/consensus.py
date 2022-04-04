@@ -97,4 +97,6 @@ def validate_block_miner(block):
 
     print(block)
     if miner_address != expected_miner:
-        raise Exception(f"Invalid miner {miner_address} for block. Expected {expected_miner}")
+        print(f"Invalid miner {miner_address} for block. Expected {expected_miner}")
+        return False
+    return True
