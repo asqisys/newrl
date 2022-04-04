@@ -4,7 +4,7 @@ from ..signmanager import sign_object
 from ..blockchain import calculate_hash
 from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
-from ...constants import MINIMUM_ACCEPTANCE_RATIO
+from ...constants import COMMITTEE_SIZE, MINIMUM_ACCEPTANCE_RATIO
 from ..auth.auth import get_wallet
 from ..minermanager import get_miner_for_current_block
 
@@ -75,9 +75,9 @@ def check_community_consensus(block):
         append_receipt_to_block(block, receipt)
 
     receipt_counts = validate_block_receipts(block)
-    if receipt_counts['positive_receipt_count'] / receipt_counts['total_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO:
-        return True
 
+    if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * COMMITTEE_SIZE:
+        return True
     return False
 
 

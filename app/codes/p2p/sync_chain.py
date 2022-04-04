@@ -11,7 +11,7 @@ from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 
 from app.codes.validator import validate_block, validate_block_data, validate_receipt_signature
-from app.codes.updater import broadcast_block
+from app.codes.updater import broadcast_block, start_mining_clock
 from app.codes.fs.temp_manager import append_receipt_to_block, append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
 from app.codes.consensus.consensus import check_community_consensus, validate_block_miner, generate_block_receipt, \
     add_my_receipt_to_block
@@ -178,6 +178,9 @@ def accept_block(block, hash=None):
     blockchain.add_block(cur, block['data'], hash)
     con.commit()
     con.close()
+
+    block_timestamp = int(block['data']['timestamp'])
+    start_mining_clock(block_timestamp)
 
 
 def receive_receipt(receipt):

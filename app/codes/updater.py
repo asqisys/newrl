@@ -5,7 +5,7 @@ import os
 import sqlite3
 import threading
 
-from .clock.global_time import get_time_difference
+from .clock.global_time import get_corrected_time_ms, get_time_difference
 from .fs.temp_manager import store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
@@ -227,9 +227,12 @@ def start_receipt_timeout():
     timer.start()
 
 
-def start_mining_clock():
-    mine()
-    timer = threading.Timer(BLOCK_TIME_INTERVAL_SECONDS, start_mining_clock)
+def start_mining_clock(block_timestamp):
+    current_ts_seconds = get_corrected_time_ms() / 1000
+    block_ts_seconds = block_timestamp / 1000
+    seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds
+    print(f'Block time timestamp is {block_ts_seconds}. Current timestamp is {current_ts_seconds}. Waiting {seconds_to_wait} seconds to mine next block')
+    timer = threading.Timer(seconds_to_wait, mine)
     timer.start()
 
 
