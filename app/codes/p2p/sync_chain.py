@@ -189,7 +189,7 @@ def ask_peers_for_block(block_index):
 
 def accept_block(block, hash=None):
     if hash is None:
-        hash = calculate_hash(block)
+        hash = calculate_hash(block['data'])
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     blockchain.add_block(cur, block['data'], hash)
