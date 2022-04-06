@@ -8,7 +8,7 @@ def create_token_transaction(token_data):
     transaction = {
         'timestamp': get_time_ms(),
         'type': 2,
-        'currency': "INR",
+        'currency': "NWRL",
         'fee': 0.0,
         'descr': "New token creation",
         'valid': 1,

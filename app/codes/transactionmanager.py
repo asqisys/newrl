@@ -22,7 +22,7 @@ class Transactionmanager:
             'timestamp': get_time_ms(),
             'trans_code': "0000",
             'type': 0,
-            'currency': "INR",
+            'currency': "NWRL",
             'fee': 0.0,
             'descr': None,
             'valid': 1,

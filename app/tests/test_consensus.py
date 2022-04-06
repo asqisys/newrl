@@ -49,7 +49,7 @@ def test_block_validation_success():
                     "timestamp": "2021-09-21 10:23:34.861279",
                     "trans_code": "9258f94aa73746c9f39eefe192e6ac02d804cf1a",
                     "type": 4,
-                    "currency": "INR",
+                    "currency": "NWRL",
                     "fee": 0.0,
                     "descr": "",
                     "valid": 1,

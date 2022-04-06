@@ -116,7 +116,7 @@ def create_add_wallet_transaction(wallet):
     transaction_data = {
         'timestamp': get_time_ms(),
         'type': 1,
-        'currency': 'INR',
+        'currency': 'NWRL',
         'fee': 0.0,
         'descr': 'New wallet',
         'valid': -1,

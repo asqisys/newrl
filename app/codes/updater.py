@@ -26,6 +26,10 @@ from .auth.auth import get_wallet
 
 MAX_BLOCK_SIZE = 1000
 
+TIMERS = {
+    'mining_timer': None
+}
+
 
 def run_updater(add_to_chain=False):
     logger = BufferedLog()
@@ -228,12 +232,16 @@ def start_receipt_timeout():
 
 
 def start_mining_clock(block_timestamp):
+    global TIMERS
+    if TIMERS['mining_timer'] is not None:
+        TIMERS['mining_timer'].cancel()
     current_ts_seconds = get_corrected_time_ms() / 1000
     block_ts_seconds = block_timestamp / 1000
     seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds
     print(f'Block time timestamp is {block_ts_seconds}. Current timestamp is {current_ts_seconds}. Waiting {seconds_to_wait} seconds to mine next block')
     timer = threading.Timer(seconds_to_wait, mine)
     timer.start()
+    TIMERS['mining_timer'] = timer
 
 
 def block_receive_timeout():

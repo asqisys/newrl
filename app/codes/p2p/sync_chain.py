@@ -1,4 +1,6 @@
+import json
 import logging
+import random
 import requests
 import sqlite3
 import time
@@ -106,6 +108,11 @@ def sync_chain_from_node(url, block_index=None):
                 break
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
+            for idx, tx in enumerate(block['text']['transactions']):
+                specific_data = tx['specific_data']
+                while isinstance(specific_data, str):
+                    specific_data = json.loads(specific_data)
+                block['text']['transactions'][idx]['specific_data'] = json.dumps(specific_data)
             blockchain.add_block(cur, block)
             con.commit()
             con.close()
@@ -133,19 +140,23 @@ def sync_chain_from_peers():
 
 # TODO - use mode of max last 
 def get_best_peer_to_sync(peers):
-    best_peer = None
+    best_peers = []
     best_peer_value = 0
 
+    peers = random.sample(peers, k=min(len(peers), 5))
     for peer in peers:
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         try:
             their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
             print(f'Peer {url} has last block {their_last_block_index}')
             if their_last_block_index > best_peer_value:
-                best_peer = url
+                best_peers = [url]
                 best_peer_value = their_last_block_index
+            elif their_last_block_index == best_peer_value:
+                best_peers.append(url)
         except Exception as e:
             print('Error getting block index from peer at', url)
+    best_peer = random.choice(best_peers)
     return best_peer, best_peer_value
 
 
