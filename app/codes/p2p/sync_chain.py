@@ -21,6 +21,7 @@ from app.codes.consensus.consensus import check_community_consensus, validate_bl
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+IS_SYNCING = False
 
 def get_blocks(block_indexes):
     blocks = []
@@ -126,6 +127,11 @@ def sync_chain_from_node(url, block_index=None):
 
 
 def sync_chain_from_peers():
+    global IS_SYNCING
+    if IS_SYNCING:
+        print('Already syncing chain. Not syncing again.')
+        return
+    IS_SYNCING = True
     peers = get_peers()
     url, block_index = get_best_peer_to_sync(peers)
 
@@ -134,8 +140,7 @@ def sync_chain_from_peers():
         sync_chain_from_node(url, block_index)
     else:
         print('No node available to sync')
-
-
+    IS_SYNCING = False
 
 
 # TODO - use mode of max last 
