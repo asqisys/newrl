@@ -22,7 +22,7 @@ class Blockchain:
     def __init__(self) -> None:
         self.chain = []
 
-    def create_block(self, cur, block, block_hash):
+    def create_block(self, cur, block, block_hash, creator_wallet=None):
         """Create a block and store to db"""
         transactions_hash = self.calculate_hash(block['text']['transactions'])
         db_block_data = (
@@ -31,9 +31,10 @@ class Blockchain:
             block['proof'],
             block['previous_hash'],
             block_hash,
+            creator_wallet,
             transactions_hash
         )
-        cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
+        cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, creator_wallet, transactions_hash) VALUES (?, ?, ?, ?, ?, ?, ?)', db_block_data)
         return block
 
     def get_block(self, block_index):
@@ -202,9 +203,10 @@ def add_block(cur, block, block_hash=None):
         block['proof'],
         block['previous_hash'],
         block_hash,
+        block['creator_wallet'],
         transactions_hash
     )
-    cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, transactions_hash) VALUES (?, ?, ?, ?, ?, ?)', db_block_data)
+    cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, creator_wallet, transactions_hash) VALUES (?, ?, ?, ?, ?, ?, ?)', db_block_data)
     update_db_states(cur, block)
 
     for transaction in block['text']['transactions']:
