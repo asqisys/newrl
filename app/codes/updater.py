@@ -9,7 +9,7 @@ from .clock.global_time import get_corrected_time_ms, get_time_difference
 from .fs.temp_manager import append_receipt_to_block, store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
-from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
+from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
@@ -27,7 +27,8 @@ from .auth.auth import get_wallet
 MAX_BLOCK_SIZE = 1000
 
 TIMERS = {
-    'mining_timer': None
+    'mining_timer': None,
+    'block_receive_timeout': None,
 }
 
 
@@ -140,15 +141,19 @@ def run_updater(add_to_chain=False):
     }
     store_block_to_temp(block_payload)
     if not IS_TEST:
-        broadcast_block(block_payload)
+        nodes = get_committee_for_current_block()
+        broadcast_block(block_payload, nodes)
 
     return block
 
 
-def broadcast_block(block_payload):
+def broadcast_block(block_payload, nodes=None):
     if IS_TEST:
         return
-    peers = get_peers()
+    if nodes:
+        peers = nodes
+    else:
+        peers = get_peers()
 
     print(json.dumps(block_payload))
 
@@ -228,12 +233,22 @@ def create_empty_block_receipt_and_broadcast():
     broadcast_receipt(receipt, committee)
 
 
+def start_empty_block_mining_clock():
+    global TIMERS
+    if TIMERS['block_receive_timeout'] is not None:
+        TIMERS['block_receive_timeout'].cancel()
+    timer = threading.Timer(NO_BLOCK_TIMEOUT, create_empty_block_receipt_and_broadcast)
+    timer.start()
+    TIMERS['block_receive_timeout'] = timer
+
+
 def mine(add_to_chain=False):
     if should_i_mine():
         print('I am the miner for this block.')
         return run_updater(add_to_chain)
     elif am_i_in_current_committee():
-        create_empty_block_receipt_and_broadcast()
+        start_empty_block_mining_clock()
+        print('I am committee member. Starting no block timeout.')
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
@@ -248,6 +263,8 @@ def start_mining_clock(block_timestamp):
     global TIMERS
     if TIMERS['mining_timer'] is not None:
         TIMERS['mining_timer'].cancel()
+    if TIMERS['block_receive_timeout'] is not None:
+        TIMERS['block_receive_timeout'].cancel()
     current_ts_seconds = get_corrected_time_ms() / 1000
     block_ts_seconds = block_timestamp / 1000
     seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds

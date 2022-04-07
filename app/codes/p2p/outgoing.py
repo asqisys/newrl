@@ -44,6 +44,7 @@ def send(payload):
 
 
 def broadcast_receipt(receipt, nodes):
+    print('Broadcasting receipt to nodes')
     if IS_TEST:
         return
 
