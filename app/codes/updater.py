@@ -157,6 +157,8 @@ def broadcast_block(block_payload, nodes=None):
                 peers.append({'address': node['network_address']})
             elif 'address' in node:
                 peers.append({'address': node['address']})
+        if len(peers) == 0:
+            peers = get_peers()
     else:
         peers = get_peers()
 
