@@ -12,8 +12,9 @@ from app.codes.fs.mempool_manager import clear_mempool
 from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import list_mempool_transactions, sync_mempool_transactions
+from app.codes.updater import TIMERS
 from app.codes.utils import get_last_block_hash
-from app.constants import NEWRL_PORT
+from app.constants import SOFTWARE_VERSION
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
 from app.codes.auth.auth import get_node_wallet_public
@@ -29,6 +30,7 @@ def get_node_info():
     last_block = get_last_block_hash()
     last_block_index = last_block['index']
     node_info = {
+        'software_version': SOFTWARE_VERSION,
         'wallet': get_node_wallet_public(),
         'time': get_time_stats(),
         'last_block': last_block,
@@ -94,6 +96,17 @@ def clear_mempool_api(req: Request):
 def initiate_peer_api(address: str):
     "Test only, used to first connect a client"
     return add_peer(address)
+
+
+@router.post("/turn-off-mining-clock", tags=[p2p_tag])
+def switch_mining_clock_api():
+    global TIMERS
+
+    if TIMERS['mining_timer'] is not None:
+        print('Turning off mining clock')
+        TIMERS['mining_timer'].cancel()
+        return {'status': 'SUCCESS'}
+    return {'status': 'FAILURE', 'message': 'Mining clock not running'}
 
 
 @router.post("/revert-chain", tags=[p2p_tag])
