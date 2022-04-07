@@ -151,7 +151,12 @@ def broadcast_block(block_payload, nodes=None):
     if IS_TEST:
         return
     if nodes:
-        peers = nodes
+        peers = []
+        for node in nodes:
+            if 'network_address' in node:
+                peers.append({'address': node['network_address']})
+            elif 'address' in node:
+                peers.append({'address': node['address']})
     else:
         peers = get_peers()
 
@@ -159,7 +164,7 @@ def broadcast_block(block_payload, nodes=None):
 
     # TODO - Do not send to self
     for peer in peers:
-        if 'address' in peer and is_my_address(peer['address']):
+        if 'address' not in peer or is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Sending block to peer', url)
