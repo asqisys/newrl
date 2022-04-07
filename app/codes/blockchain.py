@@ -139,12 +139,15 @@ class Blockchain:
 
         return block
 
-    def mine_empty_block(self, cur, text):
+    def mine_empty_block(self):
         """Mine an empty block"""
         print("Mining empty block")
+        con = sqlite3.connect(NEWRL_DB)
+        cur = con.cursor()
         last_block_cursor = cur.execute(
             'SELECT block_index, hash, timestamp FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
+        con.close()
         last_block_index = last_block[0] if last_block is not None else 0
         last_block_hash = last_block[1] if last_block is not None else 0
         last_block_timestamp = last_block[2] if last_block is not None else 0
@@ -157,16 +160,12 @@ class Blockchain:
             'index': last_block_index + 1,
             'timestamp': new_block_timestamp,
             'proof': EMPTY_BLOCK_NONCE,
-            'text': text,
-            # 'creator_wallet': get_node_wallet_address(),
-            # 'fees': fees,
+            'text': {"transactions": [], "signatures": []},
+            'creator_wallet': None,
             'previous_hash': last_block_hash
         }
 
         block_hash = self.calculate_hash(block)
-        print("New block hash is ", block_hash)
-
-        block = self.create_block(cur, block, block_hash)
         return block
 
     def get_latest_ts(self, cur=None):

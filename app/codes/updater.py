@@ -6,8 +6,8 @@ import sqlite3
 import threading
 
 from .clock.global_time import get_corrected_time_ms, get_time_difference
-from .fs.temp_manager import store_block_to_temp
-from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_miner_for_current_block, should_i_mine
+from .fs.temp_manager import append_receipt_to_block, store_block_to_temp
+from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
@@ -20,7 +20,7 @@ from .crypto import calculate_hash, sign_object, _private, _public
 from .consensus.consensus import generate_block_receipt
 from .chainscanner import get_wallet_token_balance
 from .db_updater import transfer_tokens_and_update_balances
-from .p2p.outgoing import send_request_in_thread
+from .p2p.outgoing import broadcast_receipt, send_request_in_thread
 from .auth.auth import get_wallet
 
 
@@ -204,7 +204,7 @@ def mine_empty_block():
 
     blockchain = Blockchain()
 
-    block = blockchain.mine_empty_block(cur, {'transactions': []})
+    block = blockchain.mine_empty_block()
     # update_db_states(cur, block)
 
     con.commit()
@@ -217,10 +217,23 @@ def no_receipt_timeout():
     print('Inadequate receipts. Timing out and sending empty block.')
 
 
+def create_empty_block_receipt_and_broadcast():
+    blockchain = Blockchain()
+    block = blockchain.mine_empty_block()
+    receipt = generate_block_receipt(block)
+    append_receipt_to_block(block, receipt)
+    store_block_to_temp(block)
+
+    committee = get_committee_for_current_block()
+    broadcast_receipt(receipt, committee)
+
+
 def mine(add_to_chain=False):
     if should_i_mine():
         print('I am the miner for this block.')
         return run_updater(add_to_chain)
+    elif am_i_in_current_committee():
+        create_empty_block_receipt_and_broadcast()
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
@@ -247,8 +260,8 @@ def start_mining_clock(block_timestamp):
 def block_receive_timeout():
     miner = get_miner_for_current_block()
     print(f"Block receive timed out from miner {miner['wallet_address']}")
-    block_index = mine_empty_block()['index']
-    print(f"Mined new block {block_index}")
+    # block_index = mine_empty_block()['index']
+    # print(f"Mined new block {block_index}")
 
 
 def start_block_receive_timeout_clock():

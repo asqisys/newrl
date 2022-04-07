@@ -48,6 +48,8 @@ def broadcast_receipt(receipt, nodes):
         return
 
     for node in nodes:
+        if 'network_address' not in node:
+            continue
         if is_my_address(node['network_address']):
             continue
         url = 'http://' + node['network_address'] + ':' + str(NEWRL_PORT)
