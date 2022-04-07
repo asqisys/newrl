@@ -159,7 +159,7 @@ def broadcast_block(block_payload, nodes=None):
 
     # TODO - Do not send to self
     for peer in peers:
-        if is_my_address(peer['address']):
+        if 'address' in peer and is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         print('Sending block to peer', url)
