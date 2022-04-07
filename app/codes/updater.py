@@ -7,12 +7,12 @@ import threading
 
 from .clock.global_time import get_corrected_time_ms, get_time_difference
 from .fs.temp_manager import store_block_to_temp
-from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_miner_for_current_block, should_i_mine
+from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_block_intervals_elapsed, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
-from .utils import BufferedLog, get_time_ms
+from .utils import BufferedLog, get_last_block_hash, get_time_ms
 from .blockchain import Blockchain
 from .transactionmanager import Transactionmanager, get_valid_addresses
 from .state_updater import update_db_states
@@ -224,6 +224,9 @@ def mine(add_to_chain=False):
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
+
+        last_block = get_last_block_hash()
+        start_mining_clock(last_block['timestamp'])
         # start_block_receive_timeout_clock()
 
 def start_receipt_timeout():
@@ -236,8 +239,9 @@ def start_mining_clock(block_timestamp):
     if TIMERS['mining_timer'] is not None:
         TIMERS['mining_timer'].cancel()
     current_ts_seconds = get_corrected_time_ms() / 1000
-    block_ts_seconds = block_timestamp / 1000
-    seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds
+    block_ts_seconds = int(block_timestamp) / 1000
+    block_time_elapsed = get_block_intervals_elapsed() + 1
+    seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS * block_time_elapsed - current_ts_seconds
     print(f'Block time timestamp is {block_ts_seconds}. Current timestamp is {current_ts_seconds}. Waiting {seconds_to_wait} seconds to mine next block')
     timer = threading.Timer(seconds_to_wait, mine)
     timer.start()

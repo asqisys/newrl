@@ -7,7 +7,7 @@ from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
 # from .p2p.outgoing import propogate_transaction_to_peers
 from .p2p.utils import get_my_address
-from ..constants import COMMITTEE_SIZE, IS_TEST, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL_SECONDS
+from ..constants import BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, NEWRL_DB, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .auth.auth import get_wallet
 from .signmanager import sign_transaction
 from ..ntypes import TRANSACTION_MINER_ADDITION
@@ -98,6 +98,14 @@ def get_eligible_miners():
     con.close()
     return miners
 
+def get_block_intervals_elapsed():
+    last_block = get_last_block_hash()
+    last_block_ts_seconds = int(last_block['timestamp']) / 1000
+    current_time_seconds = get_corrected_time_ms() / 1000
+    time_elapsed = current_time_seconds - last_block_ts_seconds
+    block_intervals_elapsed = time_elapsed // BLOCK_TIME_INTERVAL_SECONDS
+    return block_intervals_elapsed
+
 
 def get_miner_for_current_block():
     last_block = get_last_block_hash()
@@ -105,7 +113,8 @@ def get_miner_for_current_block():
     if not last_block:
         return
 
-    random.seed(last_block['index'])
+    block_intervals_elapsed = get_block_intervals_elapsed()
+    random.seed(last_block['index'] + block_intervals_elapsed)
 
     committee_list = get_committee_for_current_block()
 
@@ -123,7 +132,8 @@ def get_committee_for_current_block():
     if not last_block:
         return
 
-    random.seed(last_block['index'])
+    block_intervals_elapsed = get_block_intervals_elapsed()
+    random.seed(last_block['index'] + block_intervals_elapsed)
 
     miners = get_eligible_miners()
 
