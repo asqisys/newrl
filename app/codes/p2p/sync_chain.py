@@ -58,7 +58,9 @@ def receive_block(block):
     if not validate_block_miner(block['data']):
         return False
 
-    validate_block(block, validate_receipts=False)
+    if not validate_block(block, validate_receipts=False):
+        print('Invalid block')
+        return False
 
     my_receipt = add_my_receipt_to_block(block)
     if check_community_consensus(block):
@@ -223,7 +225,7 @@ def receive_receipt(receipt):
         blocks_appended = append_receipt_to_block_in_storage(receipt)
         for block in blocks_appended:
             if check_community_consensus(block):
-                accept_block(block)
+                accept_block(block, block['hash'])
                 broadcast_block(block)
 
     return True
