@@ -64,6 +64,7 @@ def receive_block(block):
 
     if check_community_consensus(block):
         accept_block(block, block['hash'])
+        broadcast_block(block)
     else:
         my_receipt = add_my_receipt_to_block(block)
         if check_community_consensus(block):
