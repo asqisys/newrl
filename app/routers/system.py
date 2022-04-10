@@ -28,7 +28,10 @@ p2p_tag = 'System'
 @router.get("/get-node-info", tags=[p2p_tag])
 def get_node_info():
     last_block = get_last_block_hash()
-    last_block_index = last_block['index']
+    if last_block is None:
+        last_block_index = 0
+    else:
+        last_block_index = last_block['index']
     node_info = {
         'software_version': SOFTWARE_VERSION,
         'wallet': get_node_wallet_public(),

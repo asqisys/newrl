@@ -133,10 +133,6 @@ class Blockchain:
             'creator_wallet': get_node_wallet_address(),
             'previous_hash': last_block_hash
         }
-
-        block_hash = self.calculate_hash(block)
-        print("New block hash is ", block_hash)
-
         return block
 
     def mine_empty_block(self):
@@ -187,12 +183,14 @@ class Blockchain:
         return ts
 
 
-def add_block(cur, block, block_hash=None):
+def add_block(cur, block, block_hash):
     """Add a block to db, add transactions and update states"""
+    last_block = get_last_block_hash()
+    if last_block is not None and last_block['hash'] != block['previous_hash']:
+        print('Previous block hash does not match current block data')
+        return
     # Needed for backward compatibility of blocks
     block_index = block['block_index'] if 'block_index' in block else block['index']
-    if not block_hash:
-        block_hash = block['hash'] if 'hash' in block else ''
     # transactions_hash = block['transactions_hash'] if 'transactions_hash' in block else ''
     transactions_hash = calculate_hash(block['text']['transactions'])
     print('Adding block', block_index)

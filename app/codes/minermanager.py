@@ -103,7 +103,7 @@ def get_miner_for_current_block():
     last_block = get_last_block_hash()
 
     if not last_block:
-        return
+        return {'wallet_address': ASQI_WALLET}
 
     random.seed(last_block['index'])
 
@@ -121,7 +121,7 @@ def get_committee_for_current_block():
     last_block = get_last_block_hash()
 
     if not last_block:
-        return
+        return [{'wallet_address': ASQI_WALLET}]
 
     random.seed(last_block['index'])
 

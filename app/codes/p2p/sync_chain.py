@@ -62,15 +62,18 @@ def receive_block(block):
         print('Invalid block')
         return False
 
-    my_receipt = add_my_receipt_to_block(block)
     if check_community_consensus(block):
         accept_block(block, block['hash'])
-        broadcast_block(block)
     else:
-        if my_receipt:
-            committee = get_committee_for_current_block()
-            broadcast_receipt(my_receipt, committee)
-        store_block_to_temp(block)
+        my_receipt = add_my_receipt_to_block(block)
+        if check_community_consensus(block):
+            accept_block(block, block['hash'])
+            broadcast_block(block)
+        else:
+            if my_receipt:
+                committee = get_committee_for_current_block()
+                broadcast_receipt(my_receipt, committee)
+            store_block_to_temp(block)
     
     return True
 
@@ -105,6 +108,7 @@ def sync_chain_from_node(url, block_index=None):
         #     failed_for_invalid_block = True
         #     time.sleep(5)
         for block in blocks_data:
+            # block.pop('hash', None)
             if not validate_block_data(block):
                 print('Invalid block')
                 failed_for_invalid_block = True
@@ -116,7 +120,8 @@ def sync_chain_from_node(url, block_index=None):
                 while isinstance(specific_data, str):
                     specific_data = json.loads(specific_data)
                 block['text']['transactions'][idx]['specific_data'] = json.dumps(specific_data)
-            blockchain.add_block(cur, block)
+            hash = calculate_hash(block)
+            blockchain.add_block(cur, block, hash)
             con.commit()
             con.close()
 
