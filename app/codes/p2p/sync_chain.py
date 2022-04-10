@@ -58,7 +58,7 @@ def receive_block(block):
     if not validate_block_miner(block['data']):
         return False
 
-    if not validate_block(block, validate_receipts=False):
+    if not validate_block(block):
         print('Invalid block')
         return False
 
