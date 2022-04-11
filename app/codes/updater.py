@@ -234,6 +234,7 @@ def no_receipt_timeout():
 
 
 def create_empty_block_receipt_and_broadcast():
+    print('No block timeout. Mining empty block')
     blockchain = Blockchain()
     block = blockchain.mine_empty_block()
     receipt = generate_block_receipt(block)
@@ -276,6 +277,7 @@ def start_mining_clock(block_timestamp):
         TIMERS['mining_timer'].cancel()
     if TIMERS['block_receive_timeout'] is not None:
         TIMERS['block_receive_timeout'].cancel()
+        TIMERS['block_receive_timeout'] = None
     current_ts_seconds = get_corrected_time_ms() / 1000
     block_ts_seconds = block_timestamp / 1000
     seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds

@@ -7,7 +7,7 @@ import json
 import sqlite3
 
 from .fs.temp_manager import remove_block_from_temp
-from ..constants import NEWRL_DB
+from ..constants import BLOCK_TIME_INTERVAL_SECONDS, NEWRL_DB, NO_BLOCK_TIMEOUT
 from .utils import get_time_ms
 from .crypto import calculate_hash
 from .state_updater import update_db_states
@@ -150,7 +150,7 @@ class Blockchain:
 
         EMPTY_BLOCK_NONCE = 42
 
-        new_block_timestamp = int(last_block_timestamp) + 1
+        new_block_timestamp = int(last_block_timestamp) + (BLOCK_TIME_INTERVAL_SECONDS + NO_BLOCK_TIMEOUT) * 1000
 
         block = {
             'index': last_block_index + 1,
@@ -161,7 +161,6 @@ class Blockchain:
             'previous_hash': last_block_hash
         }
 
-        block_hash = self.calculate_hash(block)
         return block
 
     def get_latest_ts(self, cur=None):
