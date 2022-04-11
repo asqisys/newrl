@@ -42,7 +42,7 @@ def get_mempool_transactions_api(req: BlockRequest):
 
 @router.post("/receive-transaction", tags=[p2p_tag])
 def receive_transaction_api(req: TransactionAdditionRequest):
-    return validate_transaction(req.signed_transaction, propagate=False)
+    return validate_transaction(req.signed_transaction, propagate=True)
 
 @router.post("/receive-block", tags=[p2p_tag])
 def receive_block_api(req: BlockAdditionRequest):

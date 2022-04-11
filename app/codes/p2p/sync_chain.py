@@ -109,19 +109,24 @@ def sync_chain_from_node(url, block_index=None):
         #     failed_for_invalid_block = True
         #     time.sleep(5)
         for block in blocks_data:
-            # block.pop('hash', None)
+            block['index'] = block['block_index']
+            block['timestamp'] = int(block['timestamp'])
+            hash = block['hash']
+            # hash = calculate_hash(block)
+            block.pop('hash', None)
+            block.pop('transactions_hash', None)
+            block.pop('block_index', None)
+            for idx, tx in enumerate(block['text']['transactions']):
+                specific_data = tx['specific_data']
+                while isinstance(specific_data, str):
+                    specific_data = json.loads(specific_data)
+                block['text']['transactions'][idx]['specific_data'] = specific_data
             if not validate_block_data(block):
                 print('Invalid block')
                 failed_for_invalid_block = True
                 break
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
-            for idx, tx in enumerate(block['text']['transactions']):
-                specific_data = tx['specific_data']
-                while isinstance(specific_data, str):
-                    specific_data = json.loads(specific_data)
-                block['text']['transactions'][idx]['specific_data'] = json.dumps(specific_data)
-            hash = calculate_hash(block)
             blockchain.add_block(cur, block, hash)
             con.commit()
             con.close()

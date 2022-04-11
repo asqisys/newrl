@@ -90,6 +90,10 @@ def run_updater(add_to_chain=False):
             os.remove(file)
             continue
         
+        if not should_include_transaction(transaction):
+            os.remove(file)
+            continue
+        
         if trandata['transaction']['trans_code'] not in txcodes:
             textarray.append(transaction)
             signarray.append(signatures)
@@ -322,3 +326,10 @@ def start_timers(block_timestamp):
         pass
         # Not a miner and part of committee. No action to be performed
         # Hoping the sentinel node will trigger an empty block start stagnant network
+
+def should_include_transaction(transaction):
+    if transaction['type'] == 7:
+        broadcast_timestamp = transaction['specific_data']['broadcast_timestamp']
+        if broadcast_timestamp < get_corrected_time_ms() - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 1000:
+            return False
+    return True
