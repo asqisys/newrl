@@ -41,7 +41,7 @@ class dao_manager(ContractMaster):
         cstatus = 0 if not contractparams['status'] else int(contractparams['status'])
         cspecs = json.dumps(dao_params['contractspecs'])
         legpars = json.dumps(dao_params['legalparams'])
-        # signatories? voraclestr ?
+        # signatories founders wallet address as sign for DAO's setup and deploy? voraclestr ?
         signstr = {}
         oraclestr = {}
         qparams = (

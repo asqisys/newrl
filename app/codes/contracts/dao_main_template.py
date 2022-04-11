@@ -1,4 +1,5 @@
 # Abstract Class for creating DAOs
+import json
 
 from . import Utils
 from .contract_master import ContractMaster
@@ -23,43 +24,64 @@ class DaoMainTemplate(ContractMaster):
     def create_proposal(self, cur, callparamsip):
         # Method For Creating Prosposal
         callparams = input_to_dict(callparamsip)
-        if (callparams['proposal_desc']):
-            pass
-        pass
+        dao_pid = get_pid_from_wallet(cur, self.address)
+        cur.execute(f'''INSERT OR REPLACE INTO PROPOSAL_DATA
+                    (dao_person_id, function_called,params,voting_start_ts,voting_end_ts,max_votes,status)
+                    VALUES (?, ?)''', (
+            dao_pid, callparams['function_called'], callparams['params'], callparams['voting_start_ts'],
+            callparams['voting_end_ts'], callparams['max_votes'], 0))
+        prop_id = cur.insert_id()
+        response = {
+            "status": 200,
+            "proposal_id": prop_id
+        }
+        return response
 
     def vote_on_proposal(self, cur, callparamsip):
-        pass
+        # ToDO Voting to be saved in
+        if self.valid_member(cur, callparamsip):
+            self.execute(cur, callparamsip)
+            return True
+        return False
 
     def execute(self, cur, callparamsip):
+        # proposal ( funct , paramsip) - votes status
+        # Getting proposal Data
         callparams = input_to_dict(callparamsip)
-        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        proposal = cur.execute('''select * from proposal where dao_id=? and id=?''',
+                               (self.address, callparams['proposal_id']))
+        if (proposal is None):
+            return False
         if self.check_status():
-            module = importlib.import_module(
-                ".codes.contracts." + cspecs['name'], package="app")
-            sc_class = getattr(module, cspecs['name'])
-            sc_instance = sc_class(cspecs['address'])
-            #    sc_instance = nusd1(transaction['specific_data']['address'])
-            funct = getattr(sc_instance, callparams['function'])
-            funct(cur, callparams['params'])
-        pass
+            proposal = json.loads(proposal)
+            funct = getattr(self, proposal['function'])
+            funct(cur, proposal['params'])
+        else:
+            return False
 
     def add_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
         dao_pid = get_pid_from_wallet(cur, self.address)
-        # Sql code to update Membership table
-        cur.execute('''INSERT OR REPLACE INTO dao_membership
-                    (dao_person_id, member_person_id)
-                    VALUES (?, ?)''', (dao_pid, callparams['member_person_id']))
-        pass
+        is_dao_exist = cur.execute(
+            '''SELECT COUNT(*) FROM dao_membership WHERE dao_person_id LIKE ? AND member_person_id LIKE ?''',
+            (dao_pid, callparams['member_person_id']))
+        is_dao_exist=is_dao_exist.fetchone()
+        if(is_dao_exist[0]==0):
+            cur.execute('''INSERT OR REPLACE INTO dao_membership
+                                (dao_person_id, member_person_id)
+                                VALUES (?, ?)''', (dao_pid, callparams['member_person_id']))
+            return {"status":200,"message":"Successfully added."}
+        else:
+            return {"status":500,"message":"Already exists."}
 
     def delete_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
         dao_pid = get_pid_from_wallet(cur, self.address)
         # Sql code to update Membership table
-        cur.execute('''DELETE FROM dao_membership
-                    WHERE doa_personid= ? 
+        cur.execute('''DELETE FROM dao_membership 
+                    WHERE dao_person_id= ? 
                     AND member_person_id= ? ''', (dao_pid, callparams['member_person_id']))
-        pass
+        return True
 
     def check_status(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
@@ -103,3 +125,12 @@ class DaoMainTemplate(ContractMaster):
 
     def burn_token(self, cur, callapramsip):
         pass
+
+    def valid_member(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
+        member_pid=get_pid_from_wallet(callparams['function_caller'])
+        proposal = cur.execute('''Select count(*) from dao_membership where member_person_id like ?''', member_pid)
+        proposal=proposal.fetchone()
+        if(proposal[0]==0):
+            return False
+        return True

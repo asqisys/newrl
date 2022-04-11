@@ -12,6 +12,7 @@ from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME, TRANSACTION_MINER_ADDIT
 def update_db_states(cur, block):
     newblockindex = block['index'] if 'index' in block else block['block_index']
     transactions = block['text']['transactions']
+    signatures= block['text']['signatures']
     # last_block_cursor = cur.execute(
     #     f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
     # last_block = last_block_cursor.fetchone()
@@ -36,12 +37,13 @@ def update_db_states(cur, block):
             transaction['type'],
             transaction_data,
             transaction_code,
-            transaction['timestamp']
+            transaction['timestamp'],
+            signatures
         )
     return True
 
 
-def update_state_from_transaction(cur, transaction_type, transaction_data, transaction_code, transaction_timestamp):
+def update_state_from_transaction(cur, transaction_type, transaction_data, transaction_code, transaction_timestamp,transaction_signer=None):
     if transaction_type == TRANSACTION_WALLET_CREATION:  # this is a wallet creation transaction
         add_wallet_pid(cur, transaction_data)
 
@@ -83,8 +85,10 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         sc_instance = sc_class(transaction_data['address'])
     #    sc_instance = nusd1(transaction['specific_data']['address'])
         funct = getattr(sc_instance, funct)
-        funct(cur, transaction_data['params'])
-    
+        params_for_funct=transaction_data['params']
+        # adding singers address to the dict
+        params_for_funct['function_caller']=transaction_signer
+        funct(cur, params_for_funct)
     if transaction_type == TRANSACTION_MINER_ADDITION:
         add_miner(
             cur,
@@ -92,6 +96,7 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
             transaction_data['network_address'],
             transaction_data['broadcast_timestamp'],
         )
+
 
 
 def add_block_reward(cur, creator, blockindex):

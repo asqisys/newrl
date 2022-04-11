@@ -172,7 +172,23 @@ def init_trust_db():
                     (dao_person_id text NOT NULL, 
                     member_person_id text NOT NULL)
                     ''')
-
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS proposal_data
+                    (
+                    proposal_id INT PRIMARY KEY,
+                    dao_person_id text NOT NULL, 
+                    function_called text NOT NULL, 
+                    params text , 
+                    yes_votes text , 
+                    no_votes text , 
+                    abstain_votes text , 
+                    max_votes text , 
+                    status text NOT NULL, 
+                    voting_start_ts text , 
+                    voting_end_ts text ,
+                    voter_data text
+                    )
+                    ''')
     con.commit()
     con.close()
 
