@@ -6,7 +6,7 @@ import sqlite3
 import threading
 
 from .clock.global_time import get_corrected_time_ms, get_time_difference
-from .fs.temp_manager import append_receipt_to_block, store_block_to_temp
+from .fs.temp_manager import store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
@@ -237,12 +237,17 @@ def create_empty_block_receipt_and_broadcast():
     print('No block timeout. Mining empty block')
     blockchain = Blockchain()
     block = blockchain.mine_empty_block()
-    receipt = generate_block_receipt(block)
-    append_receipt_to_block(block, receipt)
-    store_block_to_temp(block)
+    block_receipt = generate_block_receipt(block)
+    block_payload = {
+        'index': block['index'],
+        'hash': calculate_hash(block),
+        'data': block,
+        'receipts': [block_receipt]
+    }
+    store_block_to_temp(block_payload)
 
     committee = get_committee_for_current_block()
-    broadcast_receipt(receipt, committee)
+    broadcast_receipt(block_receipt, committee)
 
 
 def start_empty_block_mining_clock():

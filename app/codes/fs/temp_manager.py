@@ -46,9 +46,6 @@ def store_receipt_to_temp(receipt, folder=TMP_PATH):
 
 
 def append_receipt_to_block(block, new_receipt):
-    if 'receipts' not in block:
-        block['receipts'] = []
-    
     receipt_already_exists = False
     for receipt in block['receipts']:
         if receipt['public_key'] == new_receipt['public_key']:
