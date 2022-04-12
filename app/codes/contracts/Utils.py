@@ -5,10 +5,12 @@
 #ProposalRejected - if min_yes-1 no votes is met
 def voting_scheme_one(callparams):
 
-    min_yes_votes = callparams['min_yes_votes']
+    min_yes_proportion = callparams['voting_scheme_params']['min_yes_votes']
+    total_votes = callparams['total_votes']
     current_yes_votes = callparams['current_yes_votes']
     current_no_votes = callparams['current_no_votes']
 
+    min_yes_votes = (total_votes*min_yes_proportion)/100
     if(current_yes_votes >= min_yes_votes):
         return 1
     elif(current_no_votes>= min_yes_votes-1):

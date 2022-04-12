@@ -42,16 +42,38 @@ class DaoMainTemplate(ContractMaster):
     def vote_on_proposal(self, cur, callparamsip):
         # ToDO Voting to be saved in
         if self.valid_member(cur, callparamsip) and self.duplicate_check(cur,callparamsip):
+            current_vote_type = callparamsip['vote_type']
+            #weight is 1 now , it can be mapped to tokens holding,staking or others later
+            vote_weight = 1
             #update proposal db - votecount , proposal json
+            if(current_vote_type == -1):
+                cur.execute('''update proposal_data set no_votes = no_votes + ? where proposal_id=?''',(vote_weight,callparamsip['proposal_id']))
+            elif(current_vote_type == 0):
+                cur.execute('''update proposal_data set abstain_votes = abstain_votes + ? where proposal_id=?''',(vote_weight,callparamsip['proposal_id']))
+            elif(current_vote_type == 1):
+                cur.execute('''update proposal_data set no_votes = no_votes + ? where proposal_id=?''',(vote_weight,callparamsip['proposal_id']))
+            else:
+                pass
+                #throw exception
+
+        
+            #TODO get voting scheme params from dao params
+            #TODO get total votes, current yes and no votes from proposal
+            voting_specs = {}
+            #call the voting scheme logic      
+            cspecs = input_to_dict(self.contractparams['contractspecs'])
+            funct = getattr(self, cspecs['voting_scheme'])
+            voting_result = funct(cur, voting_specs)
             #check if any condition is met
                 #if yes (-1 or 1)
                 #update the db
                 #execute the function
-            cspecs = input_to_dict(self.contractparams['contractspecs'])
-            funct = getattr(self, cspecs['voting_scheme'])
-            # funct(cur, proposal['params'])
-            self.execute(cur, callparamsip)
-            return True
+            if(voting_result == 1):
+                cur.execute('''update proposal_data set status = ? where proposal_id= ?''',("accepted",callparamsip['proposal_id']))
+                self.execute(cur, callparamsip)
+            if(voting_result == -1):
+                cur.execute('''update proposal_data set status = ? where proposal_id= ?''',("rejected",callparamsip['proposal_id']))
+        
         return False
 
     def execute(self, cur, callparamsip):
