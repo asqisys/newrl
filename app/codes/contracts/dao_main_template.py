@@ -47,8 +47,8 @@ class DaoMainTemplate(ContractMaster):
                 #if yes (-1 or 1)
                 #update the db
                 #execute the function
-            cspecs = input_to_dict(self.contractparams['contractspecs'])
-            funct = getattr(self, cspecs['voting_scheme'])
+            # cspecs = input_to_dict(self.contractparams['contractspecs'])
+            # funct = getattr(self, cspecs['voting_scheme'])
             # funct(cur, proposal['params'])
             self.execute(cur, callparamsip)
             return True
@@ -58,15 +58,14 @@ class DaoMainTemplate(ContractMaster):
         # proposal ( funct , paramsip) - votes status
         # Getting proposal Data
         callparams = input_to_dict(callparamsip)
-        proposal = cur.execute('''select propoal_id,dao_person_id from proposal_data where  proposal_id=?''',
+        proposal = cur.execute('''select function_called,params from proposal_data where  proposal_id=?''',
                                ("".join(str(callparams['proposal_id']))))
         proposal=proposal.fetchone()
         if (proposal is None):
             return False
         if self.check_status(cur,callparamsip):
-            proposal = json.loads(proposal)
-            funct = getattr(self, proposal['function'])
-            funct(cur, proposal['params'])
+            funct = getattr(self, proposal[0])
+            funct(cur, proposal[1])
         else:
             return False
 
@@ -153,16 +152,21 @@ class DaoMainTemplate(ContractMaster):
         proposal_id=callparams['proposal_id']
         voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes" from proposal_data where proposal_id = ?''', (proposal_id,))
         voter_db_data=voter_db_data.fetchone()
-        # if(callparams['vote']==-1):
-        #     voter_db_data['no_vote']=voter_db_data['no_vote']+1
-        # elif(callparams['vote']==1):
-        #     voter_db_data['yes_vote']=voter_db_data['yes_vote']+1
-        # else:
-        #     voter_db_data['abstain_vote'] = voter_db_data['abstain_vote'] + 1
-        # voter_data = input_to_dict(json.loads(voter_db_data['voter_data'].fetchone()))
-        # for voter in voter_data.keys():
-        #     if(voter==member_pid):
-        #         return False
-        # voter_data[member_pid]={"vote":callparams['vote'],"qty":None}
-        # cur.execute(f'''update proposal_data set voter_data=?,yes_vote=?,no_vote=?,abstain_vote=?  where proposal_id like ?''',(json.dumps(voter_data),voter_db_data['yes_vote'],voter_db_data['no_vote'],voter_db_data['abstain_vote'],proposal_id))
+        yes_votes=0
+        no_votes=0
+        abstain_votes=0
+        if(voter_db_data[0] is None):
+            voter_db_data=['{}',0,0,0]
+        if(callparams['vote']==-1):
+            no_votes=int(voter_db_data[2])+1
+        elif(callparams['vote']==1):
+            yes_votes=int(voter_db_data[1])+1
+        else:
+            abstain_votes = int(voter_db_data[3]) + 1
+        voter_data = input_to_dict(json.loads(voter_db_data[0]))
+        for voter in voter_data.keys():
+            if(voter==member_pid):
+                return False
+        voter_data[member_pid]={"vote":callparams['vote'],"qty":None}
+        cur.execute(f'''update proposal_data set voter_data=?,yes_votes=?,no_votes=?,abstain_votes=?  where proposal_id like ?''',(json.dumps(voter_data),yes_votes,no_votes,abstain_votes,proposal_id))
         return True
