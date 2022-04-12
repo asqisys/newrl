@@ -64,3 +64,12 @@ def clear_mempool():
     for filename in filenames:
         file = MEMPOOL_PATH + filename
         os.remove(file)
+    
+    clear_temp()
+
+def clear_temp():
+    filenames = glob.glob(f'{TMP_PATH}*.json')
+    print(filenames)
+    
+    for f in filenames:
+        os.remove(f)
