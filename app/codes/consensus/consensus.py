@@ -1,10 +1,11 @@
 """Consensus related functions"""
 
+from ..clock.global_time import get_corrected_time_ms
 from ..signmanager import sign_object
 from ..blockchain import calculate_hash
 from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
-from ...constants import COMMITTEE_SIZE, MINIMUM_ACCEPTANCE_RATIO
+from ...constants import BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, MINIMUM_ACCEPTANCE_RATIO
 from ..auth.auth import get_wallet
 from ..minermanager import get_committee_for_current_block, get_miner_for_current_block
 
@@ -88,6 +89,12 @@ def check_community_consensus(block):
 
 
 def validate_block_miner(block):
+    time_ms_elapsed_since_last_block = get_corrected_time_ms() - int(block['timestamp'])
+    block_cuttoff_triggered = time_ms_elapsed_since_last_block > (BLOCK_TIME_INTERVAL_SECONDS + BLOCK_RECEIVE_TIMEOUT_SECONDS) * 1000
+    if block['proof'] == 42 and len(block['text']['transactions']) == 0 and block_cuttoff_triggered:
+        # Accept emtpy block mined and transmitted by committee
+        return True
+
     miner_address = block['creator_wallet']
 
     expected_miner = get_miner_for_current_block()['wallet_address']
