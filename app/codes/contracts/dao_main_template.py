@@ -40,6 +40,12 @@ class DaoMainTemplate(ContractMaster):
     def vote_on_proposal(self, cur, callparamsip):
         # ToDO Voting to be saved in
         if self.valid_member(cur, callparamsip):
+            #check if already voted
+            #update proposal db - votecount , proposal json
+            #check if any condition is met
+                #if yes (-1 or 1)
+                #update the db
+                #execute the function
             self.execute(cur, callparamsip)
             return True
         return False
