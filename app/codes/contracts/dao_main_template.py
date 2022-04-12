@@ -5,6 +5,7 @@ from . import Utils
 from .contract_master import ContractMaster
 from ..db_updater import *
 from abc import ABCMeta, abstractmethod
+
 import importlib
 
 
@@ -25,12 +26,13 @@ class DaoMainTemplate(ContractMaster):
         # Method For Creating Prosposal
         callparams = input_to_dict(callparamsip)
         dao_pid = get_pid_from_wallet(cur, self.address)
+        # TODO max votes for now is hard coded
         cur.execute(f'''INSERT OR REPLACE INTO PROPOSAL_DATA
                     (dao_person_id, function_called,params,voting_start_ts,voting_end_ts,max_votes,status)
-                    VALUES (?, ?)''', (
-            dao_pid, callparams['function_called'], callparams['params'], callparams['voting_start_ts'],
-            callparams['voting_end_ts'], callparams['max_votes'], 0))
-        prop_id = cur.insert_id()
+                    VALUES (?, ? ,? ,? ,? ,? ,? )''', (
+            dao_pid, callparams['function_called'], json.dumps(callparams['params']), callparams['voting_start_ts'],
+            callparams['voting_end_ts'], 5, 0))
+        prop_id = cur.lastrowid
         response = {
             "status": 200,
             "proposal_id": prop_id
@@ -39,13 +41,15 @@ class DaoMainTemplate(ContractMaster):
 
     def vote_on_proposal(self, cur, callparamsip):
         # ToDO Voting to be saved in
-        if self.valid_member(cur, callparamsip):
-            #check if already voted
+        if self.valid_member(cur, callparamsip) and self.duplicate_check(cur,callparamsip):
             #update proposal db - votecount , proposal json
             #check if any condition is met
                 #if yes (-1 or 1)
                 #update the db
                 #execute the function
+            cspecs = input_to_dict(self.contractparams['contractspecs'])
+            funct = getattr(self, cspecs['voting_scheme'])
+            # funct(cur, proposal['params'])
             self.execute(cur, callparamsip)
             return True
         return False
@@ -54,11 +58,12 @@ class DaoMainTemplate(ContractMaster):
         # proposal ( funct , paramsip) - votes status
         # Getting proposal Data
         callparams = input_to_dict(callparamsip)
-        proposal = cur.execute('''select * from proposal where dao_id=? and id=?''',
-                               (self.address, callparams['proposal_id']))
+        proposal = cur.execute('''select propoal_id,dao_person_id from proposal_data where  proposal_id=?''',
+                               ("".join(str(callparams['proposal_id']))))
+        proposal=proposal.fetchone()
         if (proposal is None):
             return False
-        if self.check_status():
+        if self.check_status(cur,callparamsip):
             proposal = json.loads(proposal)
             funct = getattr(self, proposal['function'])
             funct(cur, proposal['params'])
@@ -92,12 +97,13 @@ class DaoMainTemplate(ContractMaster):
     def check_status(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
         cspecs = input_to_dict(self.contractparams['contractspecs'])
-        if (cspecs['voting_scheme']):
-            funct = getattr(Utils, cspecs['voting_scheme'])
-            result = funct(cur, callparams)
-        else:
-            result = Utils.voting_scheme_one(cur, callparams)
-        return result
+        # if (cspecs['voting_scheme']):
+        #     funct = getattr(Utils, cspecs['voting_scheme'])
+        #     result = funct(cur, callparams)
+        # else:
+        #     result = Utils.voting_scheme_one(cur, callparams)
+        # return result
+        return True
 
     def send_token(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
@@ -134,9 +140,29 @@ class DaoMainTemplate(ContractMaster):
 
     def valid_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
-        member_pid=get_pid_from_wallet(callparams['function_caller'])
-        proposal = cur.execute('''Select count(*) from dao_membership where member_person_id like ?''', member_pid)
+        member_pid="".join(get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address']))
+        proposal = cur.execute('''Select count(*) from dao_membership where member_person_id like ?''', [member_pid])
         proposal=proposal.fetchone()
         if(proposal[0]==0):
             return False
+        return True
+
+    def duplicate_check(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
+        member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address'])
+        proposal_id=callparams['proposal_id']
+        voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes" from proposal_data where proposal_id = ?''', (proposal_id,))
+        voter_db_data=voter_db_data.fetchone()
+        # if(callparams['vote']==-1):
+        #     voter_db_data['no_vote']=voter_db_data['no_vote']+1
+        # elif(callparams['vote']==1):
+        #     voter_db_data['yes_vote']=voter_db_data['yes_vote']+1
+        # else:
+        #     voter_db_data['abstain_vote'] = voter_db_data['abstain_vote'] + 1
+        # voter_data = input_to_dict(json.loads(voter_db_data['voter_data'].fetchone()))
+        # for voter in voter_data.keys():
+        #     if(voter==member_pid):
+        #         return False
+        # voter_data[member_pid]={"vote":callparams['vote'],"qty":None}
+        # cur.execute(f'''update proposal_data set voter_data=?,yes_vote=?,no_vote=?,abstain_vote=?  where proposal_id like ?''',(json.dumps(voter_data),voter_db_data['yes_vote'],voter_db_data['no_vote'],voter_db_data['abstain_vote'],proposal_id))
         return True

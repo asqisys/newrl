@@ -3,7 +3,7 @@
 #Min Yes Votes Voting Scheme
 #ProposalAccepted - if min_yes yes votes is met
 #ProposalRejected - if min_yes-1 no votes is met
-def voting_scheme_one(self,cur,callparams):
+def voting_scheme_one(callparams):
 
     min_yes_votes = callparams['min_yes_votes']
     current_yes_votes = callparams['current_yes_votes']
