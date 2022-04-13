@@ -40,28 +40,55 @@ class DaoMainTemplate(ContractMaster):
         return response
 
     def vote_on_proposal(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
         # ToDO Voting to be saved in
-        if self.valid_member(cur, callparamsip) and self.duplicate_check(cur,callparamsip):
-            current_vote_type = callparamsip['vote_type']
-            #weight is 1 now , it can be mapped to tokens holding,staking or others later
-            vote_weight = 1
-            #update proposal db - votecount , proposal json
-            if(current_vote_type == -1):
-                cur.execute('''update proposal_data set no_votes = no_votes + ? where proposal_id=?''',(vote_weight,callparamsip['proposal_id']))
-            elif(current_vote_type == 0):
-                cur.execute('''update proposal_data set abstain_votes = abstain_votes + ? where proposal_id=?''',(vote_weight,callparamsip['proposal_id']))
-            elif(current_vote_type == 1):
-                cur.execute('''update proposal_data set no_votes = no_votes + ? where proposal_id=?''',(vote_weight,callparamsip['proposal_id']))
-            else:
-                pass
-                #throw exception
+        if self.valid_member(cur, callparams):
+            
+            member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address'])
+            proposal_id=callparams['proposal_id']
+            voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes",total_votes,function_called  from proposal_data where proposal_id = ?''', (proposal_id,))
+            voter_db_data=voter_db_data.fetchone()
+
+
+            yes_votes=int(voter_db_data[1])
+            no_votes=int(voter_db_data[2])
+            abstain_votes=int(voter_db_data[3])
+            total_votes = int(voter_db_data[4])
+            function_called = voter_db_data[5] 
+            if(self.duplicate_check(member_pid,voter_data)):
+
+                if(voter_db_data[0] is None):
+                    voter_db_data=['{}',0,0,0]
+                if(callparams['vote']==-1):
+                    no_votes=no_votes+1
+                elif(callparams['vote']==1):
+                    yes_votes=yes_votes+1
+                else:
+                    abstain_votes = abstain_votes + 1
+                
+                voter_data = input_to_dict(json.loads(voter_db_data[0]))
+                voter_data[member_pid]={"vote":callparams['vote'],"qty":None}
+                cur.execute(f'''update proposal_data set voter_data=?,yes_votes=?,no_votes=?,abstain_votes=?  where proposal_id like ?''',(json.dumps(voter_data),yes_votes,no_votes,abstain_votes,proposal_id))
+        
+
 
         
-            #TODO get voting scheme params from dao params
-            #TODO get total votes, current yes and no votes from proposal
-            voting_specs = {}
-            #call the voting scheme logic      
+            #get voting scheme params from dao params
             cspecs = input_to_dict(self.contractparams['contractspecs'])
+            voting_schemes = cspecs['voting_scheme']
+            voting_scheme_params = None
+            for method in voting_schemes:
+                if(method.function == function_called):
+                    voting_scheme_params = method.params
+            
+            #get total votes, current yes and no votes from proposal
+            voting_specs = {
+                'voting_scheme_params': voting_scheme_params,
+                'current_yes_votes': yes_votes,
+                'current_no_votes': no_votes,
+                'total_votes':total_votes
+            }
+
             funct = getattr(self, cspecs['voting_scheme'])
             voting_result = funct(cur, voting_specs)
             #check if any condition is met
@@ -168,27 +195,7 @@ class DaoMainTemplate(ContractMaster):
             return False
         return True
 
-    def duplicate_check(self, cur, callparamsip):
-        callparams = input_to_dict(callparamsip)
-        member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address'])
-        proposal_id=callparams['proposal_id']
-        voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes" from proposal_data where proposal_id = ?''', (proposal_id,))
-        voter_db_data=voter_db_data.fetchone()
-        yes_votes=0
-        no_votes=0
-        abstain_votes=0
-        if(voter_db_data[0] is None):
-            voter_db_data=['{}',0,0,0]
-        if(callparams['vote']==-1):
-            no_votes=int(voter_db_data[2])+1
-        elif(callparams['vote']==1):
-            yes_votes=int(voter_db_data[1])+1
-        else:
-            abstain_votes = int(voter_db_data[3]) + 1
-        voter_data = input_to_dict(json.loads(voter_db_data[0]))
+    def duplicate_check(voter_data,member_pid):
         for voter in voter_data.keys():
             if(voter==member_pid):
                 return False
-        voter_data[member_pid]={"vote":callparams['vote'],"qty":None}
-        cur.execute(f'''update proposal_data set voter_data=?,yes_votes=?,no_votes=?,abstain_votes=?  where proposal_id like ?''',(json.dumps(voter_data),yes_votes,no_votes,abstain_votes,proposal_id))
-        return True
