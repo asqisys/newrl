@@ -1,5 +1,6 @@
 """Consensus related functions"""
 
+from app.nvalues import ASQI_WALLET
 from ..clock.global_time import get_corrected_time_ms
 from ..signmanager import sign_object
 from ..blockchain import calculate_hash
@@ -79,9 +80,14 @@ def check_community_consensus(block):
 
     committee = get_committee_for_current_block()
 
-    if len(committee) < 3:
-       if receipt_counts['positive_receipt_count'] > 0:
-           return True 
+    # TODO - Deal with the case when minimum number of committee members are not avalable
+    # if len(committee) < 3:
+    #    if receipt_counts['positive_receipt_count'] > 0:
+    #        return True
+    # Block is received from sentinel node after a timeout.
+    if len(committee) == 1:
+        if committee[0]['wallet_address'] == ASQI_WALLET:
+            return True
 
     if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * len(committee):
         return True
