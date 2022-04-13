@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def validate(transaction, propagate=False, validate_economics=True):
     existing_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
     if existing_transaction is not None:
-        return True
+        return {'valid': True, 'msg': 'Already validated and in mempool'}
 
     transaction_manager = Transactionmanager()
     transaction_manager.set_transaction_data(transaction)
