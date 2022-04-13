@@ -33,7 +33,7 @@ TIME_BETWEEN_BLOCKS_SECONDS = 30  # The time period between blocks
 COMMITTEE_SIZE = 10
 MINIMUM_ACCEPTANCE_VOTES = 4
 MINIMUM_ACCEPTANCE_RATIO = 0.51
-NO_BLOCK_TIMEOUT = 5  # No block received timeout in seconds
+NO_BLOCK_TIMEOUT = 10  # No block received timeout in seconds
 NO_RECEIPT_COMMITTEE_TIMEOUT = 10  # Timeout in seconds
 NETWORK_BLOCK_TIMEOUT = 25
 

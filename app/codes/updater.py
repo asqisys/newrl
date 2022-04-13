@@ -6,7 +6,7 @@ import sqlite3
 import threading
 
 from .clock.global_time import get_corrected_time_ms, get_time_difference
-from .fs.temp_manager import store_block_to_temp
+from .fs.temp_manager import get_blocks_for_index_from_storage, store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
@@ -45,7 +45,6 @@ def run_updater(add_to_chain=False):
     filenames = os.listdir(MEMPOOL_PATH)  # this is the mempool
     logger.log("Files in mempool: ", filenames)
     textarray = []
-    signarray = []
     transfiles = filenames
     txcodes = []
     tmtemp = Transactionmanager()
@@ -95,8 +94,7 @@ def run_updater(add_to_chain=False):
             continue
         
         if trandata['transaction']['trans_code'] not in txcodes:
-            textarray.append(transaction)
-            signarray.append(signatures)
+            textarray.append(transaction_file_data)
             txcodes.append(trandata['transaction']['trans_code'])
 
             transaction_fees += get_fees_for_transaction(trandata['transaction'])
@@ -111,7 +109,7 @@ def run_updater(add_to_chain=False):
                 "Reached max block height, moving forward with the collected transactions")
             break
 
-    transactionsdata = {"transactions": textarray, "signatures": signarray}
+    transactionsdata = {"transactions": textarray}
     if len(textarray) > 0:
         logger.log(f"Found {len(textarray)} transactions. Adding to chain")
     else:
@@ -144,6 +142,7 @@ def run_updater(add_to_chain=False):
         'receipts': [block_receipt]
     }
     store_block_to_temp(block_payload)
+    print('Stored block to temp with payload', json.dumps(block_payload))
     if not IS_TEST:
         nodes = get_committee_for_current_block()
         broadcast_block(block_payload, nodes)
@@ -166,7 +165,7 @@ def broadcast_block(block_payload, nodes=None):
     else:
         peers = get_peers()
 
-    print(json.dumps(block_payload))
+    print('Broadcasting block to nodes', nodes)
 
     # TODO - Do not send to self
     for peer in peers:
@@ -214,27 +213,12 @@ def pay_fee_for_transaction(cur, transaction):
     return True
 
 
-def mine_empty_block():
-    con = sqlite3.connect(NEWRL_DB)
-    cur = con.cursor()
-
-    blockchain = Blockchain()
-
-    block = blockchain.mine_empty_block()
-    # update_db_states(cur, block)
-
-    con.commit()
-    con.close()
-
-    return block
-
-
-def no_receipt_timeout():
-    print('Inadequate receipts. Timing out and sending empty block.')
-
-
 def create_empty_block_receipt_and_broadcast():
     print('No block timeout. Mining empty block')
+    blocks_in_storage = get_blocks_for_index_from_storage(block['index'])
+    if len(blocks_in_storage) != 0:
+        print('Block already exist in storage. Not mining empty block.')
+        return
     blockchain = Blockchain()
     block = blockchain.mine_empty_block()
     block_receipt = generate_block_receipt(block)
@@ -269,11 +253,6 @@ def mine(add_to_chain=False):
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
-        # start_block_receive_timeout_clock()
-
-def start_receipt_timeout():
-    timer = threading.Timer(NO_RECEIPT_COMMITTEE_TIMEOUT, no_receipt_timeout)
-    timer.start()
 
 
 def start_mining_clock(block_timestamp):
@@ -292,18 +271,6 @@ def start_mining_clock(block_timestamp):
     TIMERS['mining_timer'] = timer
 
 
-def block_receive_timeout():
-    miner = get_miner_for_current_block()
-    print(f"Block receive timed out from miner {miner['wallet_address']}")
-    # block_index = mine_empty_block()['index']
-    # print(f"Mined new block {block_index}")
-
-
-def start_block_receive_timeout_clock():
-    timer = threading.Timer(BLOCK_RECEIVE_TIMEOUT_SECONDS, block_receive_timeout)
-    timer.start()
-
-
 def start_miner_broadcast_clock():
     print('Broadcasting miner update')
     try:
@@ -313,26 +280,6 @@ def start_miner_broadcast_clock():
     timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL_SECONDS, start_miner_broadcast_clock)
     timer.start()
 
-
-def start_timers(block_timestamp):
-    print('Starting timer with timestamp ', block_timestamp)
-
-    my_global_timestamp = get_time_ms() - get_time_difference()
-    propogation_delay = my_global_timestamp - block_timestamp
-
-    # If I'm miner, start mining clock
-    if should_i_mine():
-        wait_time =  BLOCK_TIME_INTERVAL_SECONDS - propogation_delay
-        timer = threading.Timer(wait_time, mine)
-        timer.start()
-    elif am_i_in_current_committee():
-        wait_time = NO_RECEIPT_COMMITTEE_TIMEOUT - propogation_delay
-        timer = threading.Timer(wait_time, block_receive_timeout)
-        timer.start()
-    else:
-        pass
-        # Not a miner and part of committee. No action to be performed
-        # Hoping the sentinel node will trigger an empty block start stagnant network
 
 def should_include_transaction(transaction):
     if transaction['type'] == 7:

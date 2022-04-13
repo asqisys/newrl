@@ -314,12 +314,23 @@ def sign_transaction(wallet_data: dict, transaction_data: dict):
     singed_transaction_file = signmanager.sign_transaction(wallet_data, transaction_data)
     return singed_transaction_file
 
+@router.post("/submit-transaction", tags=[v2_tag])
+def submit_transaction(transaction_data: dict):
+    """Submit a signed transaction and adds it to the chain"""
+    try:
+        print('Received transaction: ', transaction_data)
+        response = validator.validate(transaction_data, propagate=True, validate_economics=True)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"status": "SUCCESS", "response": response}
+    
 @router.post("/validate-transaction", tags=[v2_tag])
 def validate_transaction(transaction_data: dict):
     """Validate a signed transaction and adds it to the chain"""
     try:
         print('Received transaction: ', transaction_data)
-        response = validator.validate(transaction_data, propagate=True)
+        response = validator.validate(transaction_data, propagate=True, validate_economics=True)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))

@@ -180,6 +180,7 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
 def add_tx_to_block(cur, block_index, transactions):
     print(block_index, transactions)
     for transaction in transactions:
+        transaction = transaction['transaction']
         transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
         description = transaction['descr'] if 'descr' in transaction else transaction['description']
         specific_data = json.dumps(

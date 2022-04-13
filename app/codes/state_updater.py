@@ -25,6 +25,7 @@ def update_db_states(cur, block):
         add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
+        transaction = transaction['transaction']
         transaction_data = transaction['specific_data']
         while isinstance(transaction_data, str):
             transaction_data = json.loads(transaction_data)

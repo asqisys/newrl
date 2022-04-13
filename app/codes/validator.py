@@ -20,23 +20,33 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def validate(transaction, propagate=False):
+def validate(transaction, propagate=False, validate_economics=True):
     existing_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
     if existing_transaction is not None:
         return True
 
     transaction_manager = Transactionmanager()
     transaction_manager.set_transaction_data(transaction)
-    economics_valid = transaction_manager.econvalidator()
     signatures_valid = transaction_manager.verifytransigns()
     valid = False
-    if economics_valid and signatures_valid:
-        msg = "Transaction is valid"
-        valid = True
-    if not economics_valid:
-        msg = "Transaction economic validation failed"
     if not signatures_valid:
         msg = "Transaction has invalid signatures"
+    if validate_economics:
+        economics_valid = transaction_manager.econvalidator()
+        if not economics_valid:
+            msg = "Transaction economic validation failed"
+            valid = False
+        msg = "Transaction economic validation successful"
+        valid = True
+    else:
+        msg = "Valid signatures. Not checking economics"
+        valid = True
+    # if  economics_valid and signatures_valid:
+    #     msg = "Transaction is valid"
+    #     valid = True
+    # if not economics_valid:
+    #     msg = "Transaction economic validation failed"
+    
     check = {'valid': valid, 'msg': msg}
 
     if valid:  # Economics and signatures are both valid
@@ -132,4 +142,12 @@ def validate_block_data(block):
     if last_block['index'] != block_index - 1:
         print('New block index is not 1 more than last block index')
         return False
+    return True
+
+
+def validate_block_transactions(block):
+    for transaction in block['text']['transactions']:
+        validation_result = validate(transaction, propagate=False, validate_economics=True)
+        if not validation_result['valid']:
+            return False
     return True

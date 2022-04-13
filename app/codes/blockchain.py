@@ -118,12 +118,12 @@ class Blockchain:
 
     def propose_block(self, cur, text):
         """Propose a new block and not add to chain"""
-        print("Starting the mining step 1")
         last_block_cursor = cur.execute(
             'SELECT block_index, hash FROM blocks ORDER BY block_index DESC LIMIT 1')
         last_block = last_block_cursor.fetchone()
         last_block_index = last_block[0] if last_block is not None else 0
         last_block_hash = last_block[1] if last_block is not None else 0
+        print(f'Proposing a block with index {last_block_index + 1}')
 
         block = {
             'index': last_block_index + 1,
