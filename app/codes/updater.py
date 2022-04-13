@@ -147,7 +147,7 @@ def run_updater(add_to_chain=False):
         nodes = get_committee_for_current_block()
         broadcast_block(block_payload, nodes)
 
-    return block
+    return block_payload
 
 
 def broadcast_block(block_payload, nodes=None):

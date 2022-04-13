@@ -206,6 +206,7 @@ def add_block(cur, block, block_hash):
     update_db_states(cur, block)
 
     for transaction in block['text']['transactions']:
+        transaction = transaction['transaction']
         transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
         remove_transaction_from_mempool(transaction_code)
     remove_block_from_temp(block_index)
