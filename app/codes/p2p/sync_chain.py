@@ -139,20 +139,25 @@ def sync_chain_from_node(url, block_index=None):
     return their_last_block_index
 
 
-def sync_chain_from_peers():
+def sync_chain_from_peers(force_sync=False):
     global IS_SYNCING
+    if force_sync:
+        IS_SYNCING = False
     if IS_SYNCING:
         print('Already syncing chain. Not syncing again.')
         return
     IS_SYNCING = True
-    peers = get_peers()
-    url, block_index = get_best_peer_to_sync(peers)
+    try:
+        peers = get_peers()
+        url, block_index = get_best_peer_to_sync(peers)
 
-    if url:
-        print('Syncing from peer', url)
-        sync_chain_from_node(url, block_index)
-    else:
-        print('No node available to sync')
+        if url:
+            print('Syncing from peer', url)
+            sync_chain_from_node(url, block_index)
+        else:
+            print('No node available to sync')
+    except Exception as e:
+        print('Sync failed', e)
     IS_SYNCING = False
 
 

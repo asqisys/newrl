@@ -70,12 +70,7 @@ def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.com'):
 
 @router.post("/sync-chain-from-peers", tags=[p2p_tag])
 def sync_chain_from_peers_api():
-    return sync_chain_from_peers()
-
-
-@router.post("/sync-chain-from-peers", tags=[p2p_tag])
-def sync_chain_from_peers_api():
-    return sync_chain_from_peers()
+    return sync_chain_from_peers(force_sync=True)
 
 
 @router.post("/clear-db-test-only", tags=[p2p_tag])
