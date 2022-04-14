@@ -84,7 +84,7 @@ def get_eligible_miners():
     # else:
     #     cutfoff_epoch = 0
     # last_block_epoch = int(last_block['timestamp'])
-    cutfoff_epoch = get_corrected_time_ms() - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 1000
+    cutfoff_epoch = get_corrected_time_ms() - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 2 * 1000
 
     con = sqlite3.connect(NEWRL_DB)
     con.row_factory = sqlite3.Row
