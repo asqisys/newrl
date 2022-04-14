@@ -51,8 +51,9 @@ class Blockchain:
         transactions_cursor = cur.execute(
             'SELECT * FROM transactions where block_index=?', (block_index,)).fetchall()
         transactions = [dict(ix) for ix in transactions_cursor]
+        transactions = list(map(lambda t: {'transaction': t, 'signatures': json.loads(t['signatures'])}, transactions))
         block['text'] = {
-            'transactions': transactions
+            'transactions': transactions,
         }
 
         return block
