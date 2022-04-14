@@ -85,7 +85,7 @@ def create_transaction(fee):
 
 def test_block_receipt_getting_stored():
     time.sleep(10)
-    block = updater.mine(True)
+    block = updater.mine(True)['data']
     print('blk', block)
     blocks_from_storage = get_blocks_for_index_from_storage(block['index'])
     assert len(blocks_from_storage) != 0

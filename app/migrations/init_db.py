@@ -82,7 +82,8 @@ def init_db():
                     fee real,
                     description text,
                     valid integer,
-                    specific_data text)
+                    specific_data text,
+                    signatures text)
                     ''')
 
     cur.execute('''
