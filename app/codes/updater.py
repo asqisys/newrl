@@ -13,7 +13,7 @@ from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECOND
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
-from .blockchain import Blockchain, get_last_block_hash
+from .blockchain import Blockchain, get_last_block_hash, get_last_block_index
 from .transactionmanager import Transactionmanager, get_valid_addresses
 from .state_updater import update_db_states
 from .crypto import calculate_hash, sign_object, _private, _public
@@ -216,8 +216,9 @@ def pay_fee_for_transaction(cur, transaction):
 
 
 def create_empty_block_receipt_and_broadcast():
+    block_index = get_last_block_index() + 1
     print('No block timeout. Mining empty block')
-    blocks_in_storage = get_blocks_for_index_from_storage(block['index'])
+    blocks_in_storage = get_blocks_for_index_from_storage(block_index)
     if len(blocks_in_storage) != 0:
         print('Block already exist in storage. Not mining empty block.')
         return

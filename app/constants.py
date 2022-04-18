@@ -3,7 +3,7 @@ import os
 
 from .ntypes import NEWRL_TOKEN_CODE, NUSD_TOKEN_CODE
 
-SOFTWARE_VERSION = "0.0.7"
+SOFTWARE_VERSION = "0.0.8"
 
 IS_TEST = os.environ.get('NEWRL_TEST') is not None
 if IS_TEST:
