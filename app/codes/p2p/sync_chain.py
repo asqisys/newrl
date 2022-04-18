@@ -117,10 +117,17 @@ def sync_chain_from_node(url, block_index=None):
             block.pop('transactions_hash', None)
             block.pop('block_index', None)
             for idx, tx in enumerate(block['text']['transactions']):
-                specific_data = tx['specific_data']
+                specific_data = tx['transaction']['specific_data']
                 while isinstance(specific_data, str):
                     specific_data = json.loads(specific_data)
-                block['text']['transactions'][idx]['specific_data'] = specific_data
+                block['text']['transactions'][idx]['transaction']['specific_data'] = specific_data
+                
+                signatures = tx['transaction']['signatures']
+                while isinstance(signatures, str):
+                    signatures = json.loads(signatures)
+                block['text']['transactions'][idx]['transaction']['signatures'] = signatures
+                block['text']['transactions'][idx]['signatures'] = signatures
+
             if not validate_block_data(block):
                 print('Invalid block')
                 failed_for_invalid_block = True

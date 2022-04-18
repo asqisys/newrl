@@ -9,11 +9,11 @@ from .clock.global_time import get_corrected_time_ms, get_time_difference
 from .fs.temp_manager import get_blocks_for_index_from_storage, store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
 from ..nvalues import TREASURY_WALLET_ADDRESS
-from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
+from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, GLOBAL_INTERNAL_CLOCK_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
-from .blockchain import Blockchain
+from .blockchain import Blockchain, get_last_block_hash
 from .transactionmanager import Transactionmanager, get_valid_addresses
 from .state_updater import update_db_states
 from .crypto import calculate_hash, sign_object, _private, _public
@@ -289,3 +289,23 @@ def should_include_transaction(transaction):
         if broadcast_timestamp < get_corrected_time_ms() - TIME_MINER_BROADCAST_INTERVAL_SECONDS * 1000:
             return False
     return True
+
+
+def global_internal_clock():
+    """Reccuring clock for all node level activities"""
+    
+    try:
+        # Check for mining delay
+        current_ts = get_corrected_time_ms()
+        last_block = get_last_block_hash()
+        if last_block:
+            last_block_ts = int(last_block['timestamp'])
+            time_elapsed_seconds = (current_ts - last_block_ts) / 1000
+
+            if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 3:
+                start_mining_clock(last_block_ts)
+    except Exception as e:
+        print('Error in global clock', e)
+
+    timer = threading.Timer(GLOBAL_INTERNAL_CLOCK_SECONDS, global_internal_clock)
+    timer.start()

@@ -10,7 +10,7 @@ from .codes.p2p.sync_chain import sync_chain_from_peers
 from .constants import NEWRL_PORT
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
 from .codes.clock.global_time import sync_timer_clock_with_global
-from .codes.updater import start_miner_broadcast_clock
+from .codes.updater import global_internal_clock, start_miner_broadcast_clock, start_mining_clock
 
 from .routers import blockchain, system, p2p, transport
 
@@ -61,6 +61,7 @@ def app_startup():
         logging.critical(e, exc_info=True)
     
     start_miner_broadcast_clock()
+    global_internal_clock()
     
 
 @app.on_event("shutdown")
