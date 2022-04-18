@@ -241,7 +241,7 @@ def start_empty_block_mining_clock():
     global TIMERS
     if TIMERS['block_receive_timeout'] is not None:
         TIMERS['block_receive_timeout'].cancel()
-    timer = threading.Timer(NO_BLOCK_TIMEOUT, create_empty_block_receipt_and_broadcast)
+    timer = threading.Timer(NO_BLOCK_TIMEOUT + BLOCK_TIME_INTERVAL_SECONDS, create_empty_block_receipt_and_broadcast)
     timer.start()
     TIMERS['block_receive_timeout'] = timer
 
@@ -250,9 +250,9 @@ def mine(add_to_chain=False):
     if should_i_mine():
         print('I am the miner for this block.')
         return run_updater(add_to_chain)
-    elif am_i_in_current_committee():
-        start_empty_block_mining_clock()
-        print('I am committee member. Starting no block timeout.')
+    # elif am_i_in_current_committee():
+    #     start_empty_block_mining_clock()
+    #     print('I am committee member. Starting no block timeout.')
     else:
         miner = get_miner_for_current_block()
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
@@ -305,6 +305,7 @@ def global_internal_clock():
 
             if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 3:
                 start_mining_clock(last_block_ts)
+                start_empty_block_mining_clock()
     except Exception as e:
         print('Error in global clock', e)
 
