@@ -182,6 +182,7 @@ def add_tx_to_block(cur, block_index, transactions):
     for transaction_signature in transactions:
         transaction = transaction_signature['transaction']
         signatures = json.dumps(transaction_signature['signatures'])
+        signatures = [] if signatures is None else signatures
         transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
         description = transaction['descr'] if 'descr' in transaction else transaction['description']
         specific_data = json.dumps(

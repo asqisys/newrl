@@ -17,6 +17,7 @@ from app.codes.updater import broadcast_block, start_mining_clock
 from app.codes.fs.temp_manager import append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
 from app.codes.consensus.consensus import check_community_consensus, validate_block_miner, generate_block_receipt, \
     add_my_receipt_to_block
+from app.migrations.init_db import revert_chain
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -129,8 +130,9 @@ def sync_chain_from_node(url, block_index=None):
                 block['text']['transactions'][idx]['signatures'] = signatures
 
             if not validate_block_data(block):
-                print('Invalid block')
+                print('Invalid block. Reverting by one block to retry')
                 failed_for_invalid_block = True
+                revert_chain(get_last_block_index() - 1)
                 break
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
