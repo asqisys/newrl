@@ -187,7 +187,7 @@ class Blockchain:
 
 def add_block(cur, block, block_hash):
     """Add a block to db, add transactions and update states"""
-    last_block = get_last_block_hash()
+    last_block = get_last_block(cur)
     if last_block is not None and last_block['hash'] != block['previous_hash']:
         print('Previous block hash does not match current block data')
         return
@@ -227,15 +227,20 @@ def get_last_block_index():
     return last_block[0] if last_block is not None else 0
 
 
-def get_last_block_hash():
+def get_last_block(cur=None):
     """Get last block hash from db"""
-    con = sqlite3.connect(NEWRL_DB)
-    cur = con.cursor()
+    cursor_opened_inside = False
+    if cur is None:
+        con = sqlite3.connect(NEWRL_DB)
+        cur = con.cursor()
+        cursor_opened_inside = True
     last_block_cursor = cur.execute(
         'SELECT block_index, hash, timestamp FROM blocks ORDER BY block_index DESC LIMIT 1'
     )
     last_block = last_block_cursor.fetchone()
-    con.close()
+
+    if cursor_opened_inside:
+        con.close()
 
     if last_block is not None:
         return {

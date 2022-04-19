@@ -1,5 +1,5 @@
 import time
-from app.codes.blockchain import get_last_block_hash
+from app.codes.blockchain import get_last_block
 from app.codes.p2p.sync_chain import receive_block
 
 from app.tests.test_mempool import create_transaction

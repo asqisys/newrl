@@ -1,11 +1,15 @@
 import requests
 
-NODE_URL = 'http://testnet.newrl.net:8090'
-WALLET = {
-  "public": "pEeY8E9fdKiZ3nJizmagKXjqDSK8Fz6SAqqwctsIhv8KctDfkJlGnSS2LUj/Igk+LwAl91Y5pUHZTTafCosZiw==",
-  "private": "x1Hp0sJzfTumKDqBwPh3+oj/VhNncx1+DLYmcTKHvV0=",
-  "address": "0x6e206561a7018d84b593c5e4788c71861d716880"
-}
+# NODE_URL = 'http://testnet.newrl.net:8090'
+# WALLET = {
+#   "public": "pEeY8E9fdKiZ3nJizmagKXjqDSK8Fz6SAqqwctsIhv8KctDfkJlGnSS2LUj/Igk+LwAl91Y5pUHZTTafCosZiw==",
+#   "private": "x1Hp0sJzfTumKDqBwPh3+oj/VhNncx1+DLYmcTKHvV0=",
+#   "address": "0x6e206561a7018d84b593c5e4788c71861d716880"
+# }
+
+NODE_URL = 'http://testnet.newrl.net:8182'
+WALLET = {"public": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==","private": "zhZpfvpmT3R7mUZa67ui1/G3I9vxRFEBrXNXToVctH0=","address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6"}
+
 
 token_code = input('Enter token code: ')
 amount = input('Issue amount: ')

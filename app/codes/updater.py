@@ -13,7 +13,7 @@ from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECOND
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
 from .utils import BufferedLog, get_time_ms
-from .blockchain import Blockchain, get_last_block_hash, get_last_block_index
+from .blockchain import Blockchain, get_last_block, get_last_block_index
 from .transactionmanager import Transactionmanager, get_valid_addresses
 from .state_updater import update_db_states
 from .crypto import calculate_hash, sign_object, _private, _public
@@ -298,7 +298,7 @@ def global_internal_clock():
     try:
         # Check for mining delay
         current_ts = get_corrected_time_ms()
-        last_block = get_last_block_hash()
+        last_block = get_last_block()
         if last_block:
             last_block_ts = int(last_block['timestamp'])
             time_elapsed_seconds = (current_ts - last_block_ts) / 1000

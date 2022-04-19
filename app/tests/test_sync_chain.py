@@ -1,5 +1,5 @@
 import time
-from app.codes.blockchain import get_last_block_hash
+from app.codes.blockchain import get_last_block
 from app.codes.chainscanner import get_transaction
 from app.codes.p2p.sync_chain import get_blocks, receive_block
 
