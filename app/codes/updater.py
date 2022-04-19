@@ -247,7 +247,7 @@ def start_empty_block_mining_clock():
 
 
 def mine(add_to_chain=False):
-    if should_i_mine():
+    if should_i_mine() or add_to_chain:
         print('I am the miner for this block.')
         return run_updater(add_to_chain)
     # elif am_i_in_current_committee():

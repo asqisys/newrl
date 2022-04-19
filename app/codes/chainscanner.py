@@ -71,11 +71,15 @@ def download_state():
 
     balances_cursor = cur.execute('SELECT * FROM balances').fetchall()
     balances = [dict(ix) for ix in balances_cursor]
+    
+    contracts_cursor = cur.execute('SELECT * FROM contracts').fetchall()
+    contracts = [dict(ix) for ix in contracts_cursor]
 
     state = {
         'wallets': wallets,
         'tokens': tokens,
         'balances': balances,
+        'contracts': contracts
     }
     return state
 
@@ -112,6 +116,16 @@ def get_token(token_code):
     cur = con.cursor()
     cur = cur.execute(
         'SELECT * FROM tokens where tokencode=?', (token_code,)).fetchone()
+    if cur is None:
+        return None
+    return dict(cur)
+
+def get_contract(contract_address):
+    con = sqlite3.connect(NEWRL_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur = cur.execute(
+        'SELECT * FROM contracts where address=?', (contract_address,)).fetchone()
     if cur is None:
         return None
     return dict(cur)

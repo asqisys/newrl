@@ -12,7 +12,7 @@ from starlette.responses import FileResponse
 from app.codes.transactionmanager import Transactionmanager
 
 from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
-from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_block, get_token, get_transaction, get_wallet
+from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_block, get_contract, get_token, get_transaction, get_wallet
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
 from app.codes.transfermanager import Transfermanager
@@ -76,6 +76,14 @@ def get_balances_api(balance_type: BalanceType, token_code: str = "", wallet_add
         balance = chain_scanner.getbalancesbytoken(str(token_code))
     return {'balance': balance}
 
+
+@router.get("/get-contract", tags=[v2_tag])
+def get_contract_api(contract_address: str):
+    """Get a contract details from the chain"""
+    contract = get_contract(contract_address)
+    if contract is None:
+        raise HTTPException(status_code=400, detail="Contract not found")
+    return contract
 
 @router.get("/download-chain", tags=[v2_tag])
 def download_chain_api():
