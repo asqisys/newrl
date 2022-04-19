@@ -1,4 +1,4 @@
-
+import math
 
 #Min Yes Votes Voting Scheme
 #ProposalAccepted - if min_yes yes votes is met
@@ -10,7 +10,7 @@ def voting_scheme_one(callparams):
     current_yes_votes = callparams['current_yes_votes']
     current_no_votes = callparams['current_no_votes']
 
-    min_yes_votes = (total_votes*min_yes_proportion)/100
+    min_yes_votes = math.ceil((total_votes*min_yes_proportion)/100)
     if(current_yes_votes >= min_yes_votes):
         return 1
     elif(current_no_votes>= min_yes_votes-1):
