@@ -6,6 +6,8 @@ import json
 
 import sqlite3
 
+from app.codes.clock.global_time import get_corrected_time_ms
+
 from .fs.temp_manager import remove_block_from_temp
 from ..constants import BLOCK_TIME_INTERVAL_SECONDS, NEWRL_DB, NO_BLOCK_TIMEOUT
 from .utils import get_time_ms
@@ -105,11 +107,10 @@ class Blockchain:
 
         block = {
             'index': last_block_index + 1,
-            'timestamp': get_time_ms(),
+            'timestamp': get_corrected_time_ms(),
             'proof': 0,
             'text': text,
             'creator_wallet': get_node_wallet_address(),
-            'fees': fees,
             'previous_hash': last_block_hash
         }
 
@@ -130,7 +131,7 @@ class Blockchain:
 
         block = {
             'index': last_block_index + 1,
-            'timestamp': get_time_ms(),
+            'timestamp': get_corrected_time_ms(),
             'proof': 0,
             'text': text,
             'creator_wallet': get_node_wallet_address(),

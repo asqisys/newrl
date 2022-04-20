@@ -61,7 +61,10 @@ def receive_block(block):
         return False
 
     if not validate_block(block):
-        print('Invalid block')
+        print('Invalid block. Sending receipts.')
+        receipt_for_invalid_block = generate_block_receipt(block['data'], vote=0)
+        committee = get_committee_for_current_block()
+        broadcast_receipt(receipt_for_invalid_block, committee)
         return False
 
     if check_community_consensus(block):

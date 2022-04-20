@@ -216,12 +216,12 @@ def pay_fee_for_transaction(cur, transaction):
 
 
 def create_empty_block_receipt_and_broadcast():
-    block_index = get_last_block_index() + 1
-    print('No block timeout. Mining empty block')
-    blocks_in_storage = get_blocks_for_index_from_storage(block_index)
-    if len(blocks_in_storage) != 0:
-        print('Block already exist in storage. Not mining empty block.')
-        return
+    print('No block timeout. Mining empty block and sending receipts.')
+    # block_index = get_last_block_index() + 1
+    # blocks_in_storage = get_blocks_for_index_from_storage(block_index)
+    # if len(blocks_in_storage) != 0:
+    #     print('Block already exist in storage. Not mining empty block.')
+    #     return
     blockchain = Blockchain()
     block = blockchain.mine_empty_block()
     block_receipt = generate_block_receipt(block)
@@ -235,6 +235,7 @@ def create_empty_block_receipt_and_broadcast():
 
     committee = get_committee_for_current_block()
     broadcast_receipt(block_receipt, committee)
+    return block_payload
 
 
 def start_empty_block_mining_clock():

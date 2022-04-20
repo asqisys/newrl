@@ -21,11 +21,11 @@ public_key = wallet_data['public']
 private_key = wallet_data['private']
 
 
-def generate_block_receipt(block):
+def generate_block_receipt(block, vote=1):
     receipt_data = {
         'block_index': block['index'],
         'block_hash': calculate_hash(block),
-        'vote': 1
+        'vote': vote
     }
     return {
         "data": receipt_data,
@@ -36,7 +36,7 @@ def generate_block_receipt(block):
 
 def add_my_receipt_to_block(block):
     """Add node's receipt to the block. Return receipt if receipt added. None if receipt already present."""
-    my_receipt = generate_block_receipt(block)
+    my_receipt = generate_block_receipt(block['data'])
     my_receipt_already_added = False
     for receipt in block['receipts']:
         if receipt['public_key'] == my_receipt['public_key']:
