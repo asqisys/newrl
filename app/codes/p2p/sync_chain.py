@@ -261,8 +261,9 @@ def receive_receipt(receipt):
         blocks_appended = append_receipt_to_block_in_storage(receipt)
         for block in blocks_appended:
             if check_community_consensus(block):
+                original_block = copy.deepcopy(block)
                 accept_block(block, block['hash'])
-                broadcast_block(block)
+                broadcast_block(original_block)
 
     return True
 
