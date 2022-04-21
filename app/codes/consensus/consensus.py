@@ -1,12 +1,14 @@
 """Consensus related functions"""
 
+from app.nvalues import ASQI_WALLET
+from ..clock.global_time import get_corrected_time_ms
 from ..signmanager import sign_object
 from ..blockchain import calculate_hash
 from ..validator import validate_block_receipts
 from ..fs.mempool_manager import append_receipt_to_block, get_receipts_from_storage
-from ...constants import MINIMUM_ACCEPTANCE_RATIO, MINIMUM_ACCEPTANCE_VOTES
+from ...constants import BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, MINIMUM_ACCEPTANCE_RATIO
 from ..auth.auth import get_wallet
-from ..minermanager import get_miner_for_current_block
+from ..minermanager import get_committee_for_current_block, get_miner_for_current_block
 
 
 try:
@@ -19,11 +21,11 @@ public_key = wallet_data['public']
 private_key = wallet_data['private']
 
 
-def generate_block_receipt(block):
+def generate_block_receipt(block, vote=1):
     receipt_data = {
         'block_index': block['index'],
         'block_hash': calculate_hash(block),
-        'vote': 1
+        'vote': vote
     }
     return {
         "data": receipt_data,
@@ -34,7 +36,7 @@ def generate_block_receipt(block):
 
 def add_my_receipt_to_block(block):
     """Add node's receipt to the block. Return receipt if receipt added. None if receipt already present."""
-    my_receipt = generate_block_receipt(block)
+    my_receipt = generate_block_receipt(block['data'])
     my_receipt_already_added = False
     for receipt in block['receipts']:
         if receipt['public_key'] == my_receipt['public_key']:
@@ -75,13 +77,30 @@ def check_community_consensus(block):
         append_receipt_to_block(block, receipt)
 
     receipt_counts = validate_block_receipts(block)
-    if receipt_counts['positive_receipt_count'] / receipt_counts['total_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO:
-        return True
 
+    committee = get_committee_for_current_block()
+
+    # TODO - Deal with the case when minimum number of committee members are not avalable
+    # if len(committee) < 3:
+    #    if receipt_counts['positive_receipt_count'] > 0:
+    #        return True
+    # Block is received from sentinel node after a timeout.
+    if len(committee) == 1:
+        if committee[0]['wallet_address'] == ASQI_WALLET:  # Todo - Check if block is empty
+            return True
+
+    if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * COMMITTEE_SIZE:
+        return True
     return False
 
 
 def validate_block_miner(block):
+    time_ms_elapsed_since_last_block = get_corrected_time_ms() - int(block['timestamp'])
+    block_cuttoff_triggered = time_ms_elapsed_since_last_block > (BLOCK_TIME_INTERVAL_SECONDS + BLOCK_RECEIVE_TIMEOUT_SECONDS) * 1000
+    if block['proof'] == 42 and len(block['text']['transactions']) == 0 and block_cuttoff_triggered:
+        # Accept emtpy block mined and transmitted by committee
+        return True
+
     miner_address = block['creator_wallet']
 
     expected_miner = get_miner_for_current_block()['wallet_address']
@@ -91,4 +110,6 @@ def validate_block_miner(block):
 
     print(block)
     if miner_address != expected_miner:
-        raise Exception(f"Invalid miner {miner_address} for block. Expected {expected_miner}")
+        print(f"Invalid miner {miner_address} for block. Expected {expected_miner}")
+        return False
+    return True

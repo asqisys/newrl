@@ -6,6 +6,17 @@ from ..crypto import sign_object
 from ...nvalues import ZERO_ADDRESS
 
 
+def get_node_wallet_public():
+    wallet = get_wallet()
+    if wallet:
+        return {
+            'address': wallet['address'],
+            'public': wallet['public']
+        }
+    else:
+        return None
+
+
 def get_node_wallet_address():
     wallet = get_wallet()
     if wallet:

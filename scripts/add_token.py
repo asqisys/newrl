@@ -1,16 +1,21 @@
 import requests
 
-# NODE_URL = 'http://testnet.newrl.net:8182'
-NODE_URL = 'http://testnet.newrl.net:8090'
-# NODE_URL = 'http://newrl.net:8090'
-# WALLET = {    "public": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==",    "private": "zhZpfvpmT3R7mUZa67ui1/G3I9vxRFEBrXNXToVctH0=",    "address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6"}
-WALLET = {        "address": "0xc29193dbab0fe018d878e258c93064f01210ec1a",        "public": "sB8/+o32Q7tRTjB2XcG65QS94XOj9nP+mI7S6RIHuXzKLRlbpnu95Zw0MxJ2VGacF4TY5rdrIB8VNweKzEqGzg==",        "private": "xXqOItcwz9JnjCt3WmQpOSnpCYLMcxTKOvBZyj9IDIY="    }
+# NODE_URL = 'http://testnet.newrl.net:8090'
+# WALLET = {
+#   "public": "pEeY8E9fdKiZ3nJizmagKXjqDSK8Fz6SAqqwctsIhv8KctDfkJlGnSS2LUj/Igk+LwAl91Y5pUHZTTafCosZiw==",
+#   "private": "x1Hp0sJzfTumKDqBwPh3+oj/VhNncx1+DLYmcTKHvV0=",
+#   "address": "0x6e206561a7018d84b593c5e4788c71861d716880"
+# }
+
+NODE_URL = 'http://testnet.newrl.net:8182'
+WALLET = {"public": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==","private": "zhZpfvpmT3R7mUZa67ui1/G3I9vxRFEBrXNXToVctH0=","address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6"}
+
 
 token_code = input('Enter token code: ')
 amount = input('Issue amount: ')
-first_owner = input('First owner[c for custodian]: ')
+first_owner = input('First owner[leave blank for custodian]: ')
 
-if first_owner == 'c':
+if first_owner == '':
   first_owner = WALLET['address']
 
 add_wallet_request = {

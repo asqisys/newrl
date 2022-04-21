@@ -55,6 +55,6 @@ POST http://testnet.newrl.net:8182/revert-chain?block_index=1&propogate=false
 POST http://159.223.163.198:8182/revert-chain?block_index=1&propogate=false
 POST http://asqisys.com:8182/revert-chain?block_index=1&propogate=false
 POST http://makemyfund.in:8182/revert-chain?block_index=1&propogate=false
-POST http://localhost:8182/revert-chain?block_index=1&propogate=false
+POST http://localhost:8182/revert-chain?block_index=2230&propogate=false
 
 POST http://testnet.newrl.net:8182/run-updater?add_to_chain_before_consensus=true

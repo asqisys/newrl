@@ -55,7 +55,7 @@ def _receive_block(block_index):
                     "timestamp": "1645095917000",
                     "trans_code": "a529a6c63c4b5480d88cd0b12e108e5340aaa25a",
                     "type": 1,
-                    "currency": "INR",
+                    "currency": "NWRL",
                     "fee": 0,
                     "descr": "New wallet",
                     "valid": 1,

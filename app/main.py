@@ -6,16 +6,13 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.codes.p2p.sync_chain import sync_chain_from_peers
-
+from .codes.p2p.sync_chain import sync_chain_from_peers
 from .constants import NEWRL_PORT
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
 from .codes.clock.global_time import sync_timer_clock_with_global
-from .codes.updater import start_miner_broadcast_clock
+from .codes.updater import global_internal_clock, start_miner_broadcast_clock, start_mining_clock
 
-from .routers import blockchain
-from .routers import p2p
-from .routers import transport
+from .routers import blockchain, system, p2p, transport
 
 
 logging.basicConfig(level=logging.INFO)
@@ -39,6 +36,7 @@ app.add_middleware(
 
 app.include_router(blockchain.router)
 app.include_router(p2p.router)
+app.include_router(system.router)
 app.include_router(transport.router)
 
 args = {
@@ -47,26 +45,24 @@ args = {
     'disablebootstrap': False,
 }
 
-# @app.on_event('startup')
-# def app_startup():
-    # try:
-    #     if not args['disablenetwork']:
-    #         sync_timer_clock_with_global()
-    #         if not args['disableupdate']:
-    #             update_software(propogate=False)
-    #         if not args['disablebootstrap']:
-    #             init_bootstrap_nodes()
-    #         sync_chain_from_peers()
-    #         update_my_address()
-    # except Exception as e:
-    #     print('Bootstrap failed')
-    #     logging.critical(e, exc_info=True)
-    #
-    # try:
-    #     start_miner_broadcast_clock()
-    # except Exception as e:
-    #     print('Miner broadcast failed')
-    #     logging.warning(e, exc_info=True)
+@app.on_event('startup')
+def app_startup():
+    try:
+        if not args['disablenetwork']:
+            sync_timer_clock_with_global()
+            if not args['disableupdate']:
+                update_software(propogate=False)
+            if not args['disablebootstrap']:
+                init_bootstrap_nodes()
+            sync_chain_from_peers()
+            update_my_address()
+    except Exception as e:
+        print('Bootstrap failed')
+        logging.critical(e, exc_info=True)
+    
+    start_miner_broadcast_clock()
+    global_internal_clock()
+    
 
 @app.on_event("shutdown")
 def shutdown_event():

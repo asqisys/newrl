@@ -2,6 +2,7 @@ import requests
 import urllib3
 
 NODE_URL = 'http://localhost:8182'
+# NODE_URL = 'http://3.85.231.1:8182'
 WALLET = {"public": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==","private": "zhZpfvpmT3R7mUZa67ui1/G3I9vxRFEBrXNXToVctH0=","address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6"}
 
 # NODE_URL = 'http://testnet.newrl.net:8090'
@@ -9,6 +10,7 @@ WALLET = {"public": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83G
 
 response = requests.get(NODE_URL + '/generate-contract-address')
 contract_address = response.text
+contract_address = contract_address.replace('"', '')
 print('Contract address', contract_address)
 
 add_wallet_request = {
@@ -37,5 +39,3 @@ print('Sending wallet add transaction to chain')
 response = requests.post(NODE_URL + '/validate-transaction', json=signed_transaction)
 print('Got response from chain\n', response.text)
 assert response.status_code == 200
-
-# response = requests.post(NODE_URL + '/run-updater')

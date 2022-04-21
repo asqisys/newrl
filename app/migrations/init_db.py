@@ -2,6 +2,7 @@ import sqlite3
 import json
 
 from ..codes.state_updater import update_state_from_transaction
+from .migrate_db import run_migrations
 from ..constants import NEWRL_DB, NEWRL_P2P_DB
 
 db_path = NEWRL_DB
@@ -83,7 +84,8 @@ def init_db():
                     fee real,
                     description text,
                     valid integer,
-                    specific_data text)
+                    specific_data text,
+                    signatures text)
                     ''')
 
     cur.execute('''
@@ -200,13 +202,20 @@ def revert_chain(block_index):
     cur = con.cursor()
     cur.execute(f'DELETE FROM blocks WHERE block_index > {block_index}')
     cur.execute(f'DELETE FROM transactions WHERE block_index > {block_index}')
-    cur.execute('DROP TABLE wallets')
-    cur.execute('DROP TABLE tokens')
-    cur.execute('DROP TABLE balances')
+    cur.execute('DROP TABLE IF EXISTS wallets')
+    cur.execute('DROP TABLE IF EXISTS tokens')
+    cur.execute('DROP TABLE IF EXISTS balances')
+    cur.execute('DROP TABLE IF EXISTS transfers')
+    cur.execute('DROP TABLE IF EXISTS contracts')
+    cur.execute('DROP TABLE IF EXISTS miners')
     con.commit()
+    con.close()
 
     init_db()
-
+    run_migrations()
+    
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
     transactions_cursor = cur.execute(f'SELECT transaction_code, block_index, type, timestamp, specific_data FROM transactions WHERE block_index <= {block_index}').fetchall()
     for transaction in transactions_cursor:
         transaction_code = transaction[0]

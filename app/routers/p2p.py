@@ -7,6 +7,7 @@ from fastapi.exceptions import HTTPException
 from starlette.requests import Request
 
 from app.codes.chainscanner import download_chain, download_state, get_transaction
+from app.codes.clock.global_time import get_time_stats
 from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, receive_block, receive_receipt, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import get_mempool_transactions, list_mempool_transactions, sync_mempool_transactions
@@ -14,13 +15,13 @@ from app.constants import NEWRL_PORT
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
 from .request_models import BlockAdditionRequest, BlockRequest, ReceiptAdditionRequest, TransactionAdditionRequest, TransactionsRequest
-from app.codes.auth.auth import get_node_wallet_address
+from app.codes.auth.auth import get_node_wallet_address, get_node_wallet_public
 from app.codes.validator import validate as validate_transaction
 from app.codes.minermanager import get_miner_info
 
 router = APIRouter()
 
-p2p_tag = 'p2p'
+p2p_tag = 'P2P'
 
 @router.get("/get-node-wallet-address", tags=[p2p_tag])
 def api_get_node_wallet_address():
@@ -41,7 +42,7 @@ def get_mempool_transactions_api(req: BlockRequest):
 
 @router.post("/receive-transaction", tags=[p2p_tag])
 def receive_transaction_api(req: TransactionAdditionRequest):
-    return validate_transaction(req.signed_transaction, propagate=False)
+    return validate_transaction(req.signed_transaction, propagate=True)
 
 @router.post("/receive-block", tags=[p2p_tag])
 def receive_block_api(req: BlockAdditionRequest):
@@ -58,48 +59,6 @@ def receive_receipt_api(req: ReceiptAdditionRequest):
 def get_last_block_index_api():
     return get_last_block_index()
 
-@router.post("/sync-mempool-transactions", tags=[p2p_tag])
-def sync_mempool_transactions_api():
-    return sync_mempool_transactions()
-
-@router.post("/sync-chain-from-node", tags=[p2p_tag])
-def sync_chain_from_node_api(url: str = 'https://newrl-devnet1.herokuapp.com'):
-    try:
-        return sync_chain_from_node(url)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail='No more blocks')
-
-@router.post("/sync-chain-from-peers", tags=[p2p_tag])
-def sync_chain_from_peers_api():
-    return sync_chain_from_peers()
-
-@router.post("/sync-chain-from-peers", tags=[p2p_tag])
-def sync_chain_from_peers_api():
-    return sync_chain_from_peers()
-
-@router.get("/get-transaction", tags=[p2p_tag])
-def get_transaction_api(transaction_code: str):
-    return get_transaction(transaction_code)
-
-@router.get("/download-chain", tags=[p2p_tag])
-def download_chain_api():
-    return download_chain()
-
-@router.get("/download-chain", tags=[p2p_tag])
-def download_chain_api():
-    return download_chain()
-
-@router.get("/download-state", tags=[p2p_tag])
-def download_state_api():
-    return download_state()
-
-@router.post("/clear-db-test-only", tags=[p2p_tag])
-def clear_db_api():
-    """ For testing only. To be removed. Clear and initialise a fresh db """
-    clear_db()
-    init_db()
-    return True
-
 @router.get("/get-peers", tags=[p2p_tag])
 def get_peers_api():
     return get_peers()
@@ -112,25 +71,4 @@ def get_miners_api():
 def add_peer_api(req: Request):
     return add_peer(req.client.host)
 
-@router.post("/clear-peers", tags=[p2p_tag])
-def clear_peer_api(req: Request):
-    return clear_peers()
 
-@router.post("/initiate-peer-connection", tags=[p2p_tag])
-def initiate_peer_api(address: str):
-    "Test only, used to first connect a client"
-    return add_peer(address)
-
-@router.post("/revert-chain", tags=[p2p_tag])
-def revert_chain_api(block_index: int, propogate: bool = False):
-    revert_chain(block_index)
-    if propogate:
-        call_api_on_peers(f'/revert-chain?block_index={block_index}')
-    return {'status': 'SUCCESS'}
-
-@router.post("/update-software", tags=[p2p_tag])
-def update_software_api(propogate: bool = False):
-    # update_software(propogate)
-    timer = threading.Timer(randint(5, 10), update_software, [propogate])
-    timer.start()
-    return {'status': 'SUCCESS'}

@@ -2,6 +2,7 @@
 
 import glob
 import json
+import os
 
 from ...constants import MEMPOOL_PATH, TMP_PATH
 
@@ -41,19 +42,6 @@ def append_receipt_to_block(block, new_receipt):
     return False
 
 
-def append_receipt_to_block_in_storage(receipt):
-    block_folder=TMP_PATH
-    block_index = receipt['data']['block_index']
-    blocks = []
-    for block_file in glob.glob(f'{block_folder}/block_{block_index}_*.json'):
-        with open(block_file, 'r+') as _file:
-            block = json.load(_file)
-            if append_receipt_to_block(block):
-                json.dump(block, _file)
-                blocks.append(block)
-    return blocks
-
-
 def get_mempool_transaction(transaction_code):
     existing_files_for_block = glob.glob(f'{MEMPOOL_PATH}transaction-*-{transaction_code}*.json')
     if len(existing_files_for_block) == 0:
@@ -62,3 +50,26 @@ def get_mempool_transaction(transaction_code):
     with open(existing_files_for_block[0], 'r') as _file:
         transaction = json.load(_file)
         return transaction
+
+
+def remove_transaction_from_mempool(transaction_code):
+    transaction_files = glob.glob(f'{MEMPOOL_PATH}transaction-*-{transaction_code}*.json')
+    for f in transaction_files:
+        os.remove(f)
+
+
+def clear_mempool():
+    filenames = os.listdir(MEMPOOL_PATH)
+    
+    for filename in filenames:
+        file = MEMPOOL_PATH + filename
+        os.remove(file)
+    
+    clear_temp()
+
+def clear_temp():
+    filenames = glob.glob(f'{TMP_PATH}*.json')
+    print(filenames)
+    
+    for f in filenames:
+        os.remove(f)

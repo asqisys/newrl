@@ -179,7 +179,10 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
 
 def add_tx_to_block(cur, block_index, transactions):
     print(block_index, transactions)
-    for transaction in transactions:
+    for transaction_signature in transactions:
+        transaction = transaction_signature['transaction']
+        signatures = json.dumps(transaction_signature['signatures'])
+        signatures = [] if signatures is None else signatures
         transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
         description = transaction['descr'] if 'descr' in transaction else transaction['description']
         specific_data = json.dumps(
@@ -193,11 +196,12 @@ def add_tx_to_block(cur, block_index, transactions):
             transaction['fee'],
             description,
             transaction['valid'],
-            specific_data
+            specific_data,
+            signatures
         )
         cur.execute(f'''INSERT OR IGNORE INTO transactions
-            (block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+            (block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data, signatures)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
 
 
 def update_token_amount(cur, tid, amt):

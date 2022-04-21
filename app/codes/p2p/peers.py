@@ -60,7 +60,7 @@ def add_peer(peer_address):
     try:
         logger.info('Adding peer %s', peer_address)
         # await register_me_with_them(peer_address)
-        cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
+        cur.execute('INSERT OR REPLACE INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
         con.commit()
     except Exception as e:
         logger.info('Did not add peer %s', peer_address)
@@ -162,12 +162,13 @@ def update_my_address():
 
 def update_software(propogate):
     "Update the client software from repo"
-    logger.info('Getting latest code from repo')
-    subprocess.call(["git", "pull"])
-    init_newrl()
     if propogate is True:
         logger.info('Propogaring update request to network')
         update_peers()
+
+    logger.info('Getting latest code from repo')
+    subprocess.call(["git", "pull"])
+    init_newrl()
 
 
 def validate_auth(auth):

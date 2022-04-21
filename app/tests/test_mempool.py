@@ -3,7 +3,7 @@ import sqlite3
 
 from ..codes import updater
 from ..codes.auth.auth import get_wallet
-from ..codes.fs.mempool_manager import get_mempool_transaction
+from ..codes.fs.mempool_manager import get_mempool_transaction, remove_transaction_from_mempool
 from ..codes.db_updater import update_wallet_token_balance
 from fastapi.testclient import TestClient
 
@@ -84,7 +84,9 @@ def create_transaction(fee):
 
 
 def test_block_receipt_getting_stored():
-    block = updater.mine()
+    time.sleep(10)
+    block = updater.mine(True)['data']
+    print('blk', block)
     blocks_from_storage = get_blocks_for_index_from_storage(block['index'])
     assert len(blocks_from_storage) != 0
 
@@ -94,3 +96,12 @@ def test_block_receipt_getting_stored():
 
     assert receipt['data']['block_index'] == block['index']
     assert receipt['public_key'] == get_wallet()['public']
+
+def test_transaction_remove():
+    transaction = create_transaction(2)
+    mempool_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
+    assert mempool_transaction is not None
+    remove_transaction_from_mempool(transaction['transaction']['trans_code'])
+    mempool_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
+    assert mempool_transaction is None
+    
