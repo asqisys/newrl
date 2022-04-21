@@ -28,10 +28,10 @@ class DaoMainTemplate(ContractMaster):
         dao_pid = get_pid_from_wallet(cur, self.address)
         # TODO max votes for now is hard coded
         cur.execute(f'''INSERT OR REPLACE INTO PROPOSAL_DATA
-                    (dao_person_id, function_called,params,voting_start_ts,voting_end_ts,max_votes,status)
+                    (dao_person_id, function_called,params,voting_start_ts,voting_end_ts,total_votes,status)
                     VALUES (?, ? ,? ,? ,? ,? ,? )''', (
             dao_pid, callparams['function_called'], json.dumps(callparams['params']), callparams['voting_start_ts'],
-            callparams['voting_end_ts'], 5, 0))
+            callparams['voting_end_ts'], 10, 0))
         prop_id = cur.lastrowid
         response = {
             "status": 200,
@@ -46,19 +46,22 @@ class DaoMainTemplate(ContractMaster):
             
             member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address'])
             proposal_id=callparams['proposal_id']
-            voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes",total_votes,function_called  from proposal_data where proposal_id = ?''', (proposal_id,))
+            voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes",total_votes as "total_votes",function_called as "function_called"  from proposal_data where proposal_id = ?''', (proposal_id,))
             voter_db_data=voter_db_data.fetchone()
 
 
-            yes_votes=int(voter_db_data[1])
-            no_votes=int(voter_db_data[2])
-            abstain_votes=int(voter_db_data[3])
-            total_votes = int(voter_db_data[4])
-            function_called = voter_db_data[5] 
-            if(self.duplicate_check(member_pid,voter_data)):
+            # Initializing  the voter_db_data variable
+            if (voter_db_data[0] is None):
+                voter_db_data = ['{}', 0, 0, 0,voter_db_data[4],voter_db_data[5]]
+            voter_data = input_to_dict(json.loads(voter_db_data[0]))
+            yes_votes = voter_db_data[1]
+            no_votes = voter_db_data[2]
+            abstain_votes = voter_db_data[3]
+            total_votes = voter_db_data[4]
+            function_called = voter_db_data[5]
+            if(self.duplicate_check(voter_db_data[0],member_pid)):
 
-                if(voter_db_data[0] is None):
-                    voter_db_data=['{}',0,0,0]
+
                 if(callparams['vote']==-1):
                     no_votes=no_votes+1
                 elif(callparams['vote']==1):
@@ -66,20 +69,23 @@ class DaoMainTemplate(ContractMaster):
                 else:
                     abstain_votes = abstain_votes + 1
                 
-                voter_data = input_to_dict(json.loads(voter_db_data[0]))
-                voter_data[member_pid]={"vote":callparams['vote'],"qty":None}
-                cur.execute(f'''update proposal_data set voter_data=?,yes_votes=?,no_votes=?,abstain_votes=?  where proposal_id like ?''',(json.dumps(voter_data),yes_votes,no_votes,abstain_votes,proposal_id))
+
+                voter_data[member_pid]={"vote":callparams['vote'],"weight":None}
+                cur.execute(f'''update proposal_data set voter_data=?,yes_votes=?,no_votes=?,abstain_votes=?  where proposal_id = ?''',(json.dumps(voter_data),yes_votes,no_votes,abstain_votes,proposal_id))
         
 
-
+            else:
+                return False
         
             #get voting scheme params from dao params
             cspecs = input_to_dict(self.contractparams['contractspecs'])
-            voting_schemes = cspecs['voting_scheme']
+            voting_schemes = cspecs['voting_schemes']
             voting_scheme_params = None
+            voting_scheme_selected=None
             for method in voting_schemes:
-                if(method.function == function_called):
-                    voting_scheme_params = method.params
+                if(method['function'] == function_called):
+                    voting_scheme_params = method['params']
+                    voting_scheme_selected=method['voting_scheme']
             
             #get total votes, current yes and no votes from proposal
             voting_specs = {
@@ -89,7 +95,7 @@ class DaoMainTemplate(ContractMaster):
                 'total_votes':total_votes
             }
 
-            funct = getattr(self, cspecs['voting_scheme'])
+            funct = getattr(Utils, voting_scheme_selected)
             voting_result = funct(cur, voting_specs)
             #check if any condition is met
                 #if yes (-1 or 1)
@@ -195,7 +201,9 @@ class DaoMainTemplate(ContractMaster):
             return False
         return True
 
-    def duplicate_check(voter_data,member_pid):
+    def duplicate_check(self,voter_data,member_pid):
+        voter_data = input_to_dict(json.loads(voter_data))
         for voter in voter_data.keys():
             if(voter==member_pid):
                 return False
+        return True
