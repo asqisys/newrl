@@ -233,8 +233,8 @@ def accept_block(block, hash):
     con.commit()
     con.close()
 
-    # block_timestamp = int(block['data']['timestamp'])
-    # start_mining_clock(block_timestamp)
+    block_timestamp = int(block['data']['timestamp'])
+    start_mining_clock(block_timestamp)
     return True
 
 
