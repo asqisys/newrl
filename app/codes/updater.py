@@ -216,6 +216,8 @@ def pay_fee_for_transaction(cur, transaction):
 
 
 def create_empty_block_receipt_and_broadcast():
+    global TIMERS
+    TIMERS['block_receive_timeout'] = None
     print('No block timeout. Mining empty block and sending receipts.')
     # block_index = get_last_block_index() + 1
     # blocks_in_storage = get_blocks_for_index_from_storage(block_index)
@@ -238,16 +240,20 @@ def create_empty_block_receipt_and_broadcast():
     return block_payload
 
 
-def start_empty_block_mining_clock():
+def start_empty_block_mining_clock(seconds_to_wait):
     global TIMERS
+    if TIMERS['mining_timer'] is not None:
+        TIMERS['mining_timer'].cancel()
     if TIMERS['block_receive_timeout'] is not None:
         TIMERS['block_receive_timeout'].cancel()
-    timer = threading.Timer(NO_BLOCK_TIMEOUT + BLOCK_TIME_INTERVAL_SECONDS, create_empty_block_receipt_and_broadcast)
+    timer = threading.Timer(seconds_to_wait, create_empty_block_receipt_and_broadcast)
     timer.start()
     TIMERS['block_receive_timeout'] = timer
 
 
 def mine(add_to_chain=False):
+    global TIMERS
+    TIMERS['mining_timer'] = None
     if should_i_mine() or add_to_chain:
         print('I am the miner for this block.')
         return run_updater(add_to_chain)
@@ -263,9 +269,9 @@ def start_mining_clock(block_timestamp):
     global TIMERS
     if TIMERS['mining_timer'] is not None:
         TIMERS['mining_timer'].cancel()
-    if TIMERS['block_receive_timeout'] is not None:
-        TIMERS['block_receive_timeout'].cancel()
-        TIMERS['block_receive_timeout'] = None
+    # if TIMERS['block_receive_timeout'] is not None:
+    #     TIMERS['block_receive_timeout'].cancel()
+    #     TIMERS['block_receive_timeout'] = None
     current_ts_seconds = get_corrected_time_ms() / 1000
     block_ts_seconds = block_timestamp / 1000
     seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds
@@ -294,6 +300,7 @@ def should_include_transaction(transaction):
 
 
 def global_internal_clock():
+    global TIMERS
     """Reccuring clock for all node level activities"""
     
     try:
@@ -303,10 +310,20 @@ def global_internal_clock():
         if last_block:
             last_block_ts = int(last_block['timestamp'])
             time_elapsed_seconds = (current_ts - last_block_ts) / 1000
+            print('Time elapsed since last block', time_elapsed_seconds)
 
-            if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 3:
-                start_mining_clock(last_block_ts)
-                start_empty_block_mining_clock()
+            if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS + NO_BLOCK_TIMEOUT:
+                if TIMERS['block_receive_timeout'] is None:
+                    start_empty_block_mining_clock(0)
+            elif time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS:
+                if TIMERS['mining_timer'] is None:
+                    start_mining_clock(last_block_ts)
+
+            # # if time_elapsed_seconds >= BLOCK_TIME_INTERVAL_SECONDS:
+            # start_mining_clock(last_block_ts)
+
+            # seconds_to_wait_to_mine_empty_block = BLOCK_TIME_INTERVAL_SECONDS + NO_BLOCK_TIMEOUT - time_elapsed_seconds
+            # start_empty_block_mining_clock(seconds_to_wait_to_mine_empty_block)
     except Exception as e:
         print('Error in global clock', e)
 
