@@ -3,7 +3,7 @@ import os
 
 from .ntypes import NEWRL_TOKEN_CODE, NUSD_TOKEN_CODE
 
-SOFTWARE_VERSION = "0.0.8"
+SOFTWARE_VERSION = "0.0.9"
 
 IS_TEST = os.environ.get('NEWRL_TEST') is not None
 if IS_TEST:
@@ -29,7 +29,7 @@ TREASURY = "treasury_address"
 COINBASE_SC = "coinbase_sc_address"
 TRANSPORT_SERVER = 'http://localhost:8095'
 
-GLOBAL_INTERNAL_CLOCK_SECONDS = 30  # The time period between blocks
+GLOBAL_INTERNAL_CLOCK_SECONDS = 5  # The time period between blocks
 TIME_BETWEEN_BLOCKS_SECONDS = 30  # The time period between blocks
 COMMITTEE_SIZE = 10
 MINIMUM_ACCEPTANCE_VOTES = 4
