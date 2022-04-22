@@ -12,7 +12,6 @@ from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME, TRANSACTION_MINER_ADDIT
 def update_db_states(cur, block):
     newblockindex = block['index'] if 'index' in block else block['block_index']
     transactions = block['text']['transactions']
-    signatures= block['text']['signatures']
     # last_block_cursor = cur.execute(
     #     f'''SELECT block_index FROM blocks ORDER BY block_index DESC LIMIT 1''')
     # last_block = last_block_cursor.fetchone()
@@ -26,8 +25,10 @@ def update_db_states(cur, block):
         add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
+        signature=transaction['signatures']
         transaction = transaction['transaction']
         transaction_data = transaction['specific_data']
+
         while isinstance(transaction_data, str):
             transaction_data = json.loads(transaction_data)
 
@@ -39,7 +40,7 @@ def update_db_states(cur, block):
             transaction_data,
             transaction_code,
             transaction['timestamp'],
-            signatures
+            signature
         )
     return True
 

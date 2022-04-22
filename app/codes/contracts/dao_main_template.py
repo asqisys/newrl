@@ -3,6 +3,7 @@ import json
 
 from . import Utils
 from .contract_master import ContractMaster
+from .dao_main_template_validator import create_proposal, vote_on_proposal
 from ..db_updater import *
 from abc import ABCMeta, abstractmethod
 
@@ -24,7 +25,10 @@ class DaoMainTemplate(ContractMaster):
 
     def create_proposal(self, cur, callparamsip):
         # Method For Creating Prosposal
+
         callparams = input_to_dict(callparamsip)
+        callparams['address']=self.address
+        create_proposal(cur, callparams)
         dao_pid = get_pid_from_wallet(cur, self.address)
         # TODO max votes for now is hard coded
         cur.execute(f'''INSERT OR REPLACE INTO PROPOSAL_DATA
@@ -42,9 +46,11 @@ class DaoMainTemplate(ContractMaster):
     def vote_on_proposal(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
         # ToDO Voting to be saved in
+        callparams['address']=self.address
+        # vote_on_proposal(cur, callparams)
         if self.valid_member(cur, callparams):
             
-            member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address'])
+            member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address'])
             proposal_id=callparams['proposal_id']
             voter_db_data = cur.execute('''Select voter_data as "voter_data",yes_votes as "yes_votes",no_votes as "no_votes",abstain_votes as "abstain_votes",total_votes as "total_votes",function_called as "function_called"  from proposal_data where proposal_id = ?''', (proposal_id,))
             voter_db_data=voter_db_data.fetchone()
@@ -194,7 +200,7 @@ class DaoMainTemplate(ContractMaster):
 
     def valid_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
-        member_pid="".join(get_pid_from_wallet(cur,callparams['function_caller'][0][0]['wallet_address']))
+        member_pid="".join(get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address']))
         proposal = cur.execute('''Select count(*) from dao_membership where member_person_id like ?''', [member_pid])
         proposal=proposal.fetchone()
         if(proposal[0]==0):
