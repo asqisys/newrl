@@ -526,7 +526,7 @@ def get_sc_validadds(transaction):
         return validadds
     if not address:
         print("Invalid call to a function of a contract yet to be set up.")
-        return []
+        return [-1]
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     signatories = cur.execute(
@@ -534,7 +534,7 @@ def get_sc_validadds(transaction):
     con.close()
     if signatories is None:
         print("Contract does not exist.")
-        return []
+        return [-1]
     functsignmap = json.loads(signatories[0])
     if funct in functsignmap:  # function is allowed to be called
         # checking if stated signer is in allowed list
@@ -545,7 +545,7 @@ def get_sc_validadds(transaction):
         return validadds
     else:
         print("Either function is not valid or it cannot be called in a transaction.")
-        return []
+        return [-1]
 
 
 def get_valid_addresses(transaction):
