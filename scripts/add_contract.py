@@ -15,12 +15,13 @@ print('Contract address', contract_address)
 
 add_wallet_request = {
   "sc_address": contract_address,
-  "sc_name": "nusd1",
+  "sc_name": "dao_manager",
   "version": "1.0.0",
   "creator": WALLET['address'],
   "actmode": "hybrid",
-  "signatories": {},
-  "contractspecs": {"tokencode": "TKSM19", "tokenname": "TKSM19"},
+  "signatories": {"setup":"0x20513a419d5b11cd510ae518dc04ac1690afbed6", "deploy": "0x20513a419d5b11cd510ae518dc04ac1690afbed6", "create": "0x20513a419d5b11cd510ae518dc04ac1690afbed6"},
+
+  "contractspecs": {},
   "legalparams": {}
 }
 
