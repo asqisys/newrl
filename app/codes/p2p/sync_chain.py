@@ -14,7 +14,7 @@ from app.constants import NEWRL_PORT, REQUEST_TIMEOUT, NEWRL_DB
 from app.codes.p2p.peers import get_peers
 
 from app.codes.validator import validate_block, validate_block_data, validate_block_transactions, validate_receipt_signature
-from app.codes.updater import broadcast_block, start_mining_clock
+from app.codes.updater import TIMERS, broadcast_block, start_mining_clock
 from app.codes.fs.temp_manager import append_receipt_to_block_in_storage, get_blocks_for_index_from_storage, store_block_to_temp, store_receipt_to_temp
 from app.codes.consensus.consensus import check_community_consensus, validate_block_miner, generate_block_receipt, \
     add_my_receipt_to_block
@@ -221,6 +221,7 @@ def ask_peers_for_block(block_index):
 
 
 def accept_block(block, hash):
+    global TIMERS
     if not validate_block_transactions(block['data']):
         logger.info('Transaction validation failed')
         return False
@@ -233,8 +234,10 @@ def accept_block(block, hash):
     con.commit()
     con.close()
 
-    block_timestamp = int(block['data']['timestamp'])
-    start_mining_clock(block_timestamp)
+    # block_timestamp = int(block['data']['timestamp'])
+    # start_mining_clock(block_timestamp)
+    TIMERS['mining_timer'] = None
+    TIMERS['block_receive_timeout'] = None
     return True
 
 
