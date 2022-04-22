@@ -18,3 +18,5 @@ starlette==0.14.2
 typing-extensions==3.10.0.0
 urllib3==1.26.6
 uvicorn==0.14.0
+sse-starlette==0.6.2
+sh==1.14.1
