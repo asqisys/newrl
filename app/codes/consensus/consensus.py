@@ -86,10 +86,10 @@ def check_community_consensus(block):
     #        return True
     # Block is received from sentinel node after a timeout.
     if len(committee) == 1:
-        if committee[0]['wallet_address'] == ASQI_WALLET:
+        if committee[0]['wallet_address'] == ASQI_WALLET:  # Todo - Check if block is empty
             return True
 
-    if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * len(committee):
+    if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * COMMITTEE_SIZE:
         return True
     return False
 

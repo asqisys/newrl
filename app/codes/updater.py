@@ -304,7 +304,7 @@ def global_internal_clock():
             last_block_ts = int(last_block['timestamp'])
             time_elapsed_seconds = (current_ts - last_block_ts) / 1000
 
-            if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 3:
+            if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 2:
                 start_mining_clock(last_block_ts)
                 start_empty_block_mining_clock()
     except Exception as e:

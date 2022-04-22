@@ -58,14 +58,14 @@ def validate(transaction, propagate=False, validate_economics=True):
             propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
 
             # Broadcaset transaction via transport server
-            try:
-                payload = {
-                    'operation': 'send_transaction',
-                    'data': transaction_manager.get_transaction_complete()
-                }
-                send(payload)
-            except:
-                print('Error sending transaction to transport server')
+            # try:
+            #     payload = {
+            #         'operation': 'send_transaction',
+            #         'data': transaction_manager.get_transaction_complete()
+            #     }
+            #     send(payload)
+            # except:
+            #     print('Error sending transaction to transport server')
 
     print(msg)
     return check

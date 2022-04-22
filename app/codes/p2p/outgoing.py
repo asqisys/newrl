@@ -11,11 +11,11 @@ def propogate_transaction_to_peers(transaction):
         return
     peers = get_peers()
         
+    print('Broadcasting transaction to peers', peers)
     for peer in peers:
         if is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
-        print('Broadcasting transaction to peer', url)
         payload = {'signed_transaction': transaction}
         try:
             thread = Thread(target=send_request, args = (url + '/receive-transaction', payload))

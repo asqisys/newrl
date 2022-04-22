@@ -46,13 +46,13 @@ def get_last_block_index():
 
 
 def receive_block(block):
-    print('Received block', block)
-
     block_index = block['index']
 
     if blockchain.block_exists(block_index):
         print('Block alredy exist in chain. Ignoring.')
         return False
+    
+    print('Received new block', block)
 
     if block_index > get_last_block_index() + 1:
         sync_chain_from_peers()
