@@ -66,7 +66,7 @@ def add_wallet_pid(cur, wallet):
             print("No personid linked to the parentwallet.")
             return False
     else:  # not a linked wallet, so create a new pid and update person table
-        pid = get_person_id_for_wallet_address(wallet['wallet'])
+        pid = get_person_id_for_wallet_address(wallet['wallet_address'])
         query_params = (pid, get_time_ms())
         cur.execute(f'''INSERT OR IGNORE INTO person
                     (person_id, created_time)
