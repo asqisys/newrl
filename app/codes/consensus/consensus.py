@@ -95,13 +95,6 @@ def check_community_consensus(block):
 
 
 def validate_block_miner(block):
-    last_block = get_last_block()
-    time_ms_elapsed_since_last_block = get_corrected_time_ms() - int(last_block['timestamp'])
-    block_cuttoff_triggered = time_ms_elapsed_since_last_block > (BLOCK_TIME_INTERVAL_SECONDS + BLOCK_RECEIVE_TIMEOUT_SECONDS) * 1000
-    if block['proof'] == 42 and len(block['text']['transactions']) == 0 and block_cuttoff_triggered:
-        # Accept emtpy block mined and transmitted by committee
-        return True
-
     miner_address = block['creator_wallet']
 
     expected_miner = get_miner_for_current_block()['wallet_address']
@@ -114,3 +107,11 @@ def validate_block_miner(block):
         print(f"Invalid miner {miner_address} for block. Expected {expected_miner}")
         return False
     return True
+
+
+def is_timeout_block_from_sentinel_node(block):
+    last_block = get_last_block()
+    time_ms_elapsed_since_last_block = get_corrected_time_ms() - int(last_block['timestamp'])
+    block_cuttoff_triggered = time_ms_elapsed_since_last_block > (BLOCK_TIME_INTERVAL_SECONDS + BLOCK_RECEIVE_TIMEOUT_SECONDS) * 1000
+    if block['proof'] == 42 and len(block['text']['transactions']) == 0 and block_cuttoff_triggered:
+        return True

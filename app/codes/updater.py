@@ -167,14 +167,13 @@ def broadcast_block(block_payload, nodes=None):
     else:
         peers = get_peers()
 
-    print('Broadcasting block to nodes', nodes)
+    print('Broadcasting block to peers', peers)
 
     # TODO - Do not send to self
     for peer in peers:
         if 'address' not in peer or is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
-        print('Sending block to peer', url)
         try:
             send_request_in_thread(url + '/receive-block', {'block': block_payload})
             # requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
