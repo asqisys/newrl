@@ -328,7 +328,8 @@ def am_i_sentinel_node():
 
 def sentitnel_node_mine_empty():
     blockchain = Blockchain()
-    block = blockchain.mine_empty_block()
+    current_time_ms = get_corrected_time_ms()
+    block = blockchain.mine_empty_block(current_time_ms)
     block_receipt = generate_block_receipt(block)
     block_payload = {
         'index': block['index'],

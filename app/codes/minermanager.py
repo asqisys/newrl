@@ -99,7 +99,9 @@ def get_eligible_miners():
     return miners
 
 
-def get_miner_for_current_block(last_block=get_last_block_hash()):
+def get_miner_for_current_block(last_block=None):
+    if last_block is None:
+        last_block = get_last_block_hash()
 
     if not last_block:
         return {'wallet_address': ASQI_WALLET}
@@ -116,7 +118,10 @@ def get_miner_for_current_block(last_block=get_last_block_hash()):
     # return committee_list[0]
 
 
-def get_committee_for_current_block(last_block=get_last_block_hash()):
+def get_committee_for_current_block(last_block=None):
+    if last_block is None:
+        last_block = get_last_block_hash()
+
     if not last_block:
         return [{'wallet_address': ASQI_WALLET}]
 

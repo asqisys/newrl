@@ -21,7 +21,7 @@ def update_db_states(cur, block):
 #    latest_index = cur.execute('SELECT MAX(block_index) FROM blocks')
     add_tx_to_block(cur, newblockindex, transactions)
 
-    if 'creator_wallet' in block:
+    if 'creator_wallet' in block and block['creator_wallet'] is not None:
         add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
