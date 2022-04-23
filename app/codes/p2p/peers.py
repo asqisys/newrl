@@ -203,3 +203,22 @@ def call_api_on_peers(url):
             assert response.json()['status'] == 'SUCCESS'
         except Exception as e:
             print(f'Error calling API on node {address}', str(e))
+
+
+def remove_dead_peers():
+    my_peers = get_peers()
+    my_address = get_my_address()
+
+    for peer in my_peers:
+        address = peer['address']
+        if socket.gethostbyname(address) == my_address:
+            continue
+        try:
+            response = requests.get(
+                'http://' + address + f':{NEWRL_PORT}' + '/get-status',
+                timeout=REQUEST_TIMEOUT
+            )
+            if response.status_code != 200 or response.json()['up'] != True:
+                remove_peer(peer['id'])
+        except Exception as e:
+            print(f'Error calling API on node {address}', str(e))

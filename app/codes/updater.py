@@ -8,7 +8,7 @@ import threading
 from .clock.global_time import get_corrected_time_ms, get_time_difference
 from .fs.temp_manager import get_blocks_for_index_from_storage, store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
-from ..nvalues import TREASURY_WALLET_ADDRESS
+from ..nvalues import ASQI_WALLET, TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, GLOBAL_INTERNAL_CLOCK_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
@@ -304,10 +304,16 @@ def global_internal_clock():
         if last_block:
             last_block_ts = int(last_block['timestamp'])
             time_elapsed_seconds = (current_ts - last_block_ts) / 1000
-            if should_i_mine(last_block) and TIMERS['mining_timer'] is None:
-                start_mining_clock(last_block_ts)
-            elif am_i_in_current_committee(last_block) and TIMERS['block_receive_timeout'] is not None:
-                start_empty_block_mining_clock(last_block_ts)
+
+            if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 2:
+                if am_i_sentinel_node():
+                    sentitnel_node_mine_empty()
+            if should_i_mine(last_block):
+                if TIMERS['mining_timer'] is None or not TIMERS['mining_timer'].is_alive():
+                    start_mining_clock(last_block_ts)
+            elif am_i_in_current_committee(last_block):
+                if TIMERS['block_receive_timeout'] is not None or not TIMERS['block_receive_timeout'].is_alive():
+                    start_empty_block_mining_clock(last_block_ts)
     except Exception as e:
         print('Error in global clock', e)
 
@@ -315,5 +321,27 @@ def global_internal_clock():
     timer.start()
 
 
+def am_i_sentinel_node():
+    my_wallet = get_wallet()
+    return my_wallet['address'] == ASQI_WALLET
+
+
 def sentitnel_node_mine_empty():
-    pass
+    blockchain = Blockchain()
+    block = blockchain.mine_empty_block()
+    block_receipt = generate_block_receipt(block)
+    block_payload = {
+        'index': block['index'],
+        'hash': calculate_hash(block),
+        'data': block,
+        'receipts': [block_receipt]
+    }
+    broadcast_block(block_payload=block_payload)
+
+
+def get_timers():
+    """Get timer status"""
+    return {
+        'is_mining': TIMERS['mining_timer'] is not None and TIMERS['mining_timer'].is_alive(),
+        'is_waiting_block_timeout': TIMERS['block_receive_timeout'] is not None and TIMERS['block_receive_timeout'].is_alive(),
+    }

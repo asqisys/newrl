@@ -9,10 +9,10 @@ from starlette.requests import Request
 from app.codes.chainscanner import download_chain, download_state
 from app.codes.clock.global_time import get_time_stats
 from app.codes.fs.mempool_manager import clear_mempool
-from app.codes.p2p.peers import add_peer, clear_peers, get_peers, update_software
+from app.codes.p2p.peers import add_peer, clear_peers, get_peers, remove_dead_peers, update_software
 from app.codes.p2p.sync_chain import get_blocks, get_last_block_index, sync_chain_from_node, sync_chain_from_peers
 from app.codes.p2p.sync_mempool import list_mempool_transactions, sync_mempool_transactions
-from app.codes.updater import TIMERS
+from app.codes.updater import TIMERS, get_timers
 from app.codes.utils import get_last_block_hash
 from app.constants import SOFTWARE_VERSION
 from app.migrations.init_db import clear_db, init_db, revert_chain
@@ -37,14 +37,11 @@ def get_node_info():
         'wallet': get_node_wallet_public(),
         'time': get_time_stats(),
         'last_block': last_block,
+        'timers': get_timers(),
         'miners': get_miner_info(),
         'peers': get_peers(),
         'recent_blocks': get_blocks(list(range(last_block_index - 10, last_block_index))),
         'mempool_transactions': list_mempool_transactions(),
-        'timers': {
-            'mining_timer': 'mining_timer' in TIMERS,
-            'block_receive_timeout': 'block_receive_timeout' in TIMERS,
-        }
     }
     return node_info
 
@@ -124,4 +121,18 @@ def update_software_api(propogate: bool = False):
     # update_software(propogate)
     timer = threading.Timer(randint(30, 60), update_software, [propogate])
     timer.start()
+    return {'status': 'SUCCESS'}
+
+
+@router.get("/get-status", tags=[p2p_tag])
+def get_status_api():
+    return {
+        'up': True,
+        'timers': get_timers(),
+    }
+
+
+@router.post("/remove-dead-peers", tags=[p2p_tag])
+def get_status_api():
+    remove_dead_peers()
     return {'status': 'SUCCESS'}
