@@ -221,4 +221,5 @@ def remove_dead_peers():
             if response.status_code != 200 or response.json()['up'] != True:
                 remove_peer(peer['id'])
         except Exception as e:
-            print(f'Error calling API on node {address}', str(e))
+            print('Removing peer', peer['id'])
+            remove_peer(peer['id'])
