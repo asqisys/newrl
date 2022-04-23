@@ -312,7 +312,7 @@ def global_internal_clock():
                 if TIMERS['mining_timer'] is None or not TIMERS['mining_timer'].is_alive():
                     start_mining_clock(last_block_ts)
             elif am_i_in_current_committee(last_block):
-                if TIMERS['block_receive_timeout'] is not None or not TIMERS['block_receive_timeout'].is_alive():
+                if TIMERS['block_receive_timeout'] is None or not TIMERS['block_receive_timeout'].is_alive():
                     start_empty_block_mining_clock(last_block_ts)
     except Exception as e:
         print('Error in global clock', e)
