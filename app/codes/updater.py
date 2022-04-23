@@ -307,13 +307,14 @@ def global_internal_clock():
 
             if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 2:
                 if am_i_sentinel_node():
+                    print('I am sentitnel node. Mining empty block')
                     sentitnel_node_mine_empty()
             if should_i_mine(last_block):
                 if TIMERS['mining_timer'] is None or not TIMERS['mining_timer'].is_alive():
                     start_mining_clock(last_block_ts)
-            elif am_i_in_current_committee(last_block):
-                if TIMERS['block_receive_timeout'] is None or not TIMERS['block_receive_timeout'].is_alive():
-                    start_empty_block_mining_clock(last_block_ts)
+            # elif am_i_in_current_committee(last_block):
+            #     if TIMERS['block_receive_timeout'] is None or not TIMERS['block_receive_timeout'].is_alive():
+            #         start_empty_block_mining_clock(last_block_ts)
     except Exception as e:
         print('Error in global clock', e)
 
