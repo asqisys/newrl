@@ -1,12 +1,14 @@
 import time
 import sqlite3
 
-from app.codes import updater
+from app.codes import updater, validator
+from app.codes.chainscanner import get_transaction
+from app.codes.p2p.sync_chain import receive_block
 
 from ..codes.blockchain import get_last_block
 from ..codes.utils import get_time_ms
 from ..codes.auth.auth import get_wallet
-from ..codes.minermanager import broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, get_my_miner_status
+from ..codes.minermanager import broadcast_miner_update, get_committee_for_current_block, get_eligible_miners, get_miner_for_current_block, get_my_miner_status, miner_addition_transaction
 from ..codes.db_updater import add_miner
 from fastapi.testclient import TestClient
 from ..constants import NEWRL_DB, COMMITTEE_SIZE
@@ -65,3 +67,34 @@ def clear_miner_db():
     cur.execute('delete from miners')
     con.commit()
     con.close()
+
+
+def test_miner_addition_update():
+    transaction = miner_addition_transaction()
+    response = client.post('/validate-transaction', json=transaction)
+    assert response.status_code == 200
+    block = updater.run_updater()
+    assert block is not None
+    receive_block(block)
+    transaction_in_chain = get_transaction(transaction['transaction']['trans_code'])
+    assert transaction_in_chain is not None
+
+    miners = get_eligible_miners()
+    assert len(miners) == 1
+    old_miner = miners[0]
+    time.sleep(5)
+    transaction = miner_addition_transaction(my_address='123.123.123.123')
+    response = client.post('/validate-transaction', json=transaction)
+    assert response.status_code == 200
+    block = updater.run_updater()
+    assert block is not None
+    receive_block(block)
+    transaction_in_chain = get_transaction(transaction['transaction']['trans_code'])
+    assert transaction_in_chain is not None
+
+    miners = get_eligible_miners()
+    assert len(miners) == 1
+    new_miner = miners[0]
+
+    assert old_miner['last_broadcast_timestamp'] != new_miner['last_broadcast_timestamp']
+    assert old_miner['network_address'] != new_miner['network_address']
