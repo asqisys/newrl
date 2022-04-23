@@ -111,6 +111,8 @@ def validate_block_miner(block):
 
 def is_timeout_block_from_sentinel_node(block):
     last_block = get_last_block()
+    if last_block is None:
+        return True
     time_ms_elapsed_since_last_block = get_corrected_time_ms() - int(last_block['timestamp'])
     block_cuttoff_triggered = time_ms_elapsed_since_last_block > (BLOCK_TIME_INTERVAL_SECONDS + BLOCK_RECEIVE_TIMEOUT_SECONDS) * 1000
     if block['proof'] == 42 and len(block['text']['transactions']) == 0 and block_cuttoff_triggered:
