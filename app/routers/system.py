@@ -20,7 +20,7 @@ from app.constants import SOFTWARE_VERSION
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
 from app.codes.auth.auth import get_node_wallet_public
-from app.codes.minermanager import get_miner_info
+from app.codes.minermanager import add_miners_as_peers, get_miner_info
 
 router = APIRouter()
 
@@ -140,5 +140,5 @@ def get_status_api():
 @router.post("/remove-dead-peers", tags=[p2p_tag])
 def get_status_api():
     remove_dead_peers()
+    add_miners_as_peers()
     return {'status': 'SUCCESS'}
-

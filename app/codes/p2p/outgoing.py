@@ -1,7 +1,8 @@
+import random
 import requests
 from threading import Thread
 
-from ...constants import IS_TEST, NEWRL_PORT, REQUEST_TIMEOUT, TRANSPORT_SERVER
+from ...constants import IS_TEST, MAX_BROADCAST_NODES, NEWRL_PORT, REQUEST_TIMEOUT, TRANSPORT_SERVER
 from ..p2p.utils import get_peers
 from ..p2p.utils import is_my_address
 
@@ -10,6 +11,9 @@ def propogate_transaction_to_peers(transaction):
     if IS_TEST:
         return
     peers = get_peers()
+
+    node_count = min(MAX_BROADCAST_NODES, len(peers))
+    peers = random.sample(peers, k=node_count)
         
     print('Broadcasting transaction to peers', peers)
     for peer in peers:
@@ -62,3 +66,37 @@ def broadcast_receipt(receipt, nodes):
         except Exception as e:
             print(f'Could not send receipt to node: {url}')
 
+
+def broadcast_block(block_payload, nodes=None):
+    if IS_TEST:
+        return
+    if nodes:
+        peers = []
+        for node in nodes:
+            if 'network_address' in node:
+                peers.append({'address': node['network_address']})
+            elif 'address' in node:
+                peers.append({'address': node['address']})
+        if len(peers) == 0:
+            peers = get_peers()
+            node_count = min(MAX_BROADCAST_NODES, len(peers))
+            peers = random.sample(peers, k=node_count)
+    else:
+        peers = get_peers()
+        node_count = min(MAX_BROADCAST_NODES, len(peers))
+        peers = random.sample(peers, k=node_count)
+
+    print('Broadcasting block to peers', peers)
+
+    # TODO - Do not send to self
+    for peer in peers:
+        if 'address' not in peer or is_my_address(peer['address']):
+            continue
+        url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
+        try:
+            send_request_in_thread(url + '/receive-block', {'block': block_payload})
+            # requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
+        except Exception as e:
+            print(f'Error sending block to peer: {url}')
+            print(e)
+    return True

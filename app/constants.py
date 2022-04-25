@@ -38,6 +38,7 @@ MINIMUM_ACCEPTANCE_RATIO = 0.51
 NO_BLOCK_TIMEOUT = 10  # No block received timeout in seconds
 NO_RECEIPT_COMMITTEE_TIMEOUT = 10  # Timeout in seconds
 NETWORK_BLOCK_TIMEOUT = 25
+MAX_BROADCAST_NODES = 13
 
 # Variables
 MY_ADDRESS_FILE = DATA_PATH + 'my_address.json'
