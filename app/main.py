@@ -1,4 +1,6 @@
 import logging
+from .codes.log_config import logger_init
+logger_init()
 import argparse
 import os
 import uvicorn
@@ -15,9 +17,7 @@ from .codes.updater import global_internal_clock, start_miner_broadcast_clock, s
 from .routers import blockchain, system, p2p, transport
 
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 app = FastAPI(
     title="The Newrl APIs",

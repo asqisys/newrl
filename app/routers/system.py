@@ -5,6 +5,8 @@ import uvicorn
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from starlette.requests import Request
+from app.codes.log_config import logGenerator
+from sse_starlette.sse import EventSourceResponse
 
 from app.codes.chainscanner import download_chain, download_state
 from app.codes.clock.global_time import get_time_stats
@@ -123,6 +125,10 @@ def update_software_api(propogate: bool = False):
     timer.start()
     return {'status': 'SUCCESS'}
 
+@router.get('/stream-logs',tags=[p2p_tag])
+async def run(request: Request):
+    event_generator = logGenerator(request)
+    return EventSourceResponse(event_generator)
 
 @router.get("/get-status", tags=[p2p_tag])
 def get_status_api():
@@ -131,8 +137,8 @@ def get_status_api():
         'timers': get_timers(),
     }
 
-
 @router.post("/remove-dead-peers", tags=[p2p_tag])
 def get_status_api():
     remove_dead_peers()
     return {'status': 'SUCCESS'}
+
