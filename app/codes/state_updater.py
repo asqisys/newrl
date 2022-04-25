@@ -21,12 +21,14 @@ def update_db_states(cur, block):
 #    latest_index = cur.execute('SELECT MAX(block_index) FROM blocks')
     add_tx_to_block(cur, newblockindex, transactions)
 
-    if 'creator_wallet' in block:
+    if 'creator_wallet' in block and block['creator_wallet'] is not None:
         add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
+        signature=transaction['signatures']
         transaction = transaction['transaction']
         transaction_data = transaction['specific_data']
+
         while isinstance(transaction_data, str):
             transaction_data = json.loads(transaction_data)
 
@@ -37,12 +39,13 @@ def update_db_states(cur, block):
             transaction['type'],
             transaction_data,
             transaction_code,
-            transaction['timestamp']
+            transaction['timestamp'],
+            signature
         )
     return True
 
 
-def update_state_from_transaction(cur, transaction_type, transaction_data, transaction_code, transaction_timestamp):
+def update_state_from_transaction(cur, transaction_type, transaction_data, transaction_code, transaction_timestamp,transaction_signer=None):
     if transaction_type == TRANSACTION_WALLET_CREATION:  # this is a wallet creation transaction
         add_wallet_pid(cur, transaction_data)
 
@@ -84,8 +87,10 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         sc_instance = sc_class(transaction_data['address'])
     #    sc_instance = nusd1(transaction['specific_data']['address'])
         funct = getattr(sc_instance, funct)
-        funct(cur, transaction_data['params'])
-    
+        params_for_funct=transaction_data['params']
+        # adding singers address to the dict
+        params_for_funct['function_caller']=transaction_signer
+        funct(cur, params_for_funct)
     if transaction_type == TRANSACTION_MINER_ADDITION:
         add_miner(
             cur,
@@ -93,6 +98,7 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
             transaction_data['network_address'],
             transaction_data['broadcast_timestamp'],
         )
+
 
 
 def add_block_reward(cur, creator, blockindex):

@@ -82,7 +82,7 @@ class ContractMaster():
         legpars=json.dumps(contractparams['legalparams'])
         signstr=json.dumps(contractparams['signatories'])
         oraclestr = json.dumps(contractparams['oracleids'])
-        qparams=(self.address,
+        qparams=((self.address).strip('\"'),
                 contractparams['creator'],
                 contractparams['ts_init'],
                 contractparams['name'],
