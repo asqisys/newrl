@@ -10,6 +10,7 @@ if IS_TEST:
     print('Using constants for Test')
 
 DATA_PATH = 'data_test/' if IS_TEST else 'data/'
+LOG_FILE_PATH = DATA_PATH + 'logs/'
 MEMPOOL_PATH = DATA_PATH + 'mempool/'
 TMP_PATH = DATA_PATH + 'tmp/'
 INCOMING_PATH = DATA_PATH + 'tmp/incoming/'
