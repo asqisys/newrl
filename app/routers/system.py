@@ -139,6 +139,6 @@ def get_status_api():
 
 @router.post("/remove-dead-peers", tags=[p2p_tag])
 def get_status_api():
-    remove_dead_peers()
     add_miners_as_peers()
+    remove_dead_peers()
     return {'status': 'SUCCESS'}
