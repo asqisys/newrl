@@ -190,7 +190,6 @@ class DaoMainTemplate(ContractMaster):
                      "first_owner": recipient_address,
                      "custodian": self.address,
                      "amount_created": int(value * 100),
-                     "value_created": value,
                      "tokendecimal": 2
                      }
         add_token(cur, tokendata)

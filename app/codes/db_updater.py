@@ -130,7 +130,6 @@ def add_token(cur, token, txcode=None):
             token['custodian'],
             token['legaldochash'],
             token['amount_created'],
-            token['value_created'],
             token['sc_flag'],
             disallowed_json,
             txcode,
@@ -139,8 +138,8 @@ def add_token(cur, token, txcode=None):
         )
         cur.execute(f'''INSERT OR IGNORE INTO tokens
             (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-            amount_created, value_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+            amount_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
         if token['amount_created']:
             update_wallet_token_balance(
                 cur, token['first_owner'], tid, token['amount_created'])

@@ -47,7 +47,6 @@ def init_db():
                     custodian text,
                     legaldochash text,
                     amount_created real,
-                    value_created real,
                     sc_flag integer,
                     disallowed text,
                     tokendecimal integer,

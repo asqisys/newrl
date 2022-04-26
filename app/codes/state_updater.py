@@ -117,7 +117,6 @@ def add_block_reward(cur, creator, blockindex):
         "custodian": '',
         "legaldochash": '',
         "amount_created": reward,
-        "value_created": '',
         "disallowed": {},
         "sc_flag": False
     }

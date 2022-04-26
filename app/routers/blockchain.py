@@ -154,7 +154,7 @@ def add_token(
         "custodian": request.custodian,
         "legaldochash": request.legal_doc,
         "amount_created": request.amount_created,
-        "value_created": request.value_created,
+        "tokendecimal": request.tokendecimal,
         "disallowed": request.disallowed_regions,
         "sc_flag": request.is_smart_contract_token
     }

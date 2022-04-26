@@ -27,9 +27,9 @@ def migrate_state(state_file_name):
 
   for token in state_data['all_tokens']:
     token_attributes = json.dumps(token['token_attributes']) if 'token_attributes' in token else ''
-    db_token_data = (token['tokencode'], token['tokenname'], token['tokentype'], token['first_owner'], token['custodian'], token['legaldochash'], token['amount_created'], token['value_created'], token['sc_flag'], token_attributes)
+    db_token_data = (token['tokencode'], token['tokenname'], token['tokentype'], token['first_owner'], token['custodian'], token['legaldochash'], token['amount_created'], token['sc_flag'], token_attributes)
     cur.execute(f'''INSERT OR IGNORE INTO tokens
-    (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, value_created, sc_flag, token_attributes)
+    (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, amount_created, sc_flag, token_attributes)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_token_data)
 
   for balance in state_data['all_balances']:
