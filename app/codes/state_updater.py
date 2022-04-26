@@ -90,7 +90,10 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         params_for_funct=transaction_data['params']
         # adding singers address to the dict
         params_for_funct['function_caller']=transaction_signer
-        funct(cur, params_for_funct)
+        try:
+            funct(cur, params_for_funct)
+        except Exception as e:
+            print('Exception durint smart contract function run', e)
     if transaction_type == TRANSACTION_MINER_ADDITION:
         add_miner(
             cur,
