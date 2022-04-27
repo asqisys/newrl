@@ -165,6 +165,40 @@ class DaoMainTemplate(ContractMaster):
         # return result
         return True
 
+
+
+
+
+    def valid_member(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
+        member_pid="".join(get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address']))
+        proposal = cur.execute('''Select count(*) from dao_membership where member_person_id like ?''', [member_pid])
+        proposal=proposal.fetchone()
+        if(proposal[0]==0):
+            return False
+        return True
+
+    def duplicate_check(self,voter_data,member_pid):
+        voter_data = input_to_dict(json.loads(voter_data))
+        for voter in voter_data.keys():
+            if(voter==member_pid):
+                return False
+        return True
+
+    '''Token based methods'''
+    
+    def issue_token(self, cur, callparamsip):
+        '''
+        TODO
+        params : walletId , txnHash, amount
+        function : check xn validity and issue dao tokens to that pid
+        '''
+
+        pass
+
+    def burn_token(self, cur, callapramsip):
+        pass    
+
     def send_token(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
         recipient_address = callparams['recipient_address']
@@ -193,23 +227,4 @@ class DaoMainTemplate(ContractMaster):
                      "value_created": value,
                      "tokendecimal": 2
                      }
-        add_token(cur, tokendata)
-
-    def burn_token(self, cur, callapramsip):
-        pass
-
-    def valid_member(self, cur, callparamsip):
-        callparams = input_to_dict(callparamsip)
-        member_pid="".join(get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address']))
-        proposal = cur.execute('''Select count(*) from dao_membership where member_person_id like ?''', [member_pid])
-        proposal=proposal.fetchone()
-        if(proposal[0]==0):
-            return False
-        return True
-
-    def duplicate_check(self,voter_data,member_pid):
-        voter_data = input_to_dict(json.loads(voter_data))
-        for voter in voter_data.keys():
-            if(voter==member_pid):
-                return False
-        return True
+        add_token(cur, tokendata)    
