@@ -44,6 +44,7 @@ class dao_manager(ContractMaster):
         # signatories founders wallet address as sign for DAO's setup and deploy? voraclestr ?
         signstr = json.dumps(cspecs['signstr'])
         oraclestr = {}
+        signstr = json.dumps(input_to_dict(cspecs)['signatories'])
         qparams = (
         dao_sc_address, founders_personid, contractparams['ts_init'], dao_params['dao_main_sc'], dao_params['dao_main_sc_version'],
         # actmode?
@@ -52,7 +53,7 @@ class dao_manager(ContractMaster):
         , cstatus,  # next_act_ts?
         # contractparams['next_act_ts'],
         0,
-        json.dumps(signstr),  # parent?
+        signstr,  # parent?
         # contractparams['parent']
             0
         , json.dumps(oraclestr), sdestr, cspecs, legpars)
