@@ -204,7 +204,7 @@ class DaoMainTemplate(ContractMaster):
 
         #issue tokens
         token_code = '_token' #TODO fetch dao name 
-        tokendata = {"tokencode": cspecs['tokencode'],
+        tokendata = {"tokencode": tokencode,
                      "first_owner": recipient_address,
                      "custodian": self.address,
                      "amount_created": int(amount * 100),
