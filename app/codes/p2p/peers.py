@@ -168,6 +168,7 @@ def update_software(propogate):
 
     logger.info('Getting latest code from repo')
     subprocess.call(["git", "pull"])
+    subprocess.call(["sh", "scripts/install.sh"])
     init_newrl()
 
 

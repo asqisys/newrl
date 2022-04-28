@@ -10,6 +10,7 @@ if IS_TEST:
     print('Using constants for Test')
 
 DATA_PATH = 'data_test/' if IS_TEST else 'data/'
+LOG_FILE_PATH = DATA_PATH + 'logs/'
 MEMPOOL_PATH = DATA_PATH + 'mempool/'
 TMP_PATH = DATA_PATH + 'tmp/'
 INCOMING_PATH = DATA_PATH + 'tmp/incoming/'
@@ -37,6 +38,7 @@ MINIMUM_ACCEPTANCE_RATIO = 0.51
 NO_BLOCK_TIMEOUT = 10  # No block received timeout in seconds
 NO_RECEIPT_COMMITTEE_TIMEOUT = 10  # Timeout in seconds
 NETWORK_BLOCK_TIMEOUT = 25
+MAX_BROADCAST_NODES = 13
 
 # Variables
 MY_ADDRESS_FILE = DATA_PATH + 'my_address.json'

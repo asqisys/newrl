@@ -2,6 +2,7 @@
 import sqlite3
 import random
 
+from .p2p.peers import add_peer
 from .clock.global_time import get_corrected_time_ms, get_time_difference
 from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
@@ -161,3 +162,10 @@ def get_miner_info():
         'current_block_committee': get_committee_for_current_block(),
         'eligible_miners': get_eligible_miners(),
     }
+
+
+def add_miners_as_peers():
+    miners = get_eligible_miners()
+
+    for miner in miners:
+        add_peer(miner['network_address'])
