@@ -191,11 +191,58 @@ class DaoMainTemplate(ContractMaster):
         '''
         TODO
         params : walletId , txnHash, amount
-        function : check xn validity and issue dao tokens to that pid
+        function : check txn validity and issue dao tokens to that pid
         '''
 
+        #call params
+        callparams = input_to_dict(callparamsip)
+        transferTxn = callparams['transferTxn']
+        recipient_address = callparams['recipient_address']
+        amount = callparams['amount']
+
+        #verify thr txn
+
+        #issue tokens
+        token_code = '_token' #TODO fetch dao name 
+        tokendata = {"tokencode": cspecs['tokencode'],
+                     "first_owner": recipient_address,
+                     "custodian": self.address,
+                     "amount_created": int(amount * 100),
+                     "value_created": amount,
+                     "tokendecimal": 2
+                     }
+        add_token(cur, tokendata)    
         pass
 
+
+    def lock_tokens(self, cur, callparamsip):
+        '''
+        TODO 
+        params : person_pid, dao_id, amount, txnHash (of transfer to dao)
+        function : add a new row with pid and amount++ 
+        '''
+
+        callparams = input_to_dict(callparamsip)
+        dao_id = callparams['dao_id']
+        person_id = callparams['person_id']
+        transferTxn = callparams['transferTxn']
+        amount = callparams['amount']
+
+        #update token stake table
+
+    def get_token_lock_amount(self, cur, callparamsip):
+        '''
+        TODO
+        params : pid , daoId, proposal_id
+        function : check if any balance, add this proposal for that token status entry with current balance
+        '''         
+        
+        callparams = input_to_dict(callparamsip)
+        dao_id = callparams['dao_id']
+        person_id = callparams['person_id']
+
+        #fetch current token value locked
+        
     def burn_token(self, cur, callapramsip):
         pass    
 

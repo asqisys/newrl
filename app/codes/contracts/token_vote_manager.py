@@ -13,12 +13,7 @@ class token_vote_manager(ContractMaster):
         pass
 
     
-    def lock_tokens(self, cur, callparamsip):
-        '''
-        TODO 
-        params : person_pid, dao_id, amount, txnHash (of transfer to dao)
-        function : add a new row with pid and amount++ 
-        '''
+
     
     def unlock_tokens(self, cur, callparamsip):
         '''
