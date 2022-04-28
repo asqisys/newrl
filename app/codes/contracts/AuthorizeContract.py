@@ -16,17 +16,6 @@ class AuthorizeContract(ContractMaster):
         self.version = ""
         ContractMaster.__init__(self, self.template, self.version, contractaddress)
 
-    def validate(self, cur, callparamsip):
-        callparams = input_to_dict(callparamsip)
-        cspecs = input_to_dict(self.contractparams['contractspecs'])
-        custodian_address = cspecs['custodian_address']
-        custodian_wallet = base64.b64decode(get_public_key_from_address(custodian_address))
-
-        transaction_manager = Transactionmanager()
-        transaction_manager.set_transaction_data(callparams)
-
-        return self.validateCustodian(callparams, custodian_address, custodian_wallet, transaction_manager)
-
     def validateCustodian(self, transaction, custodian_address, custodian_wallet, transaction_manager):
         valid = False
         matchedCustodian = [x for x in transaction['signatures'] if x['wallet_address'] == custodian_address][0]
@@ -42,8 +31,28 @@ class AuthorizeContract(ContractMaster):
         else:
             return False
 
-    def modifyTokenAttributes(self, sender_address, value):
-        pass
+    def validate(self, cur, callparamsip):
+        callparams = input_to_dict(callparamsip)
+        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        custodian_address = cspecs['custodian_address']
+        custodian_wallet = base64.b64decode(get_public_key_from_address(custodian_address))
+
+        transaction_manager = Transactionmanager()
+        transaction_manager.set_transaction_data(callparams)
+
+        return self.validateCustodian(callparams, custodian_address, custodian_wallet, transaction_manager)
+
+    def modifyTokenAttributes(self, cur, callparamsip):
+        if self.validate(cur, callparamsip):
+            callparams = input_to_dict(callparamsip)
+            query_params = (
+                callparams['transaction']['tokenAttributes'],
+                callparams['transaction']['tokenCode']
+
+            )
+            cur.execute(f'''UPDATE tokens SET token_attributes=? WHERE tokenCode=?''', query_params)
+        else:
+            return "Invalid Transaction: Error in custodian signature"
 
     def destroyTokens(self, sender_address, value):
         pass
