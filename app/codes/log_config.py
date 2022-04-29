@@ -30,6 +30,9 @@ def logger_init():
     stream.setLevel(logging.INFO)
     stream.setFormatter(streamformat)
 
+    if (logger.hasHandlers()):
+        logger.handlers.clear()
+
     logger.addHandler(file)
     logger.addHandler(stream)
 
