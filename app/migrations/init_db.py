@@ -191,6 +191,17 @@ def init_trust_db():
                     voter_data text
                     )
                     ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS DAO_TOKEN_LOCK
+                    (
+                    dao_id  text Not NULL,
+                    person_id text Not NULL,
+                    proposal_list TEXT ,
+                    status INT,
+                    amount_locked INT
+                    )
+                    ''')
+
     con.commit()
     con.close()
 

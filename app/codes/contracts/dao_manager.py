@@ -42,7 +42,7 @@ class dao_manager(ContractMaster):
         cspecs = json.dumps(dao_params['contractspecs'])
         legpars = json.dumps(dao_params['legalparams'])
         # signatories founders wallet address as sign for DAO's setup and deploy? voraclestr ?
-        signstr = json.dumps(cspecs['signstr'])
+        # signstr = json.dumps(cspecs['signstr'])
         oraclestr = {}
         signstr = json.dumps(input_to_dict(cspecs)['signatories'])
         qparams = (

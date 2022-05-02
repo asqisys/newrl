@@ -8,4 +8,5 @@ class membership_dao_ver1(DaoMainTemplate):
         diction=input_to_dict(callParams)
         self.template= 'membership_dao_ver1'
         self.version='1.0.0'
+        self.dao_type=1
         super().__init__(contractaddress)
