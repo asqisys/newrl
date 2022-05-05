@@ -19,7 +19,7 @@ def logger_init():
     logger.setLevel(logging.INFO)
 
     pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-    logfilename = datetime.now().strftime("%Y%m%d_%H%M") + f"_{filename}"
+    logfilename = datetime.now().strftime("%Y%m%d_%H") + f"_{filename}"
     file = logging.handlers.TimedRotatingFileHandler(f"{path}{logfilename}", when="midnight", interval=1)
     fileformat = logging.Formatter("%(asctime)s [%(levelname)s]: %(name)s: %(message)s")
     file.setLevel(logging.INFO)
@@ -55,7 +55,7 @@ def logger_cleanup(path, days_to_keep):
 '''Log Streaming Methods'''
 
 async def logGenerator(request):
-    logfilename = datetime.now().strftime("%Y%m%d_%H%M") + f"_{filename}"
+    logfilename = datetime.now().strftime("%Y%m%d_%H") + f"_{filename}"
     logFile = f"{path}{logfilename}"
     for line in tail("-f", logFile, _iter=True):
         if await request.is_disconnected():
