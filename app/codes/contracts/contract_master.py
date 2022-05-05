@@ -20,6 +20,7 @@ class ContractMaster():
     def __init__(self, template, version, contractaddress=None):
         self.address=contractaddress    #this is for instances of this class created for tx creation and other non-chain work
         self.type=1
+        self.template=template
         if contractaddress:     #as in this is an existing contract
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()

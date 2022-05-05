@@ -27,6 +27,8 @@ class dao_manager(ContractMaster):
         dao_name = dao_params['dao_name']
         founders_personid = json.dumps(dao_params['founders'])
         self.__create_dao_details(cur, dao_person_id, dao_name, founders_personid, dao_sc_address)
+        # if DAO is of type Token based create SC token keeper for it
+
 
         # create contract instance for this new dao with params of dao sc main (contract table)
         contractparams = {}
@@ -45,6 +47,7 @@ class dao_manager(ContractMaster):
         # signstr = json.dumps(cspecs['signstr'])
         oraclestr = {}
         signstr = json.dumps(input_to_dict(cspecs)['signatories'])
+
         qparams = (
         dao_sc_address, founders_personid, contractparams['ts_init'], dao_params['dao_main_sc'], dao_params['dao_main_sc_version'],
         # actmode?

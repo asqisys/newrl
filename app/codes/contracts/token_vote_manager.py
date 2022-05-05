@@ -33,9 +33,5 @@ class token_vote_manager(ContractMaster):
         function : check if any proposals are pending ands if yes return False, else transfer back the amount
         '''
     
-    def vote_with_token(self, cur, callparamsip):
-        '''
-        TODO
-        params : pid , daoId, proposal_id
-        function : check if any balance, add this proposal for that token status entry with current balance
-        '''
+
+

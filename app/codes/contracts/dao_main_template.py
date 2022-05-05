@@ -48,7 +48,7 @@ class DaoMainTemplate(ContractMaster):
         # ToDO Voting to be saved in
         callparams['address']=self.address
         # vote_on_proposal(cur, callparams)
-        if self.type==2 or self.valid_member(cur, callparams):
+        if self.dao_type==2 or self.valid_member(cur, callparams):
             
             member_pid = get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address'])
             proposal_id=callparams['proposal_id']
@@ -66,11 +66,11 @@ class DaoMainTemplate(ContractMaster):
             total_votes = voter_db_data[4]
             function_called = voter_db_data[5]
             weight=1
-            if(self.type==2):
+            if(self.dao_type==2):
                 paramtopass={}
                 paramtopass['dao_id']=self.address
                 paramtopass['person_id']=member_pid
-                weight=self.get_token_lock_amount(cur,callparamsip)
+                weight=self.get_token_lock_amount(cur,json.dumps(callparamsip))
             if(self.duplicate_check(voter_db_data[0],member_pid)):
 
 
@@ -158,7 +158,7 @@ class DaoMainTemplate(ContractMaster):
         cur.execute('''DELETE FROM dao_membership 
                     WHERE dao_person_id= ? 
                     AND member_person_id= ? ''', (dao_pid, callparams['member_person_id']))
-        return Trues
+        return True
 
     def check_status(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
@@ -192,7 +192,7 @@ class DaoMainTemplate(ContractMaster):
         return True
 
     '''Token based methods'''
-    
+    # Token unique to DAO created via below method hence in template
     def issue_token(self, cur, callparamsip):
         '''
         TODO
@@ -203,48 +203,40 @@ class DaoMainTemplate(ContractMaster):
         #call params
         callparams = input_to_dict(callparamsip)
         # Hash of Txn
-        transferTxn = callparams['transferTxn']
+        # transferTxn = callparams['transferTxn']
+
         recipient_address = callparams['recipient_address']
-        # Todo Txn Code - from user to fetch the amount value
         amount = callparams['amount']
-
-        #verify thr txn
-
-
-
+        # Stable Coin transfer from user to DAO
+        transfer_tokens_and_update_balances(
+            cur, recipient_address, self.address, 'NWRL', amount)
         #issue tokens
-        dao_data=cur.execute(f'''Select dao_name as dao_name from dao_main where dao_sc_address''',(self.address)).fetchone()
-        token_code = dao_data['dao_name']+'_token' #TODO fetch dao name
-        tokendata = {"tokencode": token_code,
-                     "first_owner": recipient_address,
-                     "custodian": self.address,
-                     "amount_created": int(amount * 100),
-                     "value_created": amount,
-                     "tokendecimal": 2
-                     }
+        dao_data=cur.execute(f'''Select dao_name as dao_name from dao_main where dao_sc_address=?''',[self.address])
+        dao_data=dao_data.fetchone()
+        token_code = dao_data[0]+'_token' #TODO fetch dao name
+        tokendata={
+        "tokenname": token_code,
+        "tokencode" : token_code,
+        "tokentype": '1',
+        "tokenattributes": {},
+        "first_owner": recipient_address,
+        "custodian": self.address,
+        "legaldochash": '',
+        "amount_created": amount,
+        "value_created": '',
+        "disallowed": {},
+        "sc_flag": False
+    }
+        # tokendata = {"tokencode": token_code,
+        #              "first_owner": recipient_address,
+        #              "custodian": self.address,
+        #              "amount_created": int(amount * 100),
+        #              "value_created": amount,
+        #              "tokendecimal": 2
+        #              }
         add_token(cur, tokendata)    
         pass
 
-
-    def lock_tokens(self, cur, callparamsip):
-        '''
-        TODO
-        params : person_pid, dao_id, amount, txnHash (of transfer to dao)
-        function : add a new row with pid and amount++
-        '''
-
-        callparams = input_to_dict(callparamsip)
-        dao_id = callparams['dao_id']
-        person_id = callparams['person_id']
-        transferTxn = callparams['transferTxn']
-        amount = callparams['amount']
-        lock_data=cur.execute(f'''Select * from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',(person_id,dao_id)).fetchone()
-        if lock_data is None:
-            cur.execute(f'''Insert into DAO_TOKEN_LOCK (dao_id,person_id,proposal_list,status,amount_locked) values (?,?,?,?,?)''',())
-        else:
-            cur.execute(f'''update DAO_TOKEN_LOCK set proposal_id=? ,amount_locked=? '''())
-
-        #update token stake table
 
     def get_token_lock_amount(self, cur, callparamsip):
         '''
@@ -255,15 +247,47 @@ class DaoMainTemplate(ContractMaster):
         
         callparams = input_to_dict(callparamsip)
         dao_id = callparams['address']
-        person_id = callparams['person_id']
-        lock_data=cur.execute(f'''Select amount_locked from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',(person_id,dao_id)).fetchone()
-        return lock_data['amount_locked']
+        person_id=get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address'])
+        lock_data=cur.execute(f'''Select amount_locked from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',[person_id,dao_id]).fetchone()
+        return lock_data[0]
         #fetch current token value locked
         
-    def burn_token(self, cur, callapramsip):
-        pass    
+    def set_price(self, cur, callapramsip):
+        # To set the price at which token to be issued
+        pass
+
+    def lock_tokens(self, cur, callparamsip):
+        '''
+        TODO
+        params : person_pid, dao_id, amount, txnHash (of transfer to dao)
+        function : add a new row with pid and amount++
+        '''
+
+        callparams = input_to_dict(callparamsip)
+        dao_id = self.address
+        person_id = callparams['person_id']
+        amount = callparams['amount']
+        # proposal_id=callparams['proposal_id']
+        proposal_id=None
+        # Transfering Tokens from User To DAO
+        dao_data=cur.execute(f'''Select dao_name as dao_name from dao_main where dao_sc_address=?''',[self.address])
+        dao_data=dao_data.fetchone()
+        token_code = dao_data[0]+'_token' #TODO fetch dao name
+        transfer_tokens_and_update_balances(
+            cur, callparams['wallet_address'], self.address, token_code, amount)
+        lock_data = cur.execute(f'''Select * from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',
+                                [person_id, dao_id]).fetchone()
 
 
+        if lock_data is None:
+            cur.execute(
+                f'''Insert into DAO_TOKEN_LOCK (dao_id,person_id,amount_locked) values (?,?,?)''',
+                (dao_id,person_id,amount))
+        else:
+            cur.execute(f'''update DAO_TOKEN_LOCK set amount_locked=? where person_id=? and dao_id=? ''',[json.dumps(proposal_list),amount,person_id, dao_id])
+
+        # update token stake table
+        pass
     def update_token_proposal_data(self, cur, callparamsip):
         #
         callparams = input_to_dict(callparamsip)
@@ -272,13 +296,14 @@ class DaoMainTemplate(ContractMaster):
         proposal_id=callparams['proposal_id']
         amount_locked=callparams['amount_locked']
         lock_data = cur.execute(f'''Select proposal_list from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',
-                                (person_id, dao_id)).fetchone()
+                                [person_id, dao_id]).fetchone()
         if lock_data is None:
             cur.execute(
                 f'''update  DAO_TOKEN_LOCK set proposal_list =? , amount_locked=? where person_id=? and dao_id=?''',
-                ())
+                (json.dumps({proposal_id})))
         else:
             flag=False
+            lock_data=json.load(lock_data)
             for i in lock_data['proposal_list']:
                 if(i==proposal_id):
                     flag=True
@@ -288,10 +313,8 @@ class DaoMainTemplate(ContractMaster):
                 cur.execute(
                     f'''update  DAO_TOKEN_LOCK set proposal_list =? , amount_locked=? where person_id=? and dao_id=?''',
                     (lock_data['proposal_list']))
-
-
-            cur.execute(f'''update DAO_TOKEN_LOCK set proposal_id=? ,amount_locked=? where person_id=? and dao_id=?'''())
         cur.execute()
 
 
-    pass
+        pass
+
