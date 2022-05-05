@@ -58,10 +58,11 @@ def receive_block(block):
         sync_chain_from_peers()
         return
 
+    broadcast_exclude_nodes = block['peers_already_broadcasted'] if 'peers_already_broadcasted' in block else None
     if is_timeout_block_from_sentinel_node(block['data']):
         original_block = copy.deepcopy(block)
         accept_block(block, block['hash'])
-        broadcast_block(original_block)
+        broadcast_block(original_block, exclude_nodes=broadcast_exclude_nodes)
     
     if not validate_block_miner(block['data']):
         return False
@@ -76,13 +77,13 @@ def receive_block(block):
     if check_community_consensus(block):
         original_block = copy.deepcopy(block)
         accept_block(block, block['hash'])
-        broadcast_block(original_block)
+        broadcast_block(original_block, exclude_nodes=broadcast_exclude_nodes)
     else:
         my_receipt = add_my_receipt_to_block(block)
         if check_community_consensus(block):
             original_block = copy.deepcopy(block)
             if accept_block(block, block['hash']):
-                broadcast_block(original_block)
+                broadcast_block(original_block, exclude_nodes=broadcast_exclude_nodes)
         else:
             if my_receipt:
                 committee = get_committee_for_current_block()

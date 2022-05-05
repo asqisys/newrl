@@ -7,20 +7,26 @@ from ..p2p.utils import get_peers
 from ..p2p.utils import is_my_address
 
 
-def propogate_transaction_to_peers(transaction):
+def propogate_transaction_to_peers(transaction, exclude_nodes=None):
     if IS_TEST:
         return
     peers = get_peers()
+    if exclude_nodes:
+        peers = get_excluded_peers_to_broadcast(peers, exclude_nodes)
 
     node_count = min(MAX_BROADCAST_NODES, len(peers))
     peers = random.sample(peers, k=node_count)
-        
+    
+    payload = {
+        'signed_transaction': transaction,
+        'peers_already_broadcasted': get_excluded_node_list(peers, exclude_nodes)
+    }
+
     print('Broadcasting transaction to peers', peers)
     for peer in peers:
         if is_my_address(peer['address']):
             continue
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
-        payload = {'signed_transaction': transaction}
         try:
             thread = Thread(target=send_request, args = (url + '/receive-transaction', payload))
             thread.start()
@@ -67,7 +73,7 @@ def broadcast_receipt(receipt, nodes):
             print(f'Could not send receipt to node: {url}')
 
 
-def broadcast_block(block_payload, nodes=None):
+def broadcast_block(block_payload, nodes=None, exclude_nodes=None):
     if IS_TEST:
         return
     if nodes:
@@ -78,16 +84,12 @@ def broadcast_block(block_payload, nodes=None):
             elif 'address' in node:
                 peers.append({'address': node['address']})
         if len(peers) == 0:
-            peers = get_peers()
-            node_count = min(MAX_BROADCAST_NODES, len(peers))
-            peers = random.sample(peers, k=node_count)
+            peers = get_random_peers(exclude_nodes)
     else:
-        peers = get_peers()
-        node_count = min(MAX_BROADCAST_NODES, len(peers))
-        peers = random.sample(peers, k=node_count)
+        peers = get_random_peers(exclude_nodes)
 
     print('Broadcasting block to peers', peers)
-
+    block_payload['peers_already_broadcasted'] = get_excluded_node_list(peers, exclude_nodes)
     # TODO - Do not send to self
     for peer in peers:
         if 'address' not in peer or is_my_address(peer['address']):
@@ -100,3 +102,24 @@ def broadcast_block(block_payload, nodes=None):
             print(f'Error sending block to peer: {url}')
             print(e)
     return True
+
+
+def get_excluded_peers_to_broadcast(peers, exclude_nodes):
+    peers = filter(lambda p: p['address'] not in exclude_nodes, peers)
+    return list(peers)
+
+
+def get_random_peers(exclude_nodes=None):
+    peers = get_peers()
+    if exclude_nodes:
+        peers = get_excluded_peers_to_broadcast(peers, exclude_nodes)
+    node_count = min(MAX_BROADCAST_NODES, len(peers))
+    peers = random.sample(peers, k=node_count)
+    return peers
+
+
+def get_excluded_node_list(new_nodes, already_broadcasted_nodes):
+    new_node_addresses = list(map(lambda p: p['address'] if 'address' in p else None, new_nodes))
+    combined_list = new_node_addresses + already_broadcasted_nodes
+    combined_list = list(set(combined_list))
+    return combined_list
