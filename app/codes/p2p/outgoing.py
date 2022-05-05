@@ -120,6 +120,9 @@ def get_random_peers(exclude_nodes=None):
 
 def get_excluded_node_list(new_nodes, already_broadcasted_nodes):
     new_node_addresses = list(map(lambda p: p['address'] if 'address' in p else None, new_nodes))
-    combined_list = new_node_addresses + already_broadcasted_nodes
+    if already_broadcasted_nodes:
+        combined_list = new_node_addresses + already_broadcasted_nodes
+    else:
+        combined_list = new_node_addresses
     combined_list = list(set(combined_list))
     return combined_list
