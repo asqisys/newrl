@@ -42,8 +42,8 @@ def get_node_info():
         'timers': get_timers(),
         'miners': get_miner_info(),
         'peers': get_peers(),
-        'recent_blocks': get_blocks(list(range(last_block_index - 10, last_block_index))),
-        'mempool_transactions': list_mempool_transactions(),
+        'recent_blocks': get_blocks(list(range(last_block_index - 5, last_block_index))),
+        'mempool_transactions': list_mempool_transactions()[-10:],
     }
     return node_info
 
