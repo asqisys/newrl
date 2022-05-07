@@ -186,6 +186,13 @@ def pay_fee_for_transaction(cur, transaction):
     return True
 
 
+def update_network_trust_scores(cur, block):
+    last_block = get_last_block(cur=cur)
+    block_to_take_receipts = last_block['index'] - 10
+    block_to_take_receipts = min(block_to_take_receipts, 0)
+    # TODO - complete the trust score update for the receipt senders
+
+
 def create_empty_block_receipt_and_broadcast():
     logger.info('No block timeout. Mining empty block and sending receipts.')
     # block_index = get_last_block_index() + 1
