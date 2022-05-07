@@ -41,15 +41,15 @@ def get_mempool_transactions_api(req: BlockRequest):
     return get_blocks(req.block_indexes)
 
 @router.post("/receive-transaction", tags=[p2p_tag])
-def receive_transaction_api(req: TransactionAdditionRequest):
+async def receive_transaction_api(req: TransactionAdditionRequest):
     return validate_transaction(req.signed_transaction, propagate=True)
 
 @router.post("/receive-block", tags=[p2p_tag])
-def receive_block_api(req: BlockAdditionRequest):
+async def receive_block_api(req: BlockAdditionRequest):
     return receive_block(req.block)
 
 @router.post("/receive-receipt", tags=[p2p_tag])
-def receive_receipt_api(req: ReceiptAdditionRequest):
+async def receive_receipt_api(req: ReceiptAdditionRequest):
     if receive_receipt(req.receipt):
         return {'status': 'SUCCESS'}
     else:
@@ -70,5 +70,3 @@ def get_miners_api():
 @router.post("/add-peer", tags=[p2p_tag])
 def add_peer_api(req: Request):
     return add_peer(req.client.host)
-
-
