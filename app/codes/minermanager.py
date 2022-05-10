@@ -2,6 +2,7 @@
 import sqlite3
 import random
 
+from .p2p.peers import add_peer
 from .clock.global_time import get_corrected_time_ms, get_time_difference
 from ..nvalues import ASQI_WALLET
 from .utils import get_last_block_hash
@@ -99,8 +100,9 @@ def get_eligible_miners():
     return miners
 
 
-def get_miner_for_current_block():
-    last_block = get_last_block_hash()
+def get_miner_for_current_block(last_block=None):
+    if last_block is None:
+        last_block = get_last_block_hash()
 
     if not last_block:
         return {'wallet_address': ASQI_WALLET}
@@ -117,8 +119,9 @@ def get_miner_for_current_block():
     # return committee_list[0]
 
 
-def get_committee_for_current_block():
-    last_block = get_last_block_hash()
+def get_committee_for_current_block(last_block=None):
+    if last_block is None:
+        last_block = get_last_block_hash()
 
     if not last_block:
         return [{'wallet_address': ASQI_WALLET}]
@@ -135,17 +138,17 @@ def get_committee_for_current_block():
     return committee
 
 
-def should_i_mine():
+def should_i_mine(last_block=None):
     my_wallet = get_wallet()
-    miner = get_miner_for_current_block()
+    miner = get_miner_for_current_block(last_block=last_block)
     if miner['wallet_address'] == my_wallet['address']:
         return True
     return False
 
 
-def am_i_in_current_committee():
+def am_i_in_current_committee(last_block=None):
     my_wallet_address = get_wallet()['address']
-    committee = get_committee_for_current_block()
+    committee = get_committee_for_current_block(last_block)
 
     found = list(filter(lambda w: w['wallet_address'] == my_wallet_address, committee))
     if len(found) == 0:
@@ -159,3 +162,10 @@ def get_miner_info():
         'current_block_committee': get_committee_for_current_block(),
         'eligible_miners': get_eligible_miners(),
     }
+
+
+def add_miners_as_peers():
+    miners = get_eligible_miners()
+
+    for miner in miners:
+        add_peer(miner['network_address'])

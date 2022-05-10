@@ -45,7 +45,7 @@ class CreateTokenRequest(BaseModel):
     custodian: str = '0x762485963e99f6a6548729f11d610dd37ffd3b73'
     legal_doc: str = '686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401'
     amount_created: int = 1000000
-    value_created: int = 10000
+    tokendecimal: int = 0
     disallowed_regions: Optional[List[str]] = []
     is_smart_contract_token: bool = False
     token_attributes: dict

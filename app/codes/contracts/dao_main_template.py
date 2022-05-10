@@ -172,9 +172,6 @@ class DaoMainTemplate(ContractMaster):
         return True
 
 
-
-
-
     def valid_member(self, cur, callparamsip):
         callparams = input_to_dict(callparamsip)
         member_pid="".join(get_pid_from_wallet(cur,callparams['function_caller'][0]['wallet_address']))

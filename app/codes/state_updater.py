@@ -21,7 +21,7 @@ def update_db_states(cur, block):
 #    latest_index = cur.execute('SELECT MAX(block_index) FROM blocks')
     add_tx_to_block(cur, newblockindex, transactions)
 
-    if 'creator_wallet' in block:
+    if 'creator_wallet' in block and block['creator_wallet'] is not None:
         add_block_reward(cur, block['creator_wallet'], newblockindex)
 
     for transaction in transactions:
@@ -90,7 +90,10 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         params_for_funct=transaction_data['params']
         # adding singers address to the dict
         params_for_funct['function_caller']=transaction_signer
-        funct(cur, params_for_funct)
+        try:
+            funct(cur, params_for_funct)
+        except Exception as e:
+            print('Exception durint smart contract function run', e)
     if transaction_type == TRANSACTION_MINER_ADDITION:
         add_miner(
             cur,
@@ -117,7 +120,6 @@ def add_block_reward(cur, creator, blockindex):
         "custodian": '',
         "legaldochash": '',
         "amount_created": reward,
-        "value_created": '',
         "disallowed": {},
         "sc_flag": False
     }

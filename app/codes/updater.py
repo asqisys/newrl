@@ -8,7 +8,7 @@ import threading
 from .clock.global_time import get_corrected_time_ms, get_time_difference
 from .fs.temp_manager import get_blocks_for_index_from_storage, store_block_to_temp
 from .minermanager import am_i_in_current_committee, broadcast_miner_update, get_committee_for_current_block, get_miner_for_current_block, should_i_mine
-from ..nvalues import TREASURY_WALLET_ADDRESS
+from ..nvalues import ASQI_WALLET, TREASURY_WALLET_ADDRESS
 from ..constants import ALLOWED_FEE_PAYMENT_TOKENS, BLOCK_RECEIVE_TIMEOUT_SECONDS, BLOCK_TIME_INTERVAL_SECONDS, COMMITTEE_SIZE, GLOBAL_INTERNAL_CLOCK_SECONDS, IS_TEST, NEWRL_DB, NEWRL_PORT, NO_BLOCK_TIMEOUT, NO_RECEIPT_COMMITTEE_TIMEOUT, REQUEST_TIMEOUT, MEMPOOL_PATH, TIME_BETWEEN_BLOCKS_SECONDS, TIME_MINER_BROADCAST_INTERVAL_SECONDS
 from .p2p.peers import get_peers
 from .p2p.utils import is_my_address
@@ -20,7 +20,7 @@ from .crypto import calculate_hash, sign_object, _private, _public
 from .consensus.consensus import generate_block_receipt
 from .chainscanner import get_wallet_token_balance
 from .db_updater import transfer_tokens_and_update_balances
-from .p2p.outgoing import broadcast_receipt, send_request_in_thread
+from .p2p.outgoing import broadcast_block, broadcast_receipt, send_request_in_thread
 from .auth.auth import get_wallet
 
 
@@ -152,38 +152,6 @@ def run_updater(add_to_chain=False):
     return block_payload
 
 
-def broadcast_block(block_payload, nodes=None):
-    if IS_TEST:
-        return
-    if nodes:
-        peers = []
-        for node in nodes:
-            if 'network_address' in node:
-                peers.append({'address': node['network_address']})
-            elif 'address' in node:
-                peers.append({'address': node['address']})
-        if len(peers) == 0:
-            peers = get_peers()
-    else:
-        peers = get_peers()
-
-    print('Broadcasting block to nodes', nodes)
-
-    # TODO - Do not send to self
-    for peer in peers:
-        if 'address' not in peer or is_my_address(peer['address']):
-            continue
-        url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
-        print('Sending block to peer', url)
-        try:
-            send_request_in_thread(url + '/receive-block', {'block': block_payload})
-            # requests.post(url + '/receive-block', json={'block': block_payload}, timeout=REQUEST_TIMEOUT)
-        except Exception as e:
-            print(f'Error sending block to peer: {url}')
-            print(e)
-    return True
-
-
 def get_fees_for_transaction(transaction):
     return transaction['fee']
 
@@ -238,11 +206,12 @@ def create_empty_block_receipt_and_broadcast():
     return block_payload
 
 
-def start_empty_block_mining_clock():
+def start_empty_block_mining_clock(block_timestamp):
     global TIMERS
-    if TIMERS['block_receive_timeout'] is not None:
-        TIMERS['block_receive_timeout'].cancel()
-    timer = threading.Timer(NO_BLOCK_TIMEOUT + BLOCK_TIME_INTERVAL_SECONDS, create_empty_block_receipt_and_broadcast)
+    current_ts_seconds = get_corrected_time_ms() / 1000
+    block_ts_seconds = block_timestamp / 1000
+    seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS + NO_BLOCK_TIMEOUT - current_ts_seconds
+    timer = threading.Timer(seconds_to_wait, create_empty_block_receipt_and_broadcast)
     timer.start()
     TIMERS['block_receive_timeout'] = timer
 
@@ -259,13 +228,12 @@ def mine(add_to_chain=False):
         print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
 
 
-def start_mining_clock(block_timestamp):
-    global TIMERS
-    if TIMERS['mining_timer'] is not None:
-        TIMERS['mining_timer'].cancel()
-    if TIMERS['block_receive_timeout'] is not None:
-        TIMERS['block_receive_timeout'].cancel()
-        TIMERS['block_receive_timeout'] = None
+def start_mining_clock(block_timestamp):    
+    # if TIMERS['mining_timer'] is not None:
+    #     TIMERS['mining_timer'].cancel()
+    # if TIMERS['block_receive_timeout'] is not None:
+    #     TIMERS['block_receive_timeout'].cancel()
+    #     TIMERS['block_receive_timeout'] = None
     current_ts_seconds = get_corrected_time_ms() / 1000
     block_ts_seconds = block_timestamp / 1000
     seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds
@@ -295,6 +263,7 @@ def should_include_transaction(transaction):
 
 def global_internal_clock():
     """Reccuring clock for all node level activities"""
+    global TIMERS
     
     try:
         # Check for mining delay
@@ -305,10 +274,44 @@ def global_internal_clock():
             time_elapsed_seconds = (current_ts - last_block_ts) / 1000
 
             if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 2:
-                start_mining_clock(last_block_ts)
-                start_empty_block_mining_clock()
+                if am_i_sentinel_node():
+                    print('I am sentitnel node. Mining empty block')
+                    sentitnel_node_mine_empty()
+            if should_i_mine(last_block):
+                if TIMERS['mining_timer'] is None or not TIMERS['mining_timer'].is_alive():
+                    start_mining_clock(last_block_ts)
+            # elif am_i_in_current_committee(last_block):
+            #     if TIMERS['block_receive_timeout'] is None or not TIMERS['block_receive_timeout'].is_alive():
+            #         start_empty_block_mining_clock(last_block_ts)
     except Exception as e:
         print('Error in global clock', e)
 
     timer = threading.Timer(GLOBAL_INTERNAL_CLOCK_SECONDS, global_internal_clock)
     timer.start()
+
+
+def am_i_sentinel_node():
+    my_wallet = get_wallet()
+    return my_wallet['address'] == ASQI_WALLET
+
+
+def sentitnel_node_mine_empty():
+    blockchain = Blockchain()
+    current_time_ms = get_corrected_time_ms()
+    block = blockchain.mine_empty_block(current_time_ms)
+    block_receipt = generate_block_receipt(block)
+    block_payload = {
+        'index': block['index'],
+        'hash': calculate_hash(block),
+        'data': block,
+        'receipts': [block_receipt]
+    }
+    broadcast_block(block_payload=block_payload)
+
+
+def get_timers():
+    """Get timer status"""
+    return {
+        'is_mining': TIMERS['mining_timer'] is not None and TIMERS['mining_timer'].is_alive(),
+        'is_waiting_block_timeout': TIMERS['block_receive_timeout'] is not None and TIMERS['block_receive_timeout'].is_alive(),
+    }

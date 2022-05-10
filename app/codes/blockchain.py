@@ -139,7 +139,7 @@ class Blockchain:
         }
         return block
 
-    def mine_empty_block(self):
+    def mine_empty_block(self, new_block_timestamp=None):
         """Mine an empty block"""
         print("Mining empty block")
         con = sqlite3.connect(NEWRL_DB)
@@ -154,7 +154,8 @@ class Blockchain:
 
         EMPTY_BLOCK_NONCE = 42
 
-        new_block_timestamp = int(last_block_timestamp) + (BLOCK_TIME_INTERVAL_SECONDS + NO_BLOCK_TIMEOUT) * 1000
+        if new_block_timestamp is None:
+            new_block_timestamp = int(last_block_timestamp) + (BLOCK_TIME_INTERVAL_SECONDS + NO_BLOCK_TIMEOUT) * 1000
 
         block = {
             'index': last_block_index + 1,
