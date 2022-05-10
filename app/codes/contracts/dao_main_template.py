@@ -275,16 +275,15 @@ class DaoMainTemplate(ContractMaster):
         token_code = dao_data[0]+'_token' #TODO fetch dao name
         transfer_tokens_and_update_balances(
             cur, callparams['wallet_address'], self.address, token_code, amount)
-        lock_data = cur.execute(f'''Select * from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',
+        lock_data = cur.execute(f'''Select dao_id as dao_id ,person_id as person_id, amount_locked as amount_locked from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',
                                 [person_id, dao_id]).fetchone()
-
-
         if lock_data is None:
             cur.execute(
                 f'''Insert into DAO_TOKEN_LOCK (dao_id,person_id,amount_locked) values (?,?,?)''',
                 (dao_id,person_id,amount))
         else:
-            cur.execute(f'''update DAO_TOKEN_LOCK set amount_locked=? where person_id=? and dao_id=? ''',[json.dumps(proposal_list),amount,person_id, dao_id])
+            amount = amount+ lock_data[2]
+            cur.execute(f'''update DAO_TOKEN_LOCK set amount_locked=? where person_id=? and dao_id=? ''',[amount,person_id, dao_id])
 
         # update token stake table
         pass
