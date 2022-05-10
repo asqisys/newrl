@@ -1,7 +1,7 @@
 from .dao_main_template import DaoMainTemplate
 from ..db_updater import *
 
-class token_dao(DaoMainTemplate):
+class token_fund_dao(DaoMainTemplate):
     codehash=""
 
     def __init__(self, contractaddress=None):
