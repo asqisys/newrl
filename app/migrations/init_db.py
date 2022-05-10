@@ -177,7 +177,7 @@ def init_trust_db():
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS proposal_data
                     (
-                    proposal_id INT PRIMARY KEY,
+                    proposal_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     dao_person_id text NOT NULL, 
                     function_called text NOT NULL, 
                     params text , 
