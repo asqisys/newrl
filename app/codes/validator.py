@@ -55,7 +55,11 @@ def validate(transaction, propagate=False, validate_economics=True):
 
         if propagate and not IS_TEST:
             # Broadcast transaction to peers via HTTP
-            propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
+            exclude_nodes = transaction['peers_already_broadcasted'] if 'peers_already_broadcasted' in transaction else None
+            propogate_transaction_to_peers(
+                transaction_manager.get_transaction_complete(),
+                exclude_nodes=exclude_nodes
+            )
 
             # Broadcaset transaction via transport server
             # try:

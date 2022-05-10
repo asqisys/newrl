@@ -84,7 +84,7 @@ def create_token(wallet, custodian_wallet):
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
         "amount_created": 8888,
-        "value_created": 1000,
+        "tokendecimal": 0,
         "disallowed_regions": [],
         "is_smart_contract_token": False,
         "token_attributes": {}
@@ -97,7 +97,7 @@ def create_token(wallet, custodian_wallet):
         "custodian": custodian_wallet['address'],
         "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
         "amount_created": 8888,
-        "value_created": 1000,
+        "tokendecimal": 0,
         "disallowed_regions": [],
         "is_smart_contract_token": False,
         "token_attributes": {}}
