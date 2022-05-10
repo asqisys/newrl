@@ -23,7 +23,10 @@ from app.migrations.init_db import revert_chain
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-IS_SYNCING = False
+# IS_SYNCING = False
+SYNC_STATUS = {
+    'IS_SYNCING': False
+}
 
 def get_blocks(block_indexes):
     blocks = []
@@ -47,6 +50,9 @@ def get_last_block_index():
 
 def receive_block(block):
     block_index = block['index']
+    if block_index > get_last_block_index() + 1:
+        sync_chain_from_peers()
+        return
 
     if blockchain.block_exists(block_index):
         print('Block alredy exist in chain. Ignoring.')
@@ -54,9 +60,6 @@ def receive_block(block):
     
     print('Received new block', block)
 
-    if block_index > get_last_block_index() + 1:
-        sync_chain_from_peers()
-        return
 
     broadcast_exclude_nodes = block['peers_already_broadcasted'] if 'peers_already_broadcasted' in block else None
     if is_timeout_block_from_sentinel_node(block['data']):
@@ -162,13 +165,13 @@ def sync_chain_from_node(url, block_index=None):
 
 
 def sync_chain_from_peers(force_sync=False):
-    global IS_SYNCING
+    global SYNC_STATUS
     if force_sync:
-        IS_SYNCING = False
-    if IS_SYNCING:
+        SYNC_STATUS['IS_SYNCING'] = False
+    if SYNC_STATUS['IS_SYNCING']:
         print('Already syncing chain. Not syncing again.')
         return
-    IS_SYNCING = True
+    SYNC_STATUS['IS_SYNCING'] = True
     try:
         peers = get_peers()
         url, block_index = get_best_peer_to_sync(peers)
@@ -180,7 +183,7 @@ def sync_chain_from_peers(force_sync=False):
             print('No node available to sync')
     except Exception as e:
         print('Sync failed', e)
-    IS_SYNCING = False
+    SYNC_STATUS['IS_SYNCING'] = False
 
 
 # TODO - use mode of max last 
