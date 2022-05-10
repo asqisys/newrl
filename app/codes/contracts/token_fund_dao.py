@@ -5,7 +5,7 @@ class token_fund_dao(DaoMainTemplate):
     codehash=""
 
     def __init__(self, contractaddress=None):
-        self.template= 'token_dao'
+        self.template= 'token_fund_dao'
         self.version='1.0.0'
         self.dao_type=2
         # dao_type=2 is for token based DAO and 1 is for membership DAO
