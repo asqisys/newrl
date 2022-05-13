@@ -204,7 +204,7 @@ def get_best_peer_to_sync(peers, return_many=False):
             elif their_last_block_index == best_peer_value:
                 best_peers.append(url)
         except Exception as e:
-            logger.info('Error getting block index from peer at {url}')
+            logger.info(f'Error getting block index from peer at {url}')
     if return_many:
         return best_peers, best_peer_value
     else:

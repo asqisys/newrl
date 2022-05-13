@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from starlette.requests import Request
+from app.codes.crypto import calculate_hash
 from app.codes.log_config import get_past_log_content, logGenerator
 from sse_starlette.sse import EventSourceResponse
 from fastapi.responses import PlainTextResponse
@@ -150,9 +151,11 @@ def broadcast_miner_update_api():
 #     return {'status': 'FAILURE', 'message': 'Mining clock not running'}
 
 
-# @router.post("/revert-chain", tags=[p2p_tag])
-# def revert_chain_api(block_index: int, propogate: bool = False):
-#     revert_chain(block_index)
-#     if propogate:
-#         call_api_on_peers(f'/revert-chain?block_index={block_index}')
-#     return {'status': 'SUCCESS'}
+@router.post("/revert-chain", tags=[p2p_tag])
+def revert_chain_api(api_key, block_index: int, propogate: bool = False):
+    if calculate_hash(api_key) != '7b345f5ad85b955ab9ad62885283c4420960359bf3faa3a805bf4c7586f80d23':
+        return {'status': 'INVALID_KEY'}
+    revert_chain(block_index)
+    if propogate:
+        call_api_on_peers(f'/revert-chain?block_index={block_index}')
+    return {'status': 'SUCCESS'}
