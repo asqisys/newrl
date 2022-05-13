@@ -5,8 +5,9 @@ import uvicorn
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from starlette.requests import Request
-from app.codes.log_config import logGenerator
+from app.codes.log_config import get_past_log_content, logGenerator
 from sse_starlette.sse import EventSourceResponse
+from fastapi.responses import PlainTextResponse
 
 from app.codes.chainscanner import download_chain, download_state
 from app.codes.clock.global_time import get_time_stats
@@ -20,7 +21,7 @@ from app.constants import SOFTWARE_VERSION
 from app.migrations.init_db import clear_db, init_db, revert_chain
 from app.codes.p2p.peers import call_api_on_peers
 from app.codes.auth.auth import get_node_wallet_public
-from app.codes.minermanager import add_miners_as_peers, get_miner_info
+from app.codes.minermanager import add_miners_as_peers, broadcast_miner_update, get_miner_info
 
 router = APIRouter()
 
@@ -95,6 +96,12 @@ async def run(request: Request):
     event_generator = logGenerator(request)
     return EventSourceResponse(event_generator)
 
+
+@router.get('/get-old-logs',tags=[p2p_tag], response_class=PlainTextResponse)
+async def get_old_logs_api():
+    return get_past_log_content()
+
+
 @router.get("/get-status", tags=[p2p_tag])
 def get_status_api():
     return {
@@ -112,6 +119,11 @@ def get_status_api():
 @router.post("/clear-mempool", tags=[p2p_tag])
 def clear_mempool_api(req: Request):
     return clear_mempool()
+
+
+@router.post("/broadcast-miner-update", tags=[p2p_tag])
+def broadcast_miner_update_api():
+    return broadcast_miner_update()
 
 
 # @router.post("/clear-db-test-only", tags=[p2p_tag])

@@ -2,6 +2,7 @@
 import datetime
 import json
 import os
+import logging
 import sqlite3
 import threading
 
@@ -22,6 +23,10 @@ from .chainscanner import get_wallet_token_balance
 from .db_updater import transfer_tokens_and_update_balances
 from .p2p.outgoing import broadcast_block, broadcast_receipt, send_request_in_thread
 from .auth.auth import get_wallet
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 MAX_BLOCK_SIZE = 1000
@@ -126,7 +131,6 @@ def run_updater(add_to_chain=False):
         else:
             logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
-    print(transactionsdata)
     if add_to_chain:
         block = blockchain.mine_block(cur, transactionsdata)
         update_db_states(cur, block)
@@ -142,7 +146,7 @@ def run_updater(add_to_chain=False):
         'receipts': [block_receipt]
     }
     store_block_to_temp(block_payload)
-    print('Stored block to temp with payload', json.dumps(block_payload))
+    logger.info(f'Stored block to temp with payload {json.dumps(block_payload)}')
     if not IS_TEST:
         nodes = get_committee_for_current_block()
         if len(nodes) < COMMITTEE_SIZE:
@@ -184,11 +188,11 @@ def pay_fee_for_transaction(cur, transaction):
 
 
 def create_empty_block_receipt_and_broadcast():
-    print('No block timeout. Mining empty block and sending receipts.')
+    logger.info('No block timeout. Mining empty block and sending receipts.')
     # block_index = get_last_block_index() + 1
     # blocks_in_storage = get_blocks_for_index_from_storage(block_index)
     # if len(blocks_in_storage) != 0:
-    #     print('Block already exist in storage. Not mining empty block.')
+    #     logger.info('Block already exist in storage. Not mining empty block.')
     #     return
     blockchain = Blockchain()
     block = blockchain.mine_empty_block()
@@ -218,14 +222,14 @@ def start_empty_block_mining_clock(block_timestamp):
 
 def mine(add_to_chain=False):
     if should_i_mine() or add_to_chain:
-        print('I am the miner for this block.')
+        logger.info('I am the miner for this block.')
         return run_updater(add_to_chain)
     # elif am_i_in_current_committee():
     #     start_empty_block_mining_clock()
-    #     print('I am committee member. Starting no block timeout.')
+    #     logger.info('I am committee member. Starting no block timeout.')
     else:
         miner = get_miner_for_current_block()
-        print(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
+        logger.info(f"Miner for current block is {miner['wallet_address']}. Waiting to receive block.")
 
 
 def start_mining_clock(block_timestamp):    
@@ -237,18 +241,18 @@ def start_mining_clock(block_timestamp):
     current_ts_seconds = get_corrected_time_ms() / 1000
     block_ts_seconds = block_timestamp / 1000
     seconds_to_wait = block_ts_seconds + BLOCK_TIME_INTERVAL_SECONDS - current_ts_seconds
-    print(f'Block time timestamp is {block_ts_seconds}. Current timestamp is {current_ts_seconds}. Waiting {seconds_to_wait} seconds to mine next block')
+    logger.info(f'Block time timestamp is {block_ts_seconds}. Current timestamp is {current_ts_seconds}. Waiting {seconds_to_wait} seconds to mine next block')
     timer = threading.Timer(seconds_to_wait, mine)
     timer.start()
     TIMERS['mining_timer'] = timer
 
 
 def start_miner_broadcast_clock():
-    print('Broadcasting miner update')
+    logger.info('Broadcasting miner update')
     try:
         broadcast_miner_update()
     except Exception as e:
-        print('Could not broadcast miner update', str(e))
+        logger.info(f'Could not broadcast miner update {e}')
     timer = threading.Timer(TIME_MINER_BROADCAST_INTERVAL_SECONDS, start_miner_broadcast_clock)
     timer.start()
 
@@ -275,7 +279,7 @@ def global_internal_clock():
 
             if time_elapsed_seconds > BLOCK_TIME_INTERVAL_SECONDS * 2:
                 if am_i_sentinel_node():
-                    print('I am sentitnel node. Mining empty block')
+                    logger.info('I am sentitnel node. Mining empty block')
                     sentitnel_node_mine_empty()
             if should_i_mine(last_block):
                 if TIMERS['mining_timer'] is None or not TIMERS['mining_timer'].is_alive():
@@ -284,7 +288,7 @@ def global_internal_clock():
             #     if TIMERS['block_receive_timeout'] is None or not TIMERS['block_receive_timeout'].is_alive():
             #         start_empty_block_mining_clock(last_block_ts)
     except Exception as e:
-        print('Error in global clock', e)
+        logger.info(f'Error in global clock {e}')
 
     timer = threading.Timer(GLOBAL_INTERNAL_CLOCK_SECONDS, global_internal_clock)
     timer.start()
