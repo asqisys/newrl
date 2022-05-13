@@ -38,7 +38,7 @@ TIMERS = {
 
 
 def run_updater(add_to_chain=False):
-    logger = BufferedLog()
+    # logger = BufferedLog()
     blockchain = Blockchain()
 
     con = sqlite3.connect(NEWRL_DB)
@@ -48,7 +48,7 @@ def run_updater(add_to_chain=False):
     latest_ts = blockchain.get_latest_ts(cur)
 
     filenames = os.listdir(MEMPOOL_PATH)  # this is the mempool
-    logger.log("Files in mempool: ", filenames)
+    logger.info(f"Files in mempool: {filenames}")
     textarray = []
     transfiles = filenames
     txcodes = []
@@ -60,10 +60,10 @@ def run_updater(add_to_chain=False):
         file = MEMPOOL_PATH + filename
         try:
             with open(file, "r") as read_file:
-                logger.log("Processing ", file)
+                logger.info(f"Processing {file}")
                 transaction_file_data = json.load(read_file)
         except:
-            logger.log("Couldn't load transaction file ", file)
+            logger.info(f"Couldn't load transaction file {file}")
             continue
         
         transaction = transaction_file_data['transaction']
@@ -72,7 +72,7 @@ def run_updater(add_to_chain=False):
         # new code for validating again
         trandata = tmtemp.loadtransactionpassive(file)
         if not tmtemp.verifytransigns():
-            logger.log(
+            logger.info(
                 f"Transaction id {trandata['transaction']['trans_code']} has invalid signatures")
             os.remove(file)
             continue
@@ -81,12 +81,11 @@ def run_updater(add_to_chain=False):
             os.remove(file)
             continue
         if not tmtemp.econvalidator():
-            logger.log("Economic validation failed for transaction ",
-                        trandata['transaction']['trans_code'])
+            logger.info(f"Economic validation failed for transaction {trandata['transaction']['trans_code']}")
             os.remove(file)
             continue
 
-        logger.log("Found valid transaction, checking if it is already included")
+        logger.info("Found valid transaction, checking if it is already included")
         transactions_cursor = cur.execute("SELECT * FROM transactions where transaction_code='" + transaction['trans_code'] + "'")
         row = transactions_cursor.fetchone()
         if row is not None:
@@ -107,29 +106,29 @@ def run_updater(add_to_chain=False):
             # try:
             #     os.remove(file)
             # except:
-            #     logger.log("Couldn't delete:",file)
+            #     logger.info("Couldn't delete:",file)
         block_height += 1
         if block_height >= MAX_BLOCK_SIZE:
-            logger.log(
+            logger.info(
                 "Reached max block height, moving forward with the collected transactions")
             break
 
     transactionsdata = {"transactions": textarray}
     if len(textarray) > 0:
-        logger.log(f"Found {len(textarray)} transactions. Adding to chain")
+        logger.info(f"Found {len(textarray)} transactions. Adding to chain")
     else:
-        logger.log("No new transactions. Checking for time.")
-        logger.log("latest ts:", latest_ts, "\tNow: ", datetime.datetime.now())
+        logger.info("No new transactions. Checking for time.")
+        logger.info(f"latest TS:{latest_ts} Now: {datetime.datetime.now()}")
         try:
             time_diff = get_time_ms() - int(latest_ts)
         except Exception as e:
             time_diff = TIME_BETWEEN_BLOCKS_SECONDS * 1000 + 1  # Set a high timelimit as no last block timestamp found
-        logger.log("Time since last block: ", time_diff, " seconds")
+        logger.info(f"Time since last block: {time_diff} seconds")
         if time_diff < TIME_BETWEEN_BLOCKS_SECONDS * 1000:  # TODO - Change the block time limit
-            logger.log("No new transactions, not enough time since last block. Exiting.")
+            logger.info("No new transactions, not enough time since last block. Exiting.")
             return logger.get_logs()
         else:
-            logger.log(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
+            logger.info(f"More than {TIME_BETWEEN_BLOCKS_SECONDS} seconds since the last block. Adding a new empty one.")
 
     if add_to_chain:
         block = blockchain.mine_block(cur, transactionsdata)
