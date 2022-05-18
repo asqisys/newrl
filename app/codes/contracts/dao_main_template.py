@@ -28,7 +28,7 @@ class DaoMainTemplate(ContractMaster):
 
         callparams = input_to_dict(callparamsip)
         callparams['address']=self.address
-        create_proposal(cur, callparams)
+        # create_proposal(cur, callparams)
         dao_pid = get_pid_from_wallet(cur, self.address)
         # TODO max votes for now is hard coded
         cur.execute(f'''INSERT OR REPLACE INTO PROPOSAL_DATA
@@ -126,7 +126,7 @@ class DaoMainTemplate(ContractMaster):
         # Getting proposal Data
         callparams = input_to_dict(callparamsip)
         proposal = cur.execute('''select function_called,params from proposal_data where  proposal_id=?''',
-                               ("".join(str(callparams['proposal_id']))))
+                               ("".join(str(callparams['proposal_id'])),))
         proposal=proposal.fetchone()
         if (proposal is None):
             return False
