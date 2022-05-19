@@ -47,6 +47,10 @@ def create_dao_manager(cur, address):
             (address, creator, ts_init, 
             name, version, actmode, status,next_act_ts, signatories, parent, oracleids, selfdestruct, contractspecs, legalparams)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+        try:
+            cur.execute(f'''alter table DAO_TOKEN_LOCK add COLUMN wallet_address text''')
+        except:
+            pass
 
 
 if __name__ == '__main__':

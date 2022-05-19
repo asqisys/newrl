@@ -276,41 +276,41 @@ class DaoMainTemplate(ContractMaster):
                                 [person_id, dao_id]).fetchone()
         if lock_data is None:
             cur.execute(
-                f'''Insert into DAO_TOKEN_LOCK (dao_id,person_id,amount_locked) values (?,?,?)''',
-                (dao_id,person_id,amount))
+                f'''Insert into DAO_TOKEN_LOCK (dao_id,person_id,amount_locked,wallet_address) values (?,?,?,?)''',
+                (dao_id,person_id,amount,callparams['wallet_address']))
         else:
             amount = amount+ lock_data[2]
             cur.execute(f'''update DAO_TOKEN_LOCK set amount_locked=? where person_id=? and dao_id=? ''',[amount,person_id, dao_id])
 
         # update token stake table
         pass
-    def update_token_proposal_data(self, cur, callparamsip):
-        #
-        callparams = input_to_dict(callparamsip)
-        dao_id = callparams['dao_id']
-        person_id = callparams['person_id']
-        proposal_id=callparams['proposal_id']
-        amount_locked=callparams['amount_locked']
-        lock_data = cur.execute(f'''Select proposal_list from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',
-                                [person_id, dao_id]).fetchone()
-        if lock_data is None:
-            cur.execute(
-                f'''update  DAO_TOKEN_LOCK set proposal_list =? , amount_locked=? where person_id=? and dao_id=?''',
-                (json.dumps({proposal_id})))
-        else:
-            flag=False
-            lock_data=json.load(lock_data)
-            for i in lock_data['proposal_list']:
-                if(i==proposal_id):
-                    flag=True
-                    pass
-            if not flag:
-                lock_data['proposal_list'].append(proposal_id)
-                cur.execute(
-                    f'''update  DAO_TOKEN_LOCK set proposal_list =? , amount_locked=? where person_id=? and dao_id=?''',
-                    (lock_data['proposal_list']))
-        cur.execute()
-
-
-        pass
+    # def update_token_proposal_data(self, cur, callparamsip):
+    #     #
+    #     callparams = input_to_dict(callparamsip)
+    #     dao_id = callparams['dao_id']
+    #     person_id = callparams['person_id']
+    #     proposal_id=callparams['proposal_id']
+    #     amount_locked=callparams['amount_locked']
+    #     lock_data = cur.execute(f'''Select proposal_list from DAO_TOKEN_LOCK where person_id=? and dao_id=?''',
+    #                             [person_id, dao_id]).fetchone()
+    #     if lock_data is None:
+    #         cur.execute(
+    #             f'''update  DAO_TOKEN_LOCK set proposal_list =? , amount_locked=? where person_id=? and dao_id=?''',
+    #             (json.dumps({proposal_id})))
+    #     else:
+    #         flag=False
+    #         lock_data=json.load(lock_data)
+    #         for i in lock_data['proposal_list']:
+    #             if(i==proposal_id):
+    #                 flag=True
+    #                 pass
+    #         if not flag:
+    #             lock_data['proposal_list'].append(proposal_id)
+    #             cur.execute(
+    #                 f'''update  DAO_TOKEN_LOCK set proposal_list =? , amount_locked=? where person_id=? and dao_id=?''',
+    #                 (lock_data['proposal_list']))
+    #     cur.execute()
+    #
+    #
+    #     pass
 

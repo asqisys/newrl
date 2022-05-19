@@ -195,9 +195,10 @@ def init_trust_db():
                     (
                     dao_id  text Not NULL,
                     person_id text Not NULL,
-                    proposal_list TEXT ,
+                    pr  oposal_list TEXT ,
                     status INT,
-                    amount_locked INT
+                    amount_locked INT,
+                    wallet_address text
                     )
                     ''')
 
