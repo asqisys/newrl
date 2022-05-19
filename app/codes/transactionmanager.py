@@ -1,4 +1,5 @@
 """Transaction management functions"""
+import importlib
 import time
 import ecdsa
 import os
@@ -8,6 +9,7 @@ import datetime
 import base64
 import sqlite3
 
+from .db_updater import get_contract_from_address, input_to_dict
 from ..ntypes import TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSCATION_TOKEN_CREATION
 from .chainscanner import get_wallet_token_balance
 from ..constants import ALLOWED_CUSTODIANS_FILE, MEMPOOL_PATH, NEWRL_DB
@@ -325,6 +327,15 @@ class Transactionmanager:
                 self.transaction['specific_data']['asset1_number'], token1mp)
             sender1valid = False
             sender2valid = False
+            sc_created_token1 = is_token_sc_created(tokencode1)
+            if(sc_created_token1):
+                sc_address1 = get_sc_address_from_token(tokencode1)
+                if (sc_address1 is None):
+                    print("Smart contract address not present in token attributes of toke " + tokencode1)
+                    self.validity = 0
+                if(not valid_from_contract(sc_address1,self.transaction)):
+                    print("Validation failed for token code"+tokencode1)
+                    self.validity=0
 
             # for ttype=5, there is no tokencode for asset2 since it is off-chain, there is no amount either
             if ttype == 4:  # some attributes of transaction apply only for bilateral transfer and not unilateral
@@ -333,10 +344,21 @@ class Transactionmanager:
                 token2mp = self.mempoolpayment(sender2, tokencode2)
                 token2amt = max(
                     self.transaction['specific_data']['asset2_number'], token2mp)
+                sc_created_token2 = is_token_sc_created(tokencode2)
+                if(sc_created_token2):
+                    sc_address2=get_sc_address_from_token(tokencode2)
+                    if(sc_address2 is None):
+                        print("Smart contract address not present in token attributes of toke "+tokencode2)
+                        self.validity=0
+                    if(not valid_from_contract(sc_address2,self.transaction)):
+                        print("Validation failed for token code" + tokencode2)
+                        self.validity = 0
+
 
             # address validity applies to both senders in ttype 4 and 5; since sender2 is still receiving tokens
             sender1valid = is_wallet_valid(sender1)
             sender2valid = is_wallet_valid(sender2)
+
             if not sender1valid:
                 print("Invalid sender1 wallet")
             #	self.transaction['valid']=0
@@ -472,6 +494,39 @@ def is_wallet_valid(address):
         return False
     return True
 
+def is_token_sc_created(tokencode):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    token_cursor = cur.execute(
+        'SELECT sc_flag FROM tokens WHERE tokencode=?', (tokencode, ))
+    sc_flag = token_cursor.fetchone()
+    if sc_flag is not None:
+        if sc_flag==1:
+            return True
+    return True
+def get_sc_address_from_token(tokencode):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    token_cursor = cur.execute(
+        'SELECT token_attributes FROM tokens WHERE tokencode=?', (tokencode, ))
+    attributes = token_cursor.fetchone()
+    if attributes is not None:
+        attributes=input_to_dict(attributes)
+        return attributes['sc_address']
+    return None
+
+def valid_from_contract(scaddress,txn_data):
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
+    funct = 'validate'
+    contract = get_contract_from_address(
+            cur, scaddress)
+    module = importlib.import_module(
+        ".codes.contracts." + contract['name'], package="app")
+    sc_class = getattr(module, contract['name'])
+    sc_instance = sc_class(scaddress)
+    funct = getattr(sc_instance, funct)
+    return funct(cur, txn_data)
 
 def get_wallets_from_pid(personidinput):
     con = sqlite3.connect(NEWRL_DB)
