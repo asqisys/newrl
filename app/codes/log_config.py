@@ -63,3 +63,11 @@ async def logGenerator(request):
             break
         yield line
         time.sleep(0.9)
+
+
+def get_past_log_content(filename=filename):
+    # if filename is None:
+    logfilename = datetime.now().strftime("%Y%m%d_%H") + f"_{filename}"
+    logFile = f"{path}{logfilename}"
+    with open(logFile) as f:
+        return f.read()

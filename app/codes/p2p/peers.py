@@ -4,6 +4,7 @@ import sqlite3
 import requests
 import socket
 import subprocess
+from threading import Thread
 from app.codes.signmanager import sign_object
 from app.codes.validator import validate_signature
 from app.migrations.init import init_newrl
@@ -206,21 +207,25 @@ def call_api_on_peers(url):
             print(f'Error calling API on node {address}', str(e))
 
 
+def remove_dead_peer(peer, my_address):
+    address = peer['address']
+    if socket.gethostbyname(address) == my_address:
+        return
+    try:
+        response = requests.get(
+            'http://' + address + f':{NEWRL_PORT}' + '/get-status',
+            timeout=REQUEST_TIMEOUT
+        )
+        if response.status_code != 200 or response.json()['up'] != True:
+            remove_peer(peer['id'])
+    except Exception as e:
+        print('Removing peer', peer['id'])
+        remove_peer(peer['id'])
+
 def remove_dead_peers():
     my_peers = get_peers()
     my_address = get_my_address()
 
     for peer in my_peers:
-        address = peer['address']
-        if socket.gethostbyname(address) == my_address:
-            continue
-        try:
-            response = requests.get(
-                'http://' + address + f':{NEWRL_PORT}' + '/get-status',
-                timeout=REQUEST_TIMEOUT
-            )
-            if response.status_code != 200 or response.json()['up'] != True:
-                remove_peer(peer['id'])
-        except Exception as e:
-            print('Removing peer', peer['id'])
-            remove_peer(peer['id'])
+        thread = Thread(target=remove_dead_peer, args=(peer, my_address))
+        thread.start()

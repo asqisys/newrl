@@ -55,10 +55,10 @@ def receive_block(block):
         return
 
     if blockchain.block_exists(block_index):
-        print('Block alredy exist in chain. Ignoring.')
+        logger.info('Block alredy exist in chain. Ignoring.')
         return False
     
-    print('Received new block', block)
+    logger.info(f'Received new block: {block}')
 
 
     broadcast_exclude_nodes = block['peers_already_broadcasted'] if 'peers_already_broadcasted' in block else None
@@ -71,7 +71,7 @@ def receive_block(block):
         return False
 
     if not validate_block(block):
-        print('Invalid block. Sending receipts.')
+        logger.info('Invalid block. Sending receipts.')
         receipt_for_invalid_block = generate_block_receipt(block['data'], vote=0)
         committee = get_committee_for_current_block()
         broadcast_receipt(receipt_for_invalid_block, committee)
@@ -104,7 +104,7 @@ def sync_chain_from_node(url, block_index=None):
     else:
         their_last_block_index = block_index
     my_last_block = get_last_block_index()
-    print(f'I have {my_last_block} blocks. Node {url} has {their_last_block_index} blocks.')
+    logger.info(f'I have {my_last_block} blocks. Node {url} has {their_last_block_index} blocks.')
 
     block_idx = my_last_block + 1
     block_batch_size = 50  # Fetch blocks in batches
@@ -112,7 +112,7 @@ def sync_chain_from_node(url, block_index=None):
         failed_for_invalid_block = False
         blocks_to_request = list(range(block_idx, 1 + min(their_last_block_index, block_idx + block_batch_size)))
         blocks_request = {'block_indexes': blocks_to_request}
-        print(f'Asking block node {url} for blocks {blocks_request}')
+        logger.info(f'Asking block node {url} for blocks {blocks_request}')
         blocks_data = get_block_from_url_retry(url, blocks_request)
         # try:
         #     response = requests.post(
@@ -122,7 +122,7 @@ def sync_chain_from_node(url, block_index=None):
         #         )
         #     blocks_data = response.json()
         # except Exception as err:
-        #     print('Could not get block', str(err))
+        #     logger.info(f'Could not get block {err}')
         #     failed_for_invalid_block = True
         #     time.sleep(5)
         for block in blocks_data:
@@ -146,7 +146,7 @@ def sync_chain_from_node(url, block_index=None):
                 block['text']['transactions'][idx]['signatures'] = signatures
 
             if not validate_block_data(block):
-                print('Invalid block. Reverting by one block to retry')
+                logger.info('Invalid block. Reverting by one block to retry')
                 failed_for_invalid_block = True
                 revert_chain(get_last_block_index() - 1)
                 break
@@ -166,10 +166,11 @@ def sync_chain_from_node(url, block_index=None):
 
 def sync_chain_from_peers(force_sync=False):
     global SYNC_STATUS
+    logger.info(f'Syncing chain from peers with force_sync={force_sync} SYNC_STATUS={SYNC_STATUS}')
     if force_sync:
         SYNC_STATUS['IS_SYNCING'] = False
     if SYNC_STATUS['IS_SYNCING']:
-        print('Already syncing chain. Not syncing again.')
+        logger.info('Already syncing chain. Not syncing again.')
         return
     SYNC_STATUS['IS_SYNCING'] = True
     try:
@@ -177,17 +178,17 @@ def sync_chain_from_peers(force_sync=False):
         url, block_index = get_best_peer_to_sync(peers)
 
         if url:
-            print('Syncing from peer', url)
+            logger.info(f'Syncing from peer {url}')
             sync_chain_from_node(url, block_index)
         else:
-            print('No node available to sync')
+            logger.info('No node available to sync')
     except Exception as e:
-        print('Sync failed', e)
+        logger.info(f'Sync failed {e}')
     SYNC_STATUS['IS_SYNCING'] = False
 
 
 # TODO - use mode of max last 
-def get_best_peer_to_sync(peers):
+def get_best_peer_to_sync(peers, return_many=False):
     best_peers = []
     best_peer_value = 0
 
@@ -196,26 +197,29 @@ def get_best_peer_to_sync(peers):
         url = 'http://' + peer['address'] + ':' + str(NEWRL_PORT)
         try:
             their_last_block_index = int(requests.get(url + '/get-last-block-index', timeout=REQUEST_TIMEOUT).text)
-            print(f'Peer {url} has last block {their_last_block_index}')
+            logger.info(f'Peer {url} has last block {their_last_block_index}')
             if their_last_block_index > best_peer_value:
                 best_peers = [url]
                 best_peer_value = their_last_block_index
             elif their_last_block_index == best_peer_value:
                 best_peers.append(url)
         except Exception as e:
-            print('Error getting block index from peer at', url)
-    best_peer = random.choice(best_peers)
-    return best_peer, best_peer_value
+            logger.info(f'Error getting block index from peer at {url}')
+    if return_many:
+        return best_peers, best_peer_value
+    else:
+        best_peer = random.choice(best_peers)
+        return best_peer, best_peer_value
 
 
 def ask_peer_for_block(peer_url, block_index):
     blocks_request = {'block_indexes': [block_index]}
-    print(f'Asking block node {peer_url} for block {block_index}')
+    logger.info(f'Asking block node {peer_url} for block {block_index}')
     try:
         blocks_data = requests.post(peer_url + '/get-blocks', json=blocks_request, timeout=REQUEST_TIMEOUT * 5).json()
         return blocks_data
     except Exception as e:
-        print('Could not get block', str(e))
+        logger.info(f'Could not get block {e}')
         return None
 
 
@@ -291,7 +295,7 @@ def get_block_from_url_retry(url, blocks_request):
                     # timeout=REQUEST_TIMEOUT
                 )
         except Exception as err:
-            print('Retrying block get', str(err))
+            logger.info(f'Retrying block get {err}')
             failed_for_invalid_block = True
             time.sleep(5)
     blocks_data = response.json()

@@ -30,7 +30,8 @@ GET http://localhost:8182/get-peers
 POST http://localhost:8182/sync-chain-from-peers
 POST http://localhost:8182/run-updater
 GET http://localhost:8182/download-chain
-POST http://localhost:8182/revert-chain?block_index=1&propogate=false
+POST http://localhost:8182/remove-dead-peers
+POST http://localhost:8182/revert-chain?block_index=0&propogate=false
 POST http://localhost:8182/receive-transaction
 
 {"transaction": {"timestamp": 1648185985420, "trans_code": "8d9817b183d61710c82323c082e9652727931ede", "type": 7, "currency": "NWRL", "fee": 0.0, "descr": "Miner addition", "valid": 1, "specific_data": {"wallet_address": "0x76d5ac405f6885c90c407202c474faff93389605", "network_address": "3.6.169.47", "broadcast_timestamp": 1648185985420}}, "signatures": [{"wallet_address": "0x76d5ac405f6885c90c407202c474faff93389605", "msgsign": "peAZ3HOcQDKDS7EVPEmjMqKMkWJcKLKbK3T1wuphelv7vjQvsYHWUEXOu2quk9O7TJKK/kK+yt6/bYbEAW733g=="}]}

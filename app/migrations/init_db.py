@@ -176,7 +176,7 @@ def init_trust_db():
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS proposal_data
                     (
-                    proposal_id INT PRIMARY KEY,
+                    proposal_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     dao_person_id text NOT NULL, 
                     function_called text NOT NULL, 
                     params text , 
@@ -190,6 +190,18 @@ def init_trust_db():
                     voter_data text
                     )
                     ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS DAO_TOKEN_LOCK
+                    (
+                    dao_id  text Not NULL,
+                    person_id text Not NULL,
+                    pr  oposal_list TEXT ,
+                    status INT,
+                    amount_locked INT,
+                    wallet_address text
+                    )
+                    ''')
+
     con.commit()
     con.close()
 

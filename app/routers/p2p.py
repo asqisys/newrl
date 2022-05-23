@@ -68,5 +68,8 @@ def get_miners_api():
     return get_miner_info()
 
 @router.post("/add-peer", tags=[p2p_tag])
-def add_peer_api(req: Request):
-    return add_peer(req.client.host)
+def add_peer_api(req: Request, dns_address: str=None):
+    if dns_address is None:
+        return add_peer(req.client.host)
+    else:
+        return add_peer(dns_address)

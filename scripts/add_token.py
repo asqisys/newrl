@@ -7,6 +7,7 @@ import requests
 #   "address": "0x6e206561a7018d84b593c5e4788c71861d716880"
 # }
 
+# NODE_URL = 'http://localhost:8182'
 NODE_URL = 'http://testnet.newrl.net:8182'
 WALLET = {"public": "PizgnsfVWBzJxJ6RteOQ1ZyeOdc9n5KT+GrQpKz7IXLQIiVmSlvZ5EHw83GZL7wqZYQiGrHH+lKU7xE5KxmeKg==","private": "zhZpfvpmT3R7mUZa67ui1/G3I9vxRFEBrXNXToVctH0=","address": "0x20513a419d5b11cd510ae518dc04ac1690afbed6"}
 
@@ -26,7 +27,7 @@ add_wallet_request = {
   "custodian": WALLET['address'],
   "legal_doc": "686f72957d4da564e405923d5ce8311b6567cedca434d252888cb566a5b4c401",
   "amount_created": amount,
-  "tokendecimal": 0,
+  "tokendecimal": 2,
   "disallowed_regions": [],
   "is_smart_contract_token": False,
   "token_attributes": {}
