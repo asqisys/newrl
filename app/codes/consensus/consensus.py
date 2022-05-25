@@ -30,7 +30,8 @@ def generate_block_receipt(block, vote=1):
     return {
         "data": receipt_data,
         "public_key": public_key,
-        "signature": sign_object(private_key, receipt_data)
+        "signature": sign_object(private_key, receipt_data),
+        'timestamp': get_corrected_time_ms()
     }
 
 
@@ -90,6 +91,8 @@ def check_community_consensus(block):
             return True
 
     if receipt_counts['positive_receipt_count'] > MINIMUM_ACCEPTANCE_RATIO * COMMITTEE_SIZE:
+        # TODO - Check if time elapsed has exceeded receipt cut off. Do not accept otherwise
+        # This is to give every node sometime to send their receipts for the block
         return True
     return False
 
