@@ -8,7 +8,7 @@ from ..db_updater import *
 from ..transactionmanager import get_public_key_from_address, Transactionmanager
 
 
-class AuthorizeContract(ContractMaster):
+class CarbonCredits(ContractMaster):
     codehash = ""  # this is the hash of the entire document excluding this line, it is same for all instances of this class
 
     def __init__(self, contractaddress=None):
@@ -42,34 +42,24 @@ class AuthorizeContract(ContractMaster):
 
         return self.validateCustodian(callparams, custodian_address, custodian_wallet, transaction_manager)
 
-    def modifyTokenAttributes(self, cur, callparamsip):
+    def assignScores(self, cur, callparamsip):
+        cspecs = input_to_dict(self.contractparams['contractspecs'])
+        minScoreCount = cspecs['minScoreCount']
+        reportData = cspecs['reportData']
+        currentScores = cspecs['currentScores']
         if self.validate(cur, callparamsip):
             callparams = input_to_dict(callparamsip)
-            query_params = (
-                callparams['transaction']['token_code'],
-                callparams['transaction']['timestamp'],
-                callparams['transaction']['token_attributes'],
-
+            serverID = callparams['transaction']['serverID']
+            score = callparams['transaction']['score']
+            currentScores.append(
+                {
+                    "serverID": serverID,
+                    "score": score
+                }
             )
-            cursor = cur.execute('SELECT token_attributes FROM tokens WHERE tokencode = :tokencode',
-                                 {'tokencode': query_params[0]})
-            tokenAttributes = cursor.fetchone()
-            jsonObj = json.loads(tokenAttributes[0])
-            list = []
-            if "append" in jsonObj:
-                list = jsonObj["append"]
-            list.append({query_params[1]: query_params[2]})
-            jsonObj["append"] = list
-            attributes = json.dumps(jsonObj)
-            cur.execute(f'''UPDATE tokens SET token_attributes= :attr WHERE tokenCode= :code''',
-                        {'attr': attributes,
-                         'code': query_params[0]})
-            return "Modification transaction successful %s" % query_params[0]
+            ###updateContract params here
+            if len(currentScores) >= minScoreCount:
+                for score in currentScores:
+                    return
         else:
             return "Invalid Transaction: Error in custodian signature"
-
-    def destroyTokens(self, sender_address, value):
-        pass
-
-    def createTokens(self, sender_address, value):
-        pass
