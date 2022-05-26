@@ -184,8 +184,12 @@ class Transactionmanager:
         for filename in filenames:
             fl = mempool+filename
         #	self.loadtransaction
-            with open(fl, "r") as readfile:
-                trandata = json.load(readfile)['transaction']
+            try:
+                with open(fl, "r") as readfile:
+                    trandata = json.load(readfile)['transaction']
+            except:
+                print('Invalid transaction')
+                continue
             ttype = trandata['type']
             if ttype < 3:  # 0 is genesis, 1 is wallet creation, 2 is token creation
                 continue
