@@ -19,7 +19,7 @@ class dao_manager(ContractMaster):
         dao_params = input_to_dict(callparams)
 
         # create wallet and pid for contract or dao_sc_main
-        dao_sc_address = create_contract_address()
+        dao_sc_address = dao_params['dao_address']
         dao_person_id = add_pid_contract_add(cur, dao_sc_address)
 
 
