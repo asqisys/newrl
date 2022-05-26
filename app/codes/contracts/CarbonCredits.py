@@ -58,8 +58,8 @@ class CarbonCredits(ContractMaster):
                 }
             )
             ###updateContract params here
-            if len(currentScores) >= minScoreCount:
-                for score in currentScores:
-                    return
+            # if len(currentScores) >= minScoreCount:
+            #     for score in currentScores:
+            #         return
         else:
             return "Invalid Transaction: Error in custodian signature"
