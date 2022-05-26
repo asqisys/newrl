@@ -68,8 +68,13 @@ class AuthorizeContract(ContractMaster):
         else:
             return "Invalid Transaction: Error in custodian signature"
 
-    def destroyTokens(self, sender_address, value):
+    def destroyTokens(self, cur, callparamsip):
         pass
 
-    def createTokens(self, sender_address, value):
+    def createTokens(self, cur, callparamsip):
         pass
+
+    def terminate(self, cur, callparamsip):
+        cur.execute(f'''UPDATE contracts SET status=-1 WHERE address= :address''',
+                    {'address': self.address})
+        return "Contract delete successful %s" % self.address
