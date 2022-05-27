@@ -16,6 +16,7 @@ def clear_db():
     cur.execute('DROP TABLE IF EXISTS blocks')
     cur.execute('DROP TABLE IF EXISTS transactions')
     cur.execute('DROP TABLE IF EXISTS transfers')
+    cur.execute('DROP TABLE IF EXISTS receipts')
     cur.execute('DROP TABLE IF EXISTS contracts')
     cur.execute('DROP TABLE IF EXISTS miners')
     cur.execute('DROP TABLE IF EXISTS dao_main')
@@ -70,6 +71,15 @@ def init_db():
                     hash text,
                     creator_wallet text,
                     transactions_hash text)
+                    ''')
+    
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS receipts
+                    (block_index integer,
+                    block_hash text,
+                    vote integer,
+                    wallet_address text,
+                    timestamp text)
                     ''')
 
     cur.execute('''

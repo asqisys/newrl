@@ -17,7 +17,7 @@ def get_blocks_for_index_from_storage(block_index, folder=TMP_PATH):
     return blocks
 
 
-def get_receipts_from_storage(block_index, folder=MEMPOOL_PATH):
+def get_receipts_from_storage(block_index, folder=TMP_PATH):
     """Returns a list of receipts matching a block index from mempool"""
     blocks = []
     for block_file in glob.glob(f'{folder}/receipt_{block_index}_*.json'):
