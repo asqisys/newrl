@@ -71,14 +71,22 @@ def download_state():
 
     balances_cursor = cur.execute('SELECT * FROM balances').fetchall()
     balances = [dict(ix) for ix in balances_cursor]
+    
+    contracts_cursor = cur.execute('SELECT * FROM contracts').fetchall()
+    contracts = [dict(ix) for ix in contracts_cursor]
 
     state = {
         'wallets': wallets,
         'tokens': tokens,
         'balances': balances,
+        'contracts': contracts
     }
     return state
 
+
+def get_block(block_index):
+    chain = Blockchain()
+    return chain.get_block(block_index)
 
 def get_transaction(transaction_code):
     con = sqlite3.connect(NEWRL_DB)
@@ -86,7 +94,41 @@ def get_transaction(transaction_code):
     cur = con.cursor()
     transaction_cursor = cur.execute(
         'SELECT * FROM transactions where transaction_code=?', (transaction_code,)).fetchone()
+    if transaction_cursor is None:
+        return None
     return dict(transaction_cursor)
+
+
+def get_wallet(wallet_address):
+    con = sqlite3.connect(NEWRL_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur = cur.execute(
+        'SELECT * FROM wallets where wallet_address=?', (wallet_address,)).fetchone()
+    if cur is None:
+        return None
+    return dict(cur)
+
+
+def get_token(token_code):
+    con = sqlite3.connect(NEWRL_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur = cur.execute(
+        'SELECT * FROM tokens where tokencode=?', (token_code,)).fetchone()
+    if cur is None:
+        return None
+    return dict(cur)
+
+def get_contract(contract_address):
+    con = sqlite3.connect(NEWRL_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur = cur.execute(
+        'SELECT * FROM contracts where address=?', (contract_address,)).fetchone()
+    if cur is None:
+        return None
+    return dict(cur)
 
 
 def download_chain():

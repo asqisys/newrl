@@ -130,7 +130,6 @@ def add_token(cur, token, txcode=None):
             token['custodian'],
             token['legaldochash'],
             token['amount_created'],
-            token['value_created'],
             token['sc_flag'],
             disallowed_json,
             txcode,
@@ -139,8 +138,8 @@ def add_token(cur, token, txcode=None):
         )
         cur.execute(f'''INSERT OR IGNORE INTO tokens
             (tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-            amount_created, value_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
+            amount_created, sc_flag, disallowed, parent_transaction_code, tokendecimal, token_attributes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', query_params)
         if token['amount_created']:
             update_wallet_token_balance(
                 cur, token['first_owner'], tid, token['amount_created'])
@@ -179,7 +178,10 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
 
 def add_tx_to_block(cur, block_index, transactions):
     print(block_index, transactions)
-    for transaction in transactions:
+    for transaction_signature in transactions:
+        transaction = transaction_signature['transaction']
+        signatures = json.dumps(transaction_signature['signatures'])
+        signatures = [] if signatures is None else signatures
         transaction_code = transaction['transaction_code'] if 'transaction_code' in transaction else transaction['trans_code']
         description = transaction['descr'] if 'descr' in transaction else transaction['description']
         specific_data = json.dumps(
@@ -193,11 +195,12 @@ def add_tx_to_block(cur, block_index, transactions):
             transaction['fee'],
             description,
             transaction['valid'],
-            specific_data
+            specific_data,
+            signatures
         )
         cur.execute(f'''INSERT OR IGNORE INTO transactions
-            (block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
+            (block_index, transaction_code, timestamp, type, currency, fee, description, valid, specific_data, signatures)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', db_transaction_data)
 
 
 def update_token_amount(cur, tid, amt):
@@ -269,3 +272,27 @@ def input_to_dict(ipval):
     else:
         callparams = ipval
     return callparams
+
+
+def add_miner(cur, wallet_address, network_address, broadcast_timestamp):
+    miner_cursor = cur.execute('SELECT last_broadcast_timestamp FROM miners where wallet_address = ?', (wallet_address, )).fetchone()
+    if miner_cursor is not None:
+        last_broadcast_timestamp = int(miner_cursor[0])
+        if last_broadcast_timestamp > broadcast_timestamp:
+            return
+    cur.execute('''INSERT OR REPLACE INTO miners
+				(id, wallet_address, network_address, last_broadcast_timestamp)
+				 VALUES (?, ?, ?, ?)''', 
+                 (wallet_address, wallet_address, network_address, broadcast_timestamp))
+
+def add_pid_contract_add(cur,ct_add):
+    pid = get_person_id_for_wallet_address(ct_add)
+    query_params = (pid, get_time_ms())
+    cur.execute(f'''INSERT OR IGNORE INTO person
+                        (person_id, created_time)
+                        VALUES (?, ?)''', query_params)
+    query_params = (pid, ct_add)
+    cur.execute(f'''INSERT OR IGNORE INTO person_wallet
+                    (person_id, wallet_id)
+                    VALUES (?, ?)''', query_params)
+    return pid

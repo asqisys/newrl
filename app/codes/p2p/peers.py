@@ -4,6 +4,7 @@ import sqlite3
 import requests
 import socket
 import subprocess
+from threading import Thread
 from app.codes.signmanager import sign_object
 from app.codes.validator import validate_signature
 from app.migrations.init import init_newrl
@@ -60,7 +61,7 @@ def add_peer(peer_address):
     try:
         logger.info('Adding peer %s', peer_address)
         # await register_me_with_them(peer_address)
-        cur.execute('INSERT INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
+        cur.execute('INSERT OR REPLACE INTO peers(id, address) VALUES(?, ?)', (peer_address, peer_address, ))
         con.commit()
     except Exception as e:
         logger.info('Did not add peer %s', peer_address)
@@ -162,12 +163,14 @@ def update_my_address():
 
 def update_software(propogate):
     "Update the client software from repo"
-    logger.info('Getting latest code from repo')
-    subprocess.call(["git", "pull"])
-    init_newrl()
     if propogate is True:
         logger.info('Propogaring update request to network')
         update_peers()
+
+    logger.info('Getting latest code from repo')
+    subprocess.call(["git", "pull"])
+    subprocess.call(["sh", "scripts/install.sh"])
+    init_newrl()
 
 
 def validate_auth(auth):
@@ -202,3 +205,27 @@ def call_api_on_peers(url):
             assert response.json()['status'] == 'SUCCESS'
         except Exception as e:
             print(f'Error calling API on node {address}', str(e))
+
+
+def remove_dead_peer(peer, my_address):
+    address = peer['address']
+    if socket.gethostbyname(address) == my_address:
+        return
+    try:
+        response = requests.get(
+            'http://' + address + f':{NEWRL_PORT}' + '/get-status',
+            timeout=REQUEST_TIMEOUT
+        )
+        if response.status_code != 200 or response.json()['up'] != True:
+            remove_peer(peer['id'])
+    except Exception as e:
+        print('Removing peer', peer['id'])
+        remove_peer(peer['id'])
+
+def remove_dead_peers():
+    my_peers = get_peers()
+    my_address = get_my_address()
+
+    for peer in my_peers:
+        thread = Thread(target=remove_dead_peer, args=(peer, my_address))
+        thread.start()

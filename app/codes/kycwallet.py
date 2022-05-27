@@ -8,6 +8,7 @@ import datetime
 import base64
 import sqlite3
 
+from .utils import get_time_ms
 from ..constants import TMP_PATH, NEWRL_DB
 from .transactionmanager import Transactionmanager
 
@@ -113,9 +114,9 @@ def generate_wallet(kyccustodian, kycdocs, ownertype, jurisd, wallet_specific_da
 
 def create_add_wallet_transaction(wallet):
     transaction_data = {
-        'timestamp': str(datetime.datetime.now()),
+        'timestamp': get_time_ms(),
         'type': 1,
-        'currency': 'INR',
+        'currency': 'NWRL',
         'fee': 0.0,
         'descr': 'New wallet',
         'valid': -1,

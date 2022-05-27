@@ -2,6 +2,7 @@ import sqlite3
 import json
 
 from ..codes.state_updater import update_state_from_transaction
+from .migrate_db import run_migrations
 from ..constants import NEWRL_DB, NEWRL_P2P_DB
 
 db_path = NEWRL_DB
@@ -15,7 +16,11 @@ def clear_db():
     cur.execute('DROP TABLE IF EXISTS blocks')
     cur.execute('DROP TABLE IF EXISTS transactions')
     cur.execute('DROP TABLE IF EXISTS transfers')
+    cur.execute('DROP TABLE IF EXISTS receipts')
     cur.execute('DROP TABLE IF EXISTS contracts')
+    cur.execute('DROP TABLE IF EXISTS miners')
+    cur.execute('DROP TABLE IF EXISTS dao_main')
+    cur.execute('DROP TABLE IF EXISTS dao_membership')
     con.commit()
     con.close()
 
@@ -43,7 +48,6 @@ def init_db():
                     custodian text,
                     legaldochash text,
                     amount_created real,
-                    value_created real,
                     sc_flag integer,
                     disallowed text,
                     tokendecimal integer,
@@ -68,6 +72,15 @@ def init_db():
                     creator_wallet text,
                     transactions_hash text)
                     ''')
+    
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS receipts
+                    (block_index integer,
+                    block_hash text,
+                    vote integer,
+                    wallet_address text,
+                    timestamp text)
+                    ''')
 
     cur.execute('''
                     CREATE TABLE IF NOT EXISTS transactions
@@ -80,7 +93,8 @@ def init_db():
                     fee real,
                     description text,
                     valid integer,
-                    specific_data text)
+                    specific_data text,
+                    signatures text)
                     ''')
 
     cur.execute('''
@@ -111,7 +125,16 @@ def init_db():
                     contractspecs TEXT,
                     legalparams TEXT)
                     ''')
-
+    # cur.execute('DROP TABLE IF EXISTS miners')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS miners
+                    (id text NOT NULL PRIMARY KEY,
+                    wallet_address text,
+                    network_address text NOT NULL,
+                    last_broadcast_timestamp text,
+                    UNIQUE (wallet_address)
+                    )
+                    ''')
     con.commit()
     con.close()
 
@@ -148,6 +171,46 @@ def init_trust_db():
                     score real,
                     last_time integer)
                     ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS dao_main
+                    (dao_personid text NOT NULL, 
+                    dao_name text NOT NULL,
+                    founder_personid text NOT NULL,
+                    dao_sc_address text NOT NULL)
+                    ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS dao_membership
+                    (dao_person_id text NOT NULL, 
+                    member_person_id text NOT NULL)
+                    ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS proposal_data
+                    (
+                    proposal_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    dao_person_id text NOT NULL, 
+                    function_called text NOT NULL, 
+                    params text , 
+                    yes_votes INT , 
+                    no_votes INT , 
+                    abstain_votes INT , 
+                    total_votes INT , 
+                    status text NOT NULL, 
+                    voting_start_ts text , 
+                    voting_end_ts text ,
+                    voter_data text
+                    )
+                    ''')
+    cur.execute('''
+                    CREATE TABLE IF NOT EXISTS DAO_TOKEN_LOCK
+                    (
+                    dao_id  text Not NULL,
+                    person_id text Not NULL,
+                    pr  oposal_list TEXT ,
+                    status INT,
+                    amount_locked INT,
+                    wallet_address text
+                    )
+                    ''')
 
     con.commit()
     con.close()
@@ -160,13 +223,20 @@ def revert_chain(block_index):
     cur = con.cursor()
     cur.execute(f'DELETE FROM blocks WHERE block_index > {block_index}')
     cur.execute(f'DELETE FROM transactions WHERE block_index > {block_index}')
-    cur.execute('DROP TABLE wallets')
-    cur.execute('DROP TABLE tokens')
-    cur.execute('DROP TABLE balances')
+    cur.execute('DROP TABLE IF EXISTS wallets')
+    cur.execute('DROP TABLE IF EXISTS tokens')
+    cur.execute('DROP TABLE IF EXISTS balances')
+    cur.execute('DROP TABLE IF EXISTS transfers')
+    cur.execute('DROP TABLE IF EXISTS contracts')
+    cur.execute('DROP TABLE IF EXISTS miners')
     con.commit()
+    con.close()
 
     init_db()
-
+    run_migrations()
+    
+    con = sqlite3.connect(NEWRL_DB)
+    cur = con.cursor()
     transactions_cursor = cur.execute(f'SELECT transaction_code, block_index, type, timestamp, specific_data FROM transactions WHERE block_index <= {block_index}').fetchall()
     for transaction in transactions_cursor:
         transaction_code = transaction[0]

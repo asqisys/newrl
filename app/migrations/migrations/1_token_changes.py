@@ -17,7 +17,6 @@ def migrate():
                     custodian text,
                     legaldochash text,
                     amount_created integer,
-                    value_created integer,
                     sc_flag integer,
                     disallowed text,
                     parent_transaction_code text,
@@ -26,13 +25,13 @@ def migrate():
                     ''')
     
     token_cursor = cur.execute(f'''select tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-                amount_created, value_created, sc_flag, parent_transaction_code, token_attributes
+                amount_created, sc_flag, parent_transaction_code, token_attributes
                 FROM tokens''').fetchall()
     for token in token_cursor:
         cur.execute(f'''INSERT OR IGNORE INTO _tokens
 				(tokencode, tokenname, tokentype, first_owner, custodian, legaldochash, 
-                amount_created, value_created, sc_flag, parent_transaction_code, token_attributes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', token)
+                amount_created, sc_flag, parent_transaction_code, token_attributes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', token)
     
     cur.execute('DROP TABLE tokens')
     cur.execute('ALTER TABLE _tokens RENAME TO tokens')

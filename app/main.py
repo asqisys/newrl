@@ -1,29 +1,23 @@
 import logging
+from .codes.log_config import logger_init
+logger_init()
 import argparse
+import os
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.codes.p2p.sync_chain import sync_chain_from_peers
-
+from .codes.p2p.sync_chain import sync_chain_from_peers
 from .constants import NEWRL_PORT
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
-from .codes.clock.global_time import start_mining_clock, update_time_difference
+from .codes.clock.global_time import sync_timer_clock_with_global
+from .codes.updater import global_internal_clock, start_miner_broadcast_clock, start_mining_clock
 
-from .routers import blockchain
-from .routers import p2p
-from .routers import transport
+from .routers import blockchain, system, p2p, transport
 
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--disablenetwork", help="run the node local only with no network connection", action="store_true")
-parser.add_argument("--disableupdate", help="run the node without updating software", action="store_true")
-parser.add_argument("--disablebootstrap", help="run the node without bootstrapping", action="store_true")
-args = parser.parse_args()
 
 app = FastAPI(
     title="The Newrl APIs",
@@ -42,25 +36,46 @@ app.add_middleware(
 
 app.include_router(blockchain.router)
 app.include_router(p2p.router)
+app.include_router(system.router)
 app.include_router(transport.router)
+
+args = {
+    'disablenetwork': False,
+    'disableupdate': False,
+    'disablebootstrap': False,
+}
 
 @app.on_event('startup')
 def app_startup():
     try:
-        if not args.disablenetwork:
-            if not args.disableupdate:
+        if not args['disablenetwork']:
+            sync_timer_clock_with_global()
+            if not args['disableupdate']:
                 update_software(propogate=False)
-            if not args.disablebootstrap:
+            if not args['disablebootstrap']:
                 init_bootstrap_nodes()
             sync_chain_from_peers()
-            update_time_difference()
             update_my_address()
-        # start_mining_clock()
     except Exception as e:
         print('Bootstrap failed')
         logging.critical(e, exc_info=True)
+    
+    start_miner_broadcast_clock()
+    global_internal_clock()
+    
+
+@app.on_event("shutdown")
+def shutdown_event():
+    print('Shutting down node')
+    os._exit(0)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--disablenetwork", help="run the node local only with no network connection", action="store_true")
+    parser.add_argument("--disableupdate", help="run the node without updating software", action="store_true")
+    parser.add_argument("--disablebootstrap", help="run the node without bootstrapping", action="store_true")
+    _args = parser.parse_args()
+    args["disablenetwork"] = _args.disablenetwork
     uvicorn.run("app.main:app", host="0.0.0.0", port=NEWRL_PORT, reload=True)
 
 

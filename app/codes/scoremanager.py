@@ -8,7 +8,7 @@ def update_score_transaction(personid1, address1, personid2, address2, new_score
     transaction = {
         'timestamp': get_time_ms(),
         'type': TRANSACTION_TRUST_SCORE_CHANGE,
-        'currency': "INR",
+        'currency': "NWRL",
         'fee': 0.0,
         'descr': "Score update",
         'valid': 1,

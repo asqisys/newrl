@@ -19,6 +19,8 @@ class ContractMaster():
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
     def __init__(self, template, version, contractaddress=None):
         self.address=contractaddress    #this is for instances of this class created for tx creation and other non-chain work
+        self.type=1
+        self.template=template
         if contractaddress:     #as in this is an existing contract
             con = sqlite3.connect(NEWRL_DB)
             cur = con.cursor()
@@ -82,7 +84,7 @@ class ContractMaster():
         legpars=json.dumps(contractparams['legalparams'])
         signstr=json.dumps(contractparams['signatories'])
         oraclestr = json.dumps(contractparams['oracleids'])
-        qparams=(self.address,
+        qparams=((self.address).strip('\"'),
                 contractparams['creator'],
                 contractparams['ts_init'],
                 contractparams['name'],

@@ -10,9 +10,9 @@ import os
 
 from app.codes.fs.mempool_manager import get_mempool_transaction
 from app.codes.p2p.transport import send
-from .blockchain import get_last_block_hash
+from .utils import get_last_block_hash
 from .transactionmanager import Transactionmanager
-from ..constants import MEMPOOL_PATH
+from ..constants import IS_TEST, MEMPOOL_PATH
 from .p2p.outgoing import propogate_transaction_to_peers
 
 
@@ -20,43 +20,58 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def validate(transaction):
+def validate(transaction, propagate=False, validate_economics=True):
     existing_transaction = get_mempool_transaction(transaction['transaction']['trans_code'])
     if existing_transaction is not None:
-        return True
+        return {'valid': True, 'msg': 'Already validated and in mempool'}
 
     transaction_manager = Transactionmanager()
     transaction_manager.set_transaction_data(transaction)
-    economics_valid = transaction_manager.econvalidator()
     signatures_valid = transaction_manager.verifytransigns()
     valid = False
-    if economics_valid and signatures_valid:
-        msg = "All well"
-        valid = True
-    if not economics_valid:
-        msg = "Economic validation failed"
     if not signatures_valid:
-        msg = "Invalid signatures"
+        msg = "Transaction has invalid signatures"
+    if validate_economics:
+        economics_valid = transaction_manager.econvalidator()
+        if not economics_valid:
+            msg = "Transaction economic validation failed"
+            valid = False
+        msg = "Transaction economic validation successful"
+        valid = True
+    else:
+        msg = "Valid signatures. Not checking economics"
+        valid = True
+    # if  economics_valid and signatures_valid:
+    #     msg = "Transaction is valid"
+    #     valid = True
+    # if not economics_valid:
+    #     msg = "Transaction economic validation failed"
+    
     check = {'valid': valid, 'msg': msg}
 
     if valid:  # Economics and signatures are both valid
         transaction_file = f"{MEMPOOL_PATH}transaction-{transaction_manager.transaction['type']}-{transaction_manager.transaction['trans_code']}.json"
         transaction_manager.save_transaction_to_mempool(transaction_file)
 
-        # Broadcast transaction to peers
-        propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
+        if propagate and not IS_TEST:
+            # Broadcast transaction to peers via HTTP
+            exclude_nodes = transaction['peers_already_broadcasted'] if 'peers_already_broadcasted' in transaction else None
+            propogate_transaction_to_peers(
+                transaction_manager.get_transaction_complete(),
+                exclude_nodes=exclude_nodes
+            )
 
-        # Broadcaset transaction via transport server
-        try:
-            payload = {
-                'operation': 'send_transaction',
-                'data': transaction_manager.get_transaction_complete()
-            }
-            send(payload)
-        except:
-            print('Error sending transaction to transport server')
+            # Broadcaset transaction via transport server
+            # try:
+            #     payload = {
+            #         'operation': 'send_transaction',
+            #         'data': transaction_manager.get_transaction_complete()
+            #     }
+            #     send(payload)
+            # except:
+            #     print('Error sending transaction to transport server')
 
-    print(check)
+    print(msg)
     return check
 
 
@@ -74,8 +89,8 @@ def validate_signature(data, public_key, signature):
 
 def validate_receipt_signature(receipt):
     try:
-        return validate_signature(receipt['data'], receipt['public'], receipt['signature'])
-    except:
+        return validate_signature(receipt['data'], receipt['public_key'], receipt['signature'])
+    except Exception as e:
         logger.error('Error validating receipt signature')
         return False
 
@@ -84,58 +99,35 @@ def get_node_trust_score(public_key):
     # TODO - Return the actual trust score of the node by lookup on public_key
     return 1
 
+
 def validate_block_receipts(block):
     total_receipt_count = 0
-    postitive_receipt_count = 0
+    positive_receipt_count = 0
     for receipt in block['receipts']:
         total_receipt_count += 1
 
         if not validate_receipt_signature(receipt):
             continue
 
-        if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash'] or receipt['data']['vote'] < 1:
+        if receipt['data']['block_index'] != block['index'] or receipt['data']['vote'] < 1:
             continue
 
-        trust_score = get_node_trust_score(receipt['public'])
+        trust_score = get_node_trust_score(receipt['public_key'])
         valid_probability = 0 if trust_score < 0 else (trust_score + 2) / 5
-            # raise Exception('Invalid receipt signature')
 
-        if receipt['data']['block_index'] != block['index'] or receipt['data']['block_hash'] != block['hash']:
-            raise Exception('Invalid receipt data')
-        
         if receipt['data']['vote'] == 1:
-            postitive_receipt_count += 1
+            positive_receipt_count += 1
     
     return {
         'total_receipt_count': total_receipt_count,
-        'postitive_receipt_count': postitive_receipt_count,
+        'positive_receipt_count': positive_receipt_count,
     }
 
 
-def validate_block(block, validate_receipts=True, should_validate_signature=True):
-    if block['hash'][:4] != '0000':
-        return False
-
+def validate_block(block):
     if not validate_block_data(block['data']):
         return False
 
-    if should_validate_signature:
-        sign_valid = validate_signature(
-            data=block['data'],
-            public_key=block['signature']['public'],
-            signature=block['signature']['msgsign']
-        )
-
-        if not sign_valid:
-            logger.info('Invalid block signature')
-            return False
-
-    if validate_receipts:
-        receipts_valid = validate_block_receipts(block)
-        if not receipts_valid:
-            logger.info('Invalid receipts')
-            return False
-    
     return True
 
 
@@ -154,4 +146,12 @@ def validate_block_data(block):
     if last_block['index'] != block_index - 1:
         print('New block index is not 1 more than last block index')
         return False
+    return True
+
+
+def validate_block_transactions(block):
+    for transaction in block['text']['transactions']:
+        validation_result = validate(transaction, propagate=False, validate_economics=True)
+        if not validation_result['valid']:
+            return False
     return True

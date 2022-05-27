@@ -8,7 +8,9 @@ import datetime
 import base64
 import sqlite3
 
-from ..ntypes import TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSCATION_TOKEN_CREATION
+
+from ..ntypes import TRANSACTION_MINER_ADDITION, TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION, TRANSACTION_TOKEN_CREATION
+
 from .chainscanner import get_wallet_token_balance
 from ..constants import ALLOWED_CUSTODIANS_FILE, MEMPOOL_PATH, NEWRL_DB
 from .utils import get_time_ms
@@ -20,7 +22,7 @@ class Transactionmanager:
             'timestamp': get_time_ms(),
             'trans_code': "0000",
             'type': 0,
-            'currency': "INR",
+            'currency': "NWRL",
             'fee': 0.0,
             'descr': None,
             'valid': 1,
@@ -115,7 +117,12 @@ class Transactionmanager:
 
     def verifytransigns(self):
         # need to add later a check for addresses mentioned in the transaction (vary by type) and the signing ones
-        validadds = self.get_valid_addresses()
+        try:
+            validadds = self.get_valid_addresses()
+            if validadds == False:
+                return False
+        except Exception as e:
+            return False
         addvaliditydict = {}
         for valadd in validadds:
             addvaliditydict[valadd] = False
@@ -203,7 +210,7 @@ class Transactionmanager:
         # from mempool only include transactions that reduce balance and not those that increase
         # check if the sender has enough balance to spend
         self.validity = 0
-        if self.transaction['type'] == 1:
+        if self.transaction['type'] == TRANSACTION_WALLET_CREATION:
             custodian = self.transaction['specific_data']['custodian_wallet']
             walletaddress = self.transaction['specific_data']['wallet_address']
             if not is_wallet_valid(custodian):
@@ -248,7 +255,7 @@ class Transactionmanager:
                                 self.validity = 0
 
     #	self.validity=0
-        if self.transaction['type'] == 2:  # token addition transaction
+        if self.transaction['type'] == TRANSACTION_TOKEN_CREATION:  # token addition transaction
             firstowner = self.transaction['specific_data']['first_owner']
             custodian = self.transaction['specific_data']['custodian']
             fovalidity = False
@@ -302,7 +309,7 @@ class Transactionmanager:
                             "Tokencode provided does not exist. Will append as new one.")
                         self.validity = 1  # tokencode is provided by user
 
-        if self.transaction['type'] == 3:
+        if self.transaction['type'] == TRANSACTION_SMART_CONTRACT:
             self.validity = 1
             for wallet in self.transaction['specific_data']['signers']:
                 if not is_wallet_valid(wallet):
@@ -313,7 +320,7 @@ class Transactionmanager:
                         self.validity = 0
 
     #	self.validity=0
-        if self.transaction['type'] == 4 or self.transaction['type'] == 5:
+        if self.transaction['type'] == TRANSACTION_TWO_WAY_TRANSFER or self.transaction['type'] == TRANSACTION_ONE_WAY_TRANSFER:
             ttype = self.transaction['type']
             startingbalance1 = 0
             startingbalance2 = 0
@@ -404,7 +411,7 @@ class Transactionmanager:
                 #	self.transaction['valid']=1;
                     self.validity = 1
 
-        if self.transaction['type'] == 6:  # score change transaction
+        if self.transaction['type'] == TRANSACTION_TRUST_SCORE_CHANGE:  # score change transaction
             ttype = self.transaction['type']
         #    personid1 = self.transaction['specific_data']['personid1']
         #    personid2 = self.transaction['specific_data']['personid2']
@@ -430,6 +437,14 @@ class Transactionmanager:
                         self.validity = 0
                     else:
                         self.validity = 1
+        
+        if self.transaction['type'] == TRANSACTION_MINER_ADDITION:
+            # No checks for fee in the beginning
+            if not is_wallet_valid(self.transaction['specific_data']['wallet_address']):
+                print("Miner wallet not in chain")
+                self.validity = 0
+            else:
+                self.validity = 1
 
         if self.validity == 1:
             return True
@@ -515,7 +530,7 @@ def get_sc_validadds(transaction):
         return validadds
     if not address:
         print("Invalid call to a function of a contract yet to be set up.")
-        return False
+        return [-1]
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
     signatories = cur.execute(
@@ -523,7 +538,7 @@ def get_sc_validadds(transaction):
     con.close()
     if signatories is None:
         print("Contract does not exist.")
-        return False
+        return [-1]
     functsignmap = json.loads(signatories[0])
     if funct in functsignmap:  # function is allowed to be called
         # checking if stated signer is in allowed list
@@ -534,7 +549,7 @@ def get_sc_validadds(transaction):
         return validadds
     else:
         print("Either function is not valid or it cannot be called in a transaction.")
-        return False
+        return [-1]
 
 
 def get_valid_addresses(transaction):
@@ -544,11 +559,13 @@ def get_valid_addresses(transaction):
     if transaction_type == TRANSACTION_WALLET_CREATION:  # Custodian needs to sign
         valid_addresses.append(
             transaction['specific_data']['custodian_wallet'])
-    if transaction_type == TRANSCATION_TOKEN_CREATION:    # Custodian needs to sign
+    if transaction_type == TRANSACTION_TOKEN_CREATION:    # Custodian needs to sign
         valid_addresses.append(transaction['specific_data']['custodian'])
     if transaction_type == TRANSACTION_SMART_CONTRACT:
         valid_addresses = get_sc_validadds(transaction)
     if transaction_type == TRANSACTION_TWO_WAY_TRANSFER:  # Both senders need to sign
+        if transaction['specific_data']['wallet1'] == transaction['specific_data']['wallet2']:
+            raise Exception('Both senders cannot be same')
         valid_addresses.append(transaction['specific_data']['wallet1'])
         valid_addresses.append(transaction['specific_data']['wallet2'])
     if transaction_type == TRANSACTION_ONE_WAY_TRANSFER:  # Only sender1 is needed to sign
@@ -556,4 +573,6 @@ def get_valid_addresses(transaction):
     if transaction_type == TRANSACTION_TRUST_SCORE_CHANGE:
         # Only address1 is added, not address2
         valid_addresses.append(transaction['specific_data']['address1'])
+    if transaction_type == TRANSACTION_MINER_ADDITION:
+        valid_addresses.append(transaction['specific_data']['wallet_address'])
     return valid_addresses

@@ -1,7 +1,6 @@
 """Committee selection code"""
 
 from constants import MY_ADDRESS
-from ..clock.global_time import get_local_epoch
 from ..p2p.peers import get_peers
 
 
