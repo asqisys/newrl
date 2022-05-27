@@ -210,8 +210,8 @@ def add_block(cur, block, block_hash):
     )
     cur.execute('INSERT OR IGNORE INTO blocks (block_index, timestamp, proof, previous_hash, hash, creator_wallet, transactions_hash) VALUES (?, ?, ?, ?, ?, ?, ?)', db_block_data)
     update_db_states(cur, block)
-    update_receipts_in_state(cur, block)
-    update_trust_scores(cur, block)
+    # update_receipts_in_state(cur, block)
+    # update_trust_scores(cur, block)
 
     for transaction in block['text']['transactions']:
         transaction = transaction['transaction']

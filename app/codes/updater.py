@@ -151,11 +151,11 @@ def run_updater(add_to_chain=False):
     }
     store_block_to_temp(block_payload)
     logger.info(f'Stored block to temp with payload {json.dumps(block_payload)}')
-    # if not IS_TEST:
-    #     nodes = get_committee_for_current_block()
-    #     if len(nodes) < COMMITTEE_SIZE:
-    #         nodes = get_peers()
-    #     broadcast_block(block_payload, nodes)
+    if not IS_TEST:
+        nodes = get_committee_for_current_block()
+        if len(nodes) < COMMITTEE_SIZE:
+            nodes = get_peers()
+        broadcast_block(block_payload, nodes)
 
     return block_payload
 
@@ -189,13 +189,6 @@ def pay_fee_for_transaction(cur, transaction):
             fee / len(payees)
         )
     return True
-
-
-def update_network_trust_scores(cur, block):
-    last_block = get_last_block(cur=cur)
-    block_to_take_receipts = last_block['index'] - 10
-    block_to_take_receipts = min(block_to_take_receipts, 0)
-    # TODO - complete the trust score update for the receipt senders
 
 
 def create_empty_block_receipt_and_broadcast():
