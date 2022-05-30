@@ -10,9 +10,9 @@ import os
 
 from app.codes.fs.mempool_manager import get_mempool_transaction
 from app.codes.p2p.transport import send
-from .blockchain import get_last_block_hash
+from .utils import get_last_block_hash
 from .transactionmanager import Transactionmanager
-from ..constants import MEMPOOL_PATH
+from ..constants import IS_TEST, MEMPOOL_PATH
 from .p2p.outgoing import propogate_transaction_to_peers
 
 
@@ -31,32 +31,33 @@ def validate(transaction):
     signatures_valid = transaction_manager.verifytransigns()
     valid = False
     if economics_valid and signatures_valid:
-        msg = "All well"
+        msg = "Transaction is valid"
         valid = True
     if not economics_valid:
-        msg = "Economic validation failed"
+        msg = "Transaction economic validation failed"
     if not signatures_valid:
-        msg = "Invalid signatures"
+        msg = "Transaction has invalid signatures"
     check = {'valid': valid, 'msg': msg}
 
     if valid:  # Economics and signatures are both valid
         transaction_file = f"{MEMPOOL_PATH}transaction-{transaction_manager.transaction['type']}-{transaction_manager.transaction['trans_code']}.json"
         transaction_manager.save_transaction_to_mempool(transaction_file)
 
-        # Broadcast transaction to peers
-        propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
+        if not IS_TEST:
+            # Broadcast transaction to peers via HTTP
+            propogate_transaction_to_peers(transaction_manager.get_transaction_complete())
 
-        # Broadcaset transaction via transport server
-        try:
-            payload = {
-                'operation': 'send_transaction',
-                'data': transaction_manager.get_transaction_complete()
-            }
-            send(payload)
-        except:
-            print('Error sending transaction to transport server')
+            # Broadcaset transaction via transport server
+            try:
+                payload = {
+                    'operation': 'send_transaction',
+                    'data': transaction_manager.get_transaction_complete()
+                }
+                send(payload)
+            except:
+                print('Error sending transaction to transport server')
 
-    print(check)
+    print(msg)
     return check
 
 
