@@ -328,12 +328,12 @@ class Transactionmanager:
             sender1valid = False
             sender2valid = False
             sc_created_token1 = is_token_sc_created(tokencode1)
-            if(sc_created_token1):
+            if sc_created_token1:
                 sc_address1 = get_sc_address_from_token(tokencode1)
                 if (sc_address1 is None):
                     print("Smart contract address not present in token attributes of toke " + tokencode1)
                     self.validity = 0
-                if(not valid_from_contract(sc_address1,self.transaction)):
+                if(not valid_from_contract(sc_address1,{"transaction":self.transaction,"signatures":self.signatures})):
                     print("Validation failed for token code"+tokencode1)
                     self.validity=0
 
@@ -345,7 +345,7 @@ class Transactionmanager:
                 token2amt = max(
                     self.transaction['specific_data']['asset2_number'], token2mp)
                 sc_created_token2 = is_token_sc_created(tokencode2)
-                if(sc_created_token2):
+                if sc_created_token2:
                     sc_address2=get_sc_address_from_token(tokencode2)
                     if(sc_address2 is None):
                         print("Smart contract address not present in token attributes of toke "+tokencode2)
@@ -496,13 +496,13 @@ def is_wallet_valid(address):
 def is_token_sc_created(tokencode):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
-    token_cursor = cur.execute(
-        'SELECT sc_flag FROM tokens WHERE tokencode=?', (tokencode, ))
+    token_cursor = cur.execute('SELECT sc_flag FROM tokens WHERE tokencode = :tokencode',
+                                 {'tokencode': tokencode})
     sc_flag = token_cursor.fetchone()
     if sc_flag is not None:
-        if sc_flag==1:
+        if sc_flag[0]==1:
             return True
-    return True
+    return False
 def get_sc_address_from_token(tokencode):
     con = sqlite3.connect(NEWRL_DB)
     cur = con.cursor()
@@ -510,7 +510,7 @@ def get_sc_address_from_token(tokencode):
         'SELECT token_attributes FROM tokens WHERE tokencode=?', (tokencode, ))
     attributes = token_cursor.fetchone()
     if attributes is not None:
-        attributes=input_to_dict(attributes)
+        attributes=input_to_dict(attributes[0])
         return attributes['sc_address']
     return None
 
