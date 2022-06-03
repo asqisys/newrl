@@ -18,7 +18,11 @@ class AuthorizeContract(ContractMaster):
 
     def validateCustodian(self, transaction, custodian_address, custodian_wallet, transaction_manager):
         valid = False
-        matchedCustodian = [x for x in transaction['signatures'] if x['wallet_address'] == custodian_address][0]
+        matchedCustodian = [x for x in transaction['signatures'] if x['wallet_address'] == custodian_address]
+        if len(matchedCustodian)==0:
+            return False
+        else:
+            matchedCustodian=matchedCustodian[0]
         if (matchedCustodian is not None):
             try:
                 sign_valid = transaction_manager.verify_sign(matchedCustodian['msgsign'],
