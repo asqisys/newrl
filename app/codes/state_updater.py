@@ -10,7 +10,7 @@ from app.nvalues import NETWORK_TRUST_MANAGER
 from ..constants import NEWRL_DB
 from .db_updater import *
 from ..ntypes import NEWRL_TOKEN_CODE, NEWRL_TOKEN_NAME, TRANSACTION_MINER_ADDITION, TRANSACTION_ONE_WAY_TRANSFER, TRANSACTION_SMART_CONTRACT, TRANSACTION_TOKEN_CREATION, TRANSACTION_TRUST_SCORE_CHANGE, TRANSACTION_TWO_WAY_TRANSFER, TRANSACTION_WALLET_CREATION
-
+from .token_master import *
 
 def update_db_states(cur, block):
     newblockindex = block['index'] if 'index' in block else block['block_index']
@@ -56,18 +56,7 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         add_token(cur, transaction_data, transaction_code)
 
     if transaction_type == TRANSACTION_TWO_WAY_TRANSFER or transaction_type == TRANSACTION_ONE_WAY_TRANSFER:  # this is a transfer tx
-        sender1 = transaction_data['wallet1']
-        sender2 = transaction_data['wallet2']
-
-        tokencode1 = transaction_data['asset1_code']
-        amount1 = int(transaction_data['asset1_number'] or 0)
-        transfer_tokens_and_update_balances(
-            cur, sender1, sender2, tokencode1, amount1)
-
-        tokencode2 = transaction_data['asset2_code']
-        amount2 = int(transaction_data['asset2_number'] or 0)
-        transfer_tokens_and_update_balances(
-            cur, sender2, sender1, tokencode2, amount2)
+        token_transfer(cur,transaction_data)
 
     if transaction_type == TRANSACTION_TRUST_SCORE_CHANGE:  # score update transaction
         personid1 = get_pid_from_wallet(cur, transaction_data['address1'])
