@@ -124,6 +124,8 @@ def get_wallet_token_balance(cur, wallet_address, token_code):
     balance = balance_row[0] if balance_row is not None else 0
     return balance    
 
+#database update methods
+
 def update_token_amount(cur, tid, amt):
     '''
     update_token_amount updates token amount for given tid
@@ -150,7 +152,6 @@ def update_token_amount(cur, tid, amt):
 #				 VALUES (?, ?)''', (tid, cumul_amt))
     cur.execute(
         f'''UPDATE tokens SET amount_created=? WHERE tokencode=?''', (cumul_amt, tid))
-
     return True    
 
 def update_wallet_token_balance(cur, wallet_address, token_code, balance):

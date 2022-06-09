@@ -6,7 +6,7 @@ from .contract_master import ContractMaster
 from .dao_main_template_validator import create_proposal, vote_on_proposal
 from ..db_updater import *
 from abc import ABCMeta, abstractmethod
-
+from ..token_master import *
 import importlib
 
 

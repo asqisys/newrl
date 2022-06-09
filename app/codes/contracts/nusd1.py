@@ -1,7 +1,7 @@
 # class to create smart contract for creating stablecoins on Newrl
 from .contract_master import ContractMaster
 from ..db_updater import *
-
+from ..token_master import *
 class nusd1(ContractMaster):
     codehash=""    #this is the hash of the entire document excluding this line, it is same for all instances of this class
 
