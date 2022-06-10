@@ -1,13 +1,18 @@
+import importlib
 import logging
 import argparse
+import os
+
 import uvicorn
 from fastapi.openapi.utils import get_openapi
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine
 
+from app.codes.base.Base import Base
 from app.codes.p2p.sync_chain import sync_chain_from_peers
 
-from .constants import NEWRL_PORT
+from .constants import NEWRL_PORT, NEWRL_DB
 from .codes.p2p.peers import init_bootstrap_nodes, update_my_address, update_software
 from .codes.clock.global_time import start_mining_clock, update_time_difference
 
@@ -48,13 +53,20 @@ app.include_router(transport.router)
 def app_startup():
     try:
         if not args.disablenetwork:
-            if not args.disableupdate:
-                update_software(propogate=False)
-            if not args.disablebootstrap:
-                init_bootstrap_nodes()
-            sync_chain_from_peers()
-            update_time_difference()
-            update_my_address()
+            # if not args.disableupdate:
+            #     update_software(propogate=False)
+            # if not args.disablebootstrap:
+            #     init_bootstrap_nodes()
+            # sync_chain_from_peers()
+            # update_time_difference()
+            # update_my_address()
+            contracts = os.listdir('app/codes/entity')
+            # contracts = filter(lambda migration: '.py' in migration, contracts)
+            for contract in contracts:
+                contract = contract.replace('.py', '')
+                contract = importlib.import_module('app.codes.entity' + '.' + contract)
+            engine = create_engine('sqlite:///' + NEWRL_DB)
+            Base.metadata.create_all(engine)
         # start_mining_clock()
     except Exception as e:
         print('Bootstrap failed')
