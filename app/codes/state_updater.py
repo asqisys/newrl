@@ -84,6 +84,9 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         params_for_funct['function_caller']=transaction_signer
         try:
             funct(cur, params_for_funct)
+            if(transaction_data['value']):
+                value = transaction_signer[0]['wallet_address']
+                transfer_tokens_and_update_balances(cur, value,transaction_data['address'] , 'NWRL', transaction_data['value'])
         except Exception as e:
             print('Exception durint smart contract function run', e)
     if transaction_type == TRANSACTION_MINER_ADDITION:

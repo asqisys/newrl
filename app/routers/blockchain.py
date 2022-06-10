@@ -262,6 +262,7 @@ def call_sc(sc_request: CallSC):
         "address": sc_request.sc_address,
         "function" : sc_request.function_called,
         "signers" : sc_request.signers,
+        "value": sc_request.value,
         "params" : sc_request.params
     }
 
