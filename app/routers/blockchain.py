@@ -12,7 +12,7 @@ from starlette.responses import FileResponse
 from app.codes.transactionmanager import Transactionmanager
 
 from .request_models import AddWalletRequest, BalanceRequest, BalanceType, CallSC, CreateTokenRequest, CreateWalletRequest, GetTokenRequest, RunSmartContractRequest, TransferRequest, CreateSCRequest, TscoreRequest
-from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction
+from app.codes.chainscanner import Chainscanner, download_chain, download_state, get_transaction, get_token
 from app.codes.kycwallet import add_wallet, generate_wallet_address, get_address_from_public_key, get_digest, generate_wallet
 from app.codes.tokenmanager import create_token_transaction
 from app.codes.transfermanager import Transfermanager
@@ -48,6 +48,14 @@ def get_transaction_api(transaction_code: str):
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/get-token", tags=[v2_tag])
+def get_token_api(token_code: str):
+    """Get a token details from the chain"""
+    wallet = get_token(token_code)
+    if wallet is None:
+        raise HTTPException(status_code=400, detail="Token not found")
+    return wallet
 
 @router.get("/download-chain", tags=[v2_tag])
 def download_chain_api():
