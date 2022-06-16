@@ -66,6 +66,7 @@ class CallSC(BaseModel):
     sc_address: str
     function_called: str
     signers: List[str]
+    value: List[dict]
     params: dict
 
 class RunSmartContractRequest(BaseModel):

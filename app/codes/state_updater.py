@@ -94,7 +94,9 @@ def update_state_from_transaction(cur, transaction_type, transaction_data, trans
         # adding singers address to the dict
         params_for_funct['function_caller']=transaction_signer
         try:
-            funct(cur, params_for_funct)
+            #funct(cur, params_for_funct)
+            sender = transaction_signer[0]['wallet_address']
+            handle_txn_value(cur, transaction_data['value'],sender,transaction_data['address'] )
         except Exception as e:
             print('Exception durint smart contract function run', e)
     if transaction_type == TRANSACTION_MINER_ADDITION:
@@ -158,3 +160,7 @@ def update_trust_scores(cur, block):
                 new_score = (existing_score - 1) / 2
 
             update_trust_score(cur, NETWORK_TRUST_MANAGER, wallet_address, new_score, get_corrected_time_ms())
+
+def handle_txn_value(cur, values, sender, contract_address):
+    for value in values:
+        transfer_tokens_and_update_balances(cur, sender, contract_address, value['token_code'],value['amount'])
