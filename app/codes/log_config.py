@@ -12,15 +12,15 @@ from sse_starlette.sse import EventSourceResponse
 '''Logger Config and Foramtters'''
 
 path = "logs/"
-filename = "newrl-node.log"
+filename = "newrl-node-log"
 
 def logger_init():
     logger = logging.getLogger() ## root logger
     logger.setLevel(logging.INFO)
 
     pathlib.Path(path).mkdir(parents=True, exist_ok=True)
-    logfilename = datetime.now().strftime("%Y%m%d_%H") + f"_{filename}"
-    file = logging.handlers.TimedRotatingFileHandler(f"{path}{logfilename}", when="midnight", interval=1)
+    logfilename = filename
+    file = logging.handlers.RotatingFileHandler(f"{path}{logfilename}", backupCount= 25, maxBytes= 2*1000*1000)
     fileformat = logging.Formatter("%(asctime)s [%(levelname)s]: %(name)s: %(message)s")
     file.setLevel(logging.INFO)
     file.setFormatter(fileformat)
@@ -55,7 +55,7 @@ def logger_cleanup(path, days_to_keep):
 '''Log Streaming Methods'''
 
 async def logGenerator(request):
-    logfilename = datetime.now().strftime("%Y%m%d_%H") + f"_{filename}"
+    logfilename = filename
     logFile = f"{path}{logfilename}"
     for line in tail("-f", logFile, _iter=True):
         if await request.is_disconnected():

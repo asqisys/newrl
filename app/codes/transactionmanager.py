@@ -564,6 +564,8 @@ def get_valid_addresses(transaction):
     if transaction_type == TRANSACTION_SMART_CONTRACT:
         valid_addresses = get_sc_validadds(transaction)
     if transaction_type == TRANSACTION_TWO_WAY_TRANSFER:  # Both senders need to sign
+        if transaction['specific_data']['wallet1'] == transaction['specific_data']['wallet2']:
+            raise Exception('Both senders cannot be same')
         valid_addresses.append(transaction['specific_data']['wallet1'])
         valid_addresses.append(transaction['specific_data']['wallet2'])
     if transaction_type == TRANSACTION_ONE_WAY_TRANSFER:  # Only sender1 is needed to sign
